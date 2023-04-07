@@ -1,0 +1,4 @@
+{
+    "APP_URL": "http://localhost:3000",
+    "APPBACK_URL": "http://127.0.0.1:8000"
+}
