@@ -5,12 +5,11 @@ import axios from 'axios';
 import { Autocomplete, TextField } from '@mui/material';
 import config from '../../../config.json';
 
-export const SearchAgency = ({handleOnChangeAgency}) => {
+export const SearchAgency = ({handleOnChangeAgency, setAgencyName, agencyName}) => {
 
     const previousController = useRef();
 
     const [options, setOptions] = React.useState([]);
-    const [name, setName] = React.useState('');
 
     const getDataAutocomplete = (searchTerm) => {
         if (previousController.current) {
@@ -39,18 +38,17 @@ export const SearchAgency = ({handleOnChangeAgency}) => {
     return (
         <Autocomplete
             id="agency-search"
-            value={name}
+            value={agencyName}
             disablePortal={false}
             options={options}
             onChange={(event, newValue) => {
                 handleOnChangeAgency({
                     id: newValue.value,
-                    name: newValue.label
                 });
-                setName(newValue);
+                setAgencyName(newValue.label);
             }}
             onInputChange={(event, newInputValue) => {
-                setName(newInputValue);
+                setAgencyName(newInputValue);
                 if(event){
                     if(event.target.value.length > 0){
                         getDataAutocomplete(event.target.value);

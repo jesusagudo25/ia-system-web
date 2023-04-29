@@ -39,6 +39,7 @@ import config from '../config.json';
 
 const TABLE_HEAD = [
     { id: 'id', label: 'Invoice #', alignRight: false },
+    { id: 'assignment', label: 'Assignment', alignRight: false },
     { id: 'date', label: 'Date', alignRight: false },
     { id: 'agency', label: 'Agency', alignRight: false },
     { id: 'interpreter', label: 'Interpreter', alignRight: false },
@@ -114,7 +115,7 @@ export const ServiceHistory = () => {
 
     const [page, setPage] = useState(0);
 
-    const [order, setOrder] = useState('asc');
+    const [order, setOrder] = useState('desc');
 
     const [orderBy, setOrderBy] = useState('date');
 
@@ -207,7 +208,15 @@ export const ServiceHistory = () => {
                                                     <TableCell component="th" scope="row" padding="normal">
                                                         <Stack direction="row" alignItems="center" spacing={2}>
                                                             <Typography variant="subtitle2" noWrap>
-                                                                # {id}
+                                                                {invoiceDetails[0].invoice_number}
+                                                            </Typography>
+                                                        </Stack>
+                                                    </TableCell>
+
+                                                    <TableCell component="th" scope="row" padding="normal">
+                                                        <Stack direction="row" alignItems="center" spacing={2}>
+                                                            <Typography variant="subtitle2" noWrap>
+                                                                {invoiceDetails[0].assignment_number}
                                                             </Typography>
                                                         </Stack>
                                                     </TableCell>
@@ -225,7 +234,9 @@ export const ServiceHistory = () => {
                                                     </TableCell>
 
                                                     <TableCell align="left">
-                                                        <Label color={status === 'closed' ? 'success' : status === 'open' ? 'warning' : 'error'}>{sentenceCase(status === 'closed' ? 'Paid' : status === 'open' ? 'Pending' : 'Canceled')}</Label>
+                                                        <Label color={status === 'closed' ? 'success' : status === 'open' ? 'warning' : 'error'}>
+                                                            {sentenceCase(status === 'closed' ? 'Paid' : status === 'open' ? 'Pending' : 'Canceled')}
+                                                        </Label>
                                                     </TableCell>
 
                                                     <TableCell align="right">
@@ -273,7 +284,7 @@ export const ServiceHistory = () => {
                                     (
                                         <TableBody>
                                             <TableRow>
-                                                <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                                                <TableCell align="center" colSpan={7} sx={{ py: 3 }}>
                                                     <Paper
                                                         sx={{
                                                             textAlign: 'center',
@@ -297,7 +308,7 @@ export const ServiceHistory = () => {
                                 {isNotFound && (
                                     <TableBody>
                                         <TableRow>
-                                            <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                                            <TableCell align="center" colSpan={7} sx={{ py: 3 }}>
                                                 <Paper
                                                     sx={{
                                                         textAlign: 'center',

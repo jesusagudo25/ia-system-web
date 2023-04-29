@@ -23,6 +23,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import InputAdornment from '@mui/material/InputAdornment';
 import { format } from 'date-fns';
+import { ToastContainer, toast } from 'react-toastify';
 
 import { SearchInterpreter } from '../sections/@manage/interpreter/SearchInterpreter';
 import { SearchAgency } from '../sections/@manage/agency/SearchAgency';
@@ -41,7 +42,6 @@ export const NewService = () => {
     const [lenguages, setLenguages] = useState([]);
 
     /* Agency */
-
     const [agencyName, setAgencyName] = useState('');
     const [agencyId, setAgencyId] = useState('');
 
@@ -57,6 +57,7 @@ export const NewService = () => {
     const [interpreterZipCode, setInterpreterZipCode] = useState('');
     const [interpreterEmail, setInterpreterEmail] = useState('');
     const [interpreterLenguageId, setInterpreterLenguageId] = useState('none');
+    const [interpreterSelected, setInterpreterSelected] = useState(false);
 
     const [interpreterContainer, setInterpreterContainer] = useState(false);
 
@@ -88,7 +89,6 @@ export const NewService = () => {
 
     const [totalServiceInterpreter, setTotalServiceInterpreter] = useState(0);
     const [totalServiceCoordinator, setTotalServiceCoordinator] = useState(0);
-    const [totalAjusment, setTotalAjusment] = useState(false);
     const [totalService, setTotalService] = useState(0);
 
     /* Mileage calculation */
@@ -132,14 +132,12 @@ export const NewService = () => {
     /* Autocomplete agency */
 
     const handleOnChangeAgency = (agency) => {
-        setAgencyName(agency.name);
         setAgencyId(agency.id);
     }
 
     /* Autocomplete interpreter */
 
     const handleOnChangeInterpreter = (interpreter) => {
-        setInterpreterName(interpreter.name);
         setInterpreterId(interpreter.id);
         setInterpreterPhoneNum(interpreter.phone_number);
         setInterpreterSSN(interpreter.ssn);
@@ -149,6 +147,7 @@ export const NewService = () => {
         setInterpreterEmail(interpreter.email);
         setInterpreterZipCode(interpreter.zip_code);
         setInterpreterContainer(true);
+        setInterpreterSelected(true);
     }
 
     /* Autocomplete description */
@@ -162,7 +161,6 @@ export const NewService = () => {
 
     const calculateInterpreterService = (arrivalTime, startTime, endTime) => {
         setContainerOrderDetails(false);
-        setTotalAjusment(false);
         if (arrivalTime && startTime && endTime) {
 
             const arrivalTimeFloat = timeStringToFloat(format(arrivalTime, 'HH:mm'));
@@ -174,7 +172,6 @@ export const NewService = () => {
             let totalTime = Math.round((endTimeFloat - startTimeFloat) * 100) / 100;
             if (totalTime > 0 && totalTime < 2) {
                 totalTime = 2;
-                setTotalAjusment(true);
             }
             const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
             console.log(totalCostService, totalTime);
@@ -188,7 +185,7 @@ export const NewService = () => {
                 else {
                     totalInterpreter = 30 * totalTime;
                 }
-                
+
                 const totalCoordinador = (LenguageNameSelected.price_per_hour - (totalInterpreter / totalTime)) * totalTime;
 
                 setTotalServiceInterpreter(totalInterpreter);
@@ -273,14 +270,14 @@ export const NewService = () => {
                     borderRadius: 1,
                 }
             }>
-                <Typography variant="subtitle1" gutterBottom marginBottom={1}>
+                <Typography variant="subtitle1" gutterBottom marginBottom={2}>
                     Enter the data of the agency
                 </Typography>
-                <SearchAgency handleOnChangeAgency={handleOnChangeAgency} />
-                <Typography variant="subtitle1" gutterBottom marginBottom={1} sx={{ width: '100%' }}>
+                <SearchAgency handleOnChangeAgency={handleOnChangeAgency} setAgencyName={setAgencyName} agencyName={agencyName} />
+                <Typography variant="subtitle1" gutterBottom marginBottom={2} marginTop={2} sx={{ width: '100%' }}>
                     Enter the address of the service
                 </Typography>
-                <Stack direction="row" sx={{ marginTop: '20px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Stack direction="row" sx={{flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
                     <FormControl sx={{ width: '37%' }}>
                         <TextField
                             id="address"
@@ -340,12 +337,12 @@ export const NewService = () => {
                             onChange={(e) => setServiceZipCode(e.target.value)}
                         />
                     </FormControl>
-                    
-                    <Typography variant="subtitle1" gutterBottom marginBottom={1} sx={{ width: '100%' }}>
+
+                    <Typography variant="subtitle1" gutterBottom marginBottom={2} marginTop={2} sx={{ width: '100%' }}>
                         Enter the data of the interpreter
                     </Typography>
 
-                    <FormControl sx={{ width: '37%', marginTop: '20px' }}>
+                    <FormControl sx={{ width: '37%' }}>
                         <InputLabel id="lenguage-select-label"
                             sx={{ width: 400 }}
                         >Lenguage</InputLabel>
@@ -364,12 +361,15 @@ export const NewService = () => {
                             ))}
                         </Select>
                     </FormControl>
-                    <FormControl sx={{ width: '61%', marginTop: '20px' }}>
+                    <FormControl sx={{ width: '61%' }}>
                         <SearchInterpreter
                             handleOnChangeInterpreter={handleOnChangeInterpreter}
                             serviceState={serviceState}
                             interpreterLenguageId={interpreterLenguageId}
-                            setInterpreterContainer={setInterpreterContainer} />
+                            setInterpreterContainer={setInterpreterContainer}
+                            setInterpreterName={setInterpreterName}
+                            interpreterName={interpreterName}
+                            />
                     </FormControl>
                 </Stack>
                 {
@@ -389,7 +389,8 @@ export const NewService = () => {
                             interpreterState={interpreterState}
                             setInterpreterZipCode={setInterpreterZipCode}
                             interpreterZipCode={interpreterZipCode}
-                            />
+                            interpreterSelected={interpreterSelected}
+                        />
                         : null
                 }
             </Container>
@@ -407,10 +408,10 @@ export const NewService = () => {
                     borderRadius: 1,
                 }
             }>
-                <Typography variant="subtitle1" gutterBottom marginBottom={1}>
+                <Typography variant="subtitle1" gutterBottom marginBottom={2}>
                     Enter the service data
                 </Typography>
-                <SearchDescription handleOnChangeDescription={handleOnChangeDescription} />
+                <SearchDescription handleOnChangeDescription={handleOnChangeDescription} setDescription={setDescription} description={description} />
                 <Stack direction="row" sx={{ marginTop: '20px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
                     <FormControl sx={{ width: '37%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -531,7 +532,7 @@ export const NewService = () => {
                                                         </Grid>
                                                         <Grid item xs={1}>
                                                             <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-                                                                {totalMileage.toFixed(2)}
+                                                                ${totalMileage.toFixed(2)}
                                                             </Typography>
                                                         </Grid>
                                                     </>
@@ -542,14 +543,12 @@ export const NewService = () => {
                                             <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
                                                 Interpreter services rate: ${
                                                     lenguages.find((item) => item.id === interpreterLenguageId).price_per_hour
-                                                } per hour {
-                                                    totalAjusment ? `for two (2) hours minium` : null
-                                                }
+                                                } per hour for two (2) hours minium
                                             </Typography>
                                         </Grid>
                                         <Grid item xs={1}>
                                             <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-                                                {totalService.toFixed(2)}
+                                                ${totalService.toFixed(2)}
                                             </Typography>
                                         </Grid>
                                         <Grid item xs={10}>
@@ -559,7 +558,7 @@ export const NewService = () => {
                                         </Grid>
                                         <Grid item xs={1}>
                                             <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
-                                                {(totalService + totalMileage).toFixed(2)}
+                                                ${(totalService + totalMileage).toFixed(2)}
                                             </Typography>
                                         </Grid>
                                     </Grid>
@@ -597,10 +596,6 @@ export const NewService = () => {
                             {agencyName}
                         </Typography>
                     </Grid>
-                </Grid>
-                <Grid container spacing={3} sx={{
-                    mb: 3,
-                }}>
                     <Grid item xs={12} md={6} lg={4}>
                         <Typography variant="subtitle1" sx={{ mb: 1 }}>
                             Address of service
@@ -611,18 +606,10 @@ export const NewService = () => {
                     </Grid>
                     <Grid item xs={12} md={6} lg={4}>
                         <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                            City of service
+                            Description
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {serviceCity}
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={4}>
-                        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                            State of service
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {serviceState}
+                            {description}
                         </Typography>
                     </Grid>
                 </Grid>
@@ -690,9 +677,7 @@ export const NewService = () => {
                 <Typography variant="subtitle1" sx={{ marginY: 2, textAlign: 'center', color: 'text.secondary' }}>
                     Interpreter services rate: ${
                         lenguages.find((item) => item.id === interpreterLenguageId).price_per_hour
-                    } per hour {
-                        totalAjusment ? `for two (2) hours minium: $${totalService}` : null
-                    }
+                    } per hour for two (2) hours minium: ${(totalService.toFixed(2))}
                 </Typography>
                 <Typography variant="subtitle1" sx={{ marginY: 2, textAlign: 'center' }}>
                     Total Amount Due: ${(totalService + totalMileage).toFixed(2)}
@@ -701,6 +686,7 @@ export const NewService = () => {
                 <Typography variant="h6" sx={{ marginY: 2 }}>
                     Actions
                 </Typography>
+                
                 <Grid item xs={12} md={6} lg={4}>
                     <Box
                         sx={{
@@ -726,7 +712,7 @@ export const NewService = () => {
                                 <Box sx={{ mb: 0.5 }}><Iconify icon={'mdi:close-circle-outline'} color="red" width={32} /></Box>
 
                                 <Typography variant="body1" sx={{ color: 'text.secondary', textDecoration: 'none' }}>
-                                    Anulación
+                                    Cancel
                                 </Typography>
                             </Paper>
                         </Button>
@@ -743,7 +729,7 @@ export const NewService = () => {
                                 <Box sx={{ mb: 0.5 }}><Iconify icon={'material-symbols:save'} color="green" width={32} /></Box>
 
                                 <Typography variant="body1" sx={{ color: 'text.secondary', textDecoration: 'none' }}>
-                                    Generar orden
+                                    Save
                                 </Typography>
                             </Paper>
                         </Button>
@@ -854,57 +840,57 @@ export const NewService = () => {
                                     {
                                         invoiceId ? (
                                             <Stack spacing={3} sx={{ mb: 4 }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                            <Iconify icon="material-symbols:check-circle" color="#00BB2D" width={50} height={50} />
-                                        </Box>
-                                        <Typography variant="h6" gutterBottom sx={
-                                            {
-                                                textAlign: 'center'
-                                            }
-                                        }>
-                                            The order has been created successfully
-                                        </Typography>
-                                        <Typography variant="body1" sx={
-                                            {
-                                                textAlign: 'center'
-                                            }
-                                        }>
-                                            You can download the order in PDF format
-                                        </Typography>
-
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
-                                            <a
-                                                href={`${config.APPBACK_URL}/api/invoices/${invoiceId}/download/`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                download
-                                                style={{ textDecoration: 'none' }}
-                                            >
-                                                <Button variant="contained"
-                                                    size='large'
-                                                    sx={{
-                                                        width: '100%',
-                                                    }}
-                                                    color="error"
-                                                    startIcon={<Iconify icon="mdi:file-pdf" />}
-                                                >
-                                                    Download PDF
-                                                </Button>
-                                            </a>
-
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                onClick={
-                                                    () => {
-                                                        window.location.reload();
+                                                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                                    <Iconify icon="material-symbols:check-circle" color="#00BB2D" width={50} height={50} />
+                                                </Box>
+                                                <Typography variant="h6" gutterBottom sx={
+                                                    {
+                                                        textAlign: 'center'
                                                     }
-                                                }
-                                            >
-                                                Create another order
-                                            </Button>
-                                        </Box>
-                                    </Stack>
+                                                }>
+                                                    The service has been generated successfully
+                                                </Typography>
+                                                <Typography variant="body1" sx={
+                                                    {
+                                                        textAlign: 'center'
+                                                    }
+                                                }>
+                                                    You can download the invoice in PDF format
+                                                </Typography>
+
+                                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
+                                                    <a
+                                                        href={`${config.APPBACK_URL}/api/invoices/${invoiceId}/download/`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        download
+                                                        style={{ textDecoration: 'none' }}
+                                                    >
+                                                        <Button variant="contained"
+                                                            size='large'
+                                                            sx={{
+                                                                width: '100%',
+                                                            }}
+                                                            color="error"
+                                                            startIcon={<Iconify icon="mdi:file-pdf" />}
+                                                        >
+                                                            Download PDF
+                                                        </Button>
+                                                    </a>
+
+                                                    <Button
+                                                        variant="contained"
+                                                        color="primary"
+                                                        onClick={
+                                                            () => {
+                                                                window.location.reload();
+                                                            }
+                                                        }
+                                                    >
+                                                        Create another service
+                                                    </Button>
+                                                </Box>
+                                            </Stack>
                                         ) : null
                                     }
                                 </Container>
@@ -935,6 +921,7 @@ export const NewService = () => {
                 </Card>
             </Container>
 
+            <ToastContainer />
         </>
     )
 }

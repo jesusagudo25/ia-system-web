@@ -6,12 +6,11 @@ import config from '../../../config.json';
 
 const filter = createFilterOptions();
 
-export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, interpreterLenguageId, setInterpreterContainer }) => {
+export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, interpreterLenguageId, setInterpreterContainer, setInterpreterName, interpreterName }) => {
 
     const previousController = useRef();
 
     const [options, setOptions] = React.useState([]);
-    const [name, setName] = React.useState('');
 
     const getDataAutocomplete = (searchTerm) => {
         if (previousController.current) {
@@ -53,19 +52,18 @@ export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, int
     return (
         <Autocomplete
             id="interpreter-search"
-            value={name}
+            value={interpreterName}
             options={options}
             onChange={(event, newValue) => {
                 if (typeof newValue === 'string') {
-                    setName(newValue);
+                    setInterpreterName(newValue);
                 } else if (newValue && newValue.inputValue) {
-                    setName(newValue.inputValue);
+                    setInterpreterName(newValue.inputValue);
                     /* Se debe abrir el espacio para crear una nueva entrada */
                     setInterpreterContainer(true);
                 } else if (newValue) {
                     handleOnChangeInterpreter({
                         id: newValue.value,
-                        name: newValue.label,
                         phone_number: newValue.phone_number,
                         ssn: newValue.ssn,
                         email: newValue.email,
@@ -73,20 +71,19 @@ export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, int
                         city: newValue.city,
                         state: newValue.state,
                         zip_code: newValue.zip_code,
+                        selected: true,
                     });
-                    setName(newValue.label);
+                    setInterpreterName(newValue.label);
                 }
             }}
             onInputChange={(event, newInputValue) => {
-                if (newInputValue !== '') {
-                    setName(newInputValue);
-                }
+                setInterpreterName(newInputValue);
                 if (event) {
-                    if (event.target.value.length > 3) {
-                        getDataAutocomplete(event.target.value);
+                    if (event.target.value) {
+                        if(event.target.value.length > 3) getDataAutocomplete(event.target.value);
                     }
                     else {
-                        setName('');
+                        setInterpreterName('');
                         setOptions([]);
                     }
                 }

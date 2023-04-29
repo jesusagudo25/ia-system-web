@@ -16,29 +16,30 @@ export const InterpreterData = ({
     interpreterState,
     setInterpreterZipCode,
     interpreterZipCode,
+    interpreterSelected
 }) => {
     return (
         <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
             <FormControl sx={{ marginTop: '20px', width: '37%' }}>
-                <TextField label="Phone number" variant="outlined" value={interpreterPhoneNum} onChange={(e) => setInterpreterPhoneNum(e.target.value)} />
+                <TextField label="Phone number" variant="outlined" value={interpreterPhoneNum} onChange={(e) => setInterpreterPhoneNum(e.target.value)} disabled={interpreterSelected} />
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '61%' }}>
-                <TextField label="Email" variant="outlined" value={interpreterEmail} onChange={(e) => setInterpreterEmail(e.target.value)} />
+                <TextField label="Email" variant="outlined" value={interpreterEmail} onChange={(e) => setInterpreterEmail(e.target.value)} disabled={interpreterSelected} />
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '37%' }}>
-                <TextField label="Social Security Number" variant="outlined" value={interpreterSSN} onChange={(e) => setInterpreterSSN(e.target.value)} />
+                <TextField label="Social Security Number" variant="outlined" value={interpreterSSN} onChange={(e) => setInterpreterSSN(e.target.value)} disabled={interpreterSelected} />
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '61%' }}>
-                <TextField label="Address" variant="outlined" value={interpreterAddress} onChange={(e) => setInterpreterAddress(e.target.value)} />
+                <TextField label="Address" variant="outlined" value={interpreterAddress} onChange={(e) => setInterpreterAddress(e.target.value)} disabled={interpreterSelected} />
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '37%' }}>
-                <TextField label="City" variant="outlined" value={interpreterCity} onChange={(e) => setInterpreterCity(e.target.value)} />
+                <TextField label="City" variant="outlined" value={interpreterCity} onChange={(e) => setInterpreterCity(e.target.value)} disabled={interpreterSelected} />
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '34%' }}>
-                <TextField label="State" variant="outlined" value={interpreterState} onChange={(e) => setInterpreterState(e.target.value)} />
+                <TextField label="State" variant="outlined" value={interpreterState} onChange={(e) => setInterpreterState(e.target.value)} disabled={interpreterSelected} />
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '25%' }}>
-                <TextField label="Zip Code" variant="outlined" value={interpreterZipCode} onChange={(e) => setInterpreterZipCode(e.target.value)} />
+                <TextField label="Zip Code" variant="outlined" value={interpreterZipCode} onChange={(e) => setInterpreterZipCode(e.target.value)} disabled={interpreterSelected} />
             </FormControl>
         </Stack>
     )

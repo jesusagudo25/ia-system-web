@@ -200,7 +200,7 @@ export const ReportPage = () => {
 
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
-                label="Completion date"
+                label="End date"
                 value={endDate}
                 renderInput={(params) => <TextField sx={
                   {

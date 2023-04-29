@@ -6,11 +6,10 @@ import config from '../../../config.json';
 
 const filter = createFilterOptions();
 
-export const SearchDescription = ({handleOnChangeDescription}) => {
+export const SearchDescription = ({handleOnChangeDescription, setDescription, description}) => {
     const previousController = useRef();
 
     const [options, setOptions] = React.useState([]);
-    const [name, setName] = React.useState('');
 
     const getDataAutocomplete = (searchTerm) => {
         if (previousController.current) {
@@ -40,30 +39,28 @@ export const SearchDescription = ({handleOnChangeDescription}) => {
         <Autocomplete
             id="description-search"
             options={options}
-            value={name}
+            value={description}
             onChange={(event, newValue) => {
+                console.log(newValue);
                 if (typeof newValue === 'string') {
-                    setName(newValue);
+                    setDescription(newValue);
                 } else if (newValue && newValue.inputValue) {
-                    setName(newValue.inputValue);
-                } else {
+                    setDescription(newValue.inputValue);
+                } else if (newValue) {
                     handleOnChangeDescription({
-                        title: newValue.label,
                         id: newValue.value,
                     });
-                    setName(newValue.label);
+                    setDescription(newValue.label);
                 }
             }}
             onInputChange={(event, newInputValue) => {
-                if (newInputValue !== '') {
-                    setName(newInputValue);
-                }
+                setDescription(newInputValue);
                 if (event) {
-                    if (event.target.value.length > 3) {
-                        getDataAutocomplete(event.target.value);
+                    if (event.target.value) {
+                        if (event.target.value.length > 3) getDataAutocomplete(event.target.value);
                     }
                     else {
-                        setName('');
+                        setDescription('');
                         setOptions([]);
                     }
                 }

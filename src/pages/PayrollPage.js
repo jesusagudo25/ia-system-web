@@ -21,8 +21,12 @@ import {
     IconButton,
     TableContainer,
     TablePagination,
-    TextField,
+    Dialog,
+    DialogContent,
+    DialogActions,
+    Box,
     Breadcrumbs, Link,
+    Button,
 } from '@mui/material';
 
 // components
@@ -86,13 +90,21 @@ function applySortFilter(array, comparator, query) {
     return stabilizedThis.map((el) => el[0]);
 }
 
+// ----------------------------------------------------------------------
+
+const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
+
 export const PayrollPage = () => {
 
     /* Generate */
 
-    const [startDate, setStartDate] = useState(new Date());
+    const [startDate, setStartDate] = useState(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
     const [endDate, setEndDate] = useState(new Date());
 
+    /* Modal */
+
+    const [payroll, setPayroll] = useState({});
+    const [open, setOpen] = useState(false);
 
     /* Payrolls */
 
@@ -100,7 +112,7 @@ export const PayrollPage = () => {
 
     const [page, setPage] = useState(0);
 
-    const [order, setOrder] = useState('asc');
+    const [order, setOrder] = useState('desc');
 
     const [orderBy, setOrderBy] = useState('start_date');
 
@@ -149,10 +161,10 @@ export const PayrollPage = () => {
             });
             console.log(response);
             toast.success('Payroll generated successfully');
+            setPayroll(response.data.payroll);
+            setOpen(true);
             getPayrolls();
             setIsLoading(false);
-            setStartDate(new Date());
-            setEndDate(new Date());
         } catch (error) {
             console.log(error);
             toast.error('Error generating payroll');
@@ -304,16 +316,16 @@ export const PayrollPage = () => {
                                                             </IconButton>
                                                         </a>
                                                         <a
-                                                            style={{ textDecoration: 'none', color: 'inherit' }}
+                                                            style={{ textDecoration: 'none', color: 'green' }}
                                                             target="_blank"
                                                             href={`${config.APPBACK_URL}/api/bank-checks/${id}/download`}
                                                             rel="noreferrer"
                                                         >
                                                             <IconButton size="large" color="inherit">
-                                                                <Iconify icon="bx:bxs-file" />
+                                                                <Iconify icon="bx:money-withdraw" />
                                                             </IconButton>
                                                         </a>
-                                                        
+
 
                                                         <IconButton size="large" color="error" onClick={() => handleDeletePayroll(id)}>
                                                             <Iconify icon="bx:bxs-trash" />
@@ -392,6 +404,112 @@ export const PayrollPage = () => {
                     />
                 </Card>
             </Container>
+
+            {/* Toastify */}
+
+            <ToastContainer />
+
+            {/* Dialog - report result */}
+            {
+                payrolls ? (
+                    <Dialog
+                        open={open}
+                        TransitionComponent={Transition}
+                        keepMounted
+                        aria-describedby="alert-dialog-slide-description"
+                        fullWidth
+                        maxWidth='sm'
+                    >
+                        <DialogContent dividers>
+
+                            <Stack
+                                direction="column"
+                                sx={{
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                }}
+                            >
+                                <Box sx={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                }}>
+                                    <Iconify icon="mdi:check-circle" color="#4caf50" width="130px" height="130px" />
+                                </Box>
+
+                                <Stack
+                                    direction="row"
+                                    sx={{
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        width: '100%',
+                                        gap: 1,
+                                        marginTop: 1,
+                                    }}
+                                >
+                                    {/* Details */}
+                                    <Typography variant="subtitle1" sx={{ fontWeight: '600' }}>Selected month:</Typography>
+
+                                    <Typography variant="subtitle1" sx={{ fontWeight: '600' }}>{payroll.month}</Typography>
+
+                                </Stack>
+
+                                <Typography variant="h4" sx={{
+                                    fontWeight: '600',
+                                    marginTop: 2,
+                                }}>Payroll generated successfully</Typography>
+
+                                <Typography variant="h6" sx={{
+                                    marginY: 2,
+                                    fontWeight: '400'
+                                }}>You can download the payroll in PDF format</Typography>
+
+                                <a
+                                    href={`${config.APPBACK_URL}/api/payrolls/${payroll.id}/download/`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download
+                                    style={{ textDecoration: 'none' }}
+                                >
+                                    <Button variant="contained"
+                                        size='large'
+                                        sx={{
+                                            width: '100%',
+                                        }}
+                                        color="error"
+                                        startIcon={<Iconify icon="mdi:file-pdf" />}
+                                    >
+                                        Descargar
+                                    </Button>
+                                </a>
+
+                            </Stack>
+
+                        </DialogContent>
+                        <DialogActions
+                            sx={{
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Button
+                                variant="contained"
+                                size='large'
+                                sx={{
+                                    margin: 2,
+                                }}
+                                onClick={() => {
+                                    setOpen(false);
+                                    setStartDate(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
+                                    setEndDate(new Date());
+                                }}
+                            >Cerrar</Button>
+                        </DialogActions>
+                    </Dialog>
+                ) : null
+            }
         </>
     )
 }
