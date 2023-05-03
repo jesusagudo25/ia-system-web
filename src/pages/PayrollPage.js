@@ -24,9 +24,11 @@ import {
     Dialog,
     DialogContent,
     DialogActions,
+    DialogTitle,
     Box,
     Breadcrumbs, Link,
     Button,
+    Checkbox
 } from '@mui/material';
 
 // components
@@ -45,8 +47,8 @@ import Scrollbar from '../components/scrollbar';
 
 // sections
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
+import { ReviewListHead, ReviewListToolbar } from '../sections/@payroll/table';
 import config from '../config.json';
-
 
 // ----------------------------------------------------------------------
 
@@ -57,6 +59,15 @@ const TABLE_HEAD = [
     { id: 'user', label: 'User', alignRight: false },
     { id: 'total', label: 'Total', alignRight: false },
     { id: '' },
+];
+
+const TABLE_HEAD_REVIEW = [
+    { id: 'assignment', label: 'Assignment', alignRight: false },
+    { id: 'date', label: 'Date of service', alignRight: false },
+    { id: 'agency', label: 'Agency', alignRight: false },
+    { id: 'interpreter', label: 'Interpreter', alignRight: false },
+    { id: 'status', label: 'Status', alignRight: false },
+    { id: 'total', label: 'Total', alignRight: false },
 ];
 
 // ----------------------------------------------------------------------
@@ -90,6 +101,19 @@ function applySortFilter(array, comparator, query) {
     return stabilizedThis.map((el) => el[0]);
 }
 
+function applySortFilterReview(array, comparator, query) {
+    const stabilizedThis = array.map((el, index) => [el, index]);
+    stabilizedThis.sort((a, b) => {
+        const order = comparator(a[0], b[0]);
+        if (order !== 0) return order;
+        return a[1] - b[1];
+    });
+    if (query) {
+        return filter(array, (_review) => _review.date.toString().indexOf(query.toLowerCase()) !== -1);
+    }
+    return stabilizedThis.map((el) => el[0]);
+}
+
 // ----------------------------------------------------------------------
 
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
@@ -98,12 +122,12 @@ export const PayrollPage = () => {
 
     /* Generate */
 
-    const [startDate, setStartDate] = useState(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
-    const [endDate, setEndDate] = useState(new Date());
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
 
     /* Modal */
 
-    const [payroll, setPayroll] = useState({});
+    const [payroll, setPayroll] = useState(null);
     const [open, setOpen] = useState(false);
 
     /* Payrolls */
@@ -112,7 +136,7 @@ export const PayrollPage = () => {
 
     const [page, setPage] = useState(0);
 
-    const [order, setOrder] = useState('desc');
+    const [order, setOrder] = useState('asc');
 
     const [orderBy, setOrderBy] = useState('start_date');
 
@@ -154,23 +178,87 @@ export const PayrollPage = () => {
     const handleGeneratePayroll = async () => {
         try {
             setIsLoading(true);
-            const response = await axios.post(`${config.APPBACK_URL}/api/payrolls`, {
+            const response = await axios.post(`${config.APPBACK_URL}/api/payrolls/review`, {
                 user_id: 1,
                 start_date: format(startDate, 'yyyy-MM-dd'),
                 end_date: format(endDate, 'yyyy-MM-dd'),
             });
             console.log(response);
             toast.success('Payroll generated successfully');
-            setPayroll(response.data.payroll);
-            setOpen(true);
-            getPayrolls();
-            setIsLoading(false);
+            /*             setPayroll(response.data.payroll);
+                        setOpen(true);
+                        getPayrolls();
+                        setIsLoading(false); */
         } catch (error) {
             console.log(error);
             toast.error('Error generating payroll');
             setIsLoading(false);
         }
     };
+
+    /* Review */
+    const [review, setReview] = useState(null);
+
+    const [pageReview, setPageReview] = useState(0);
+
+    const [orderByReview, setOrderByReview] = useState('date');
+
+    const [filterDateReview, setFilterDateReview] = useState('');
+
+    const [selected, setSelected] = useState([]);
+
+    const handleSelectAllClick = (event) => {
+        if (event.target.checked) {
+            const newSelecteds = review.map((n) => n.id);
+            setSelected(newSelecteds);
+            return;
+        }
+        setSelected([]);
+    };
+
+    const handleClick = (event, id) => {
+        const selectedIndex = selected.indexOf(id);
+        let newSelected = [];
+        if (selectedIndex === -1) {
+            newSelected = newSelected.concat(selected, id);
+        } else if (selectedIndex === 0) {
+            newSelected = newSelected.concat(selected.slice(1));
+        } else if (selectedIndex === selected.length - 1) {
+            newSelected = newSelected.concat(selected.slice(0, -1));
+        } else if (selectedIndex > 0) {
+            newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
+        }
+        setSelected(newSelected);
+    };
+
+    const handleReviewPayroll = async () => {
+        try {
+            setIsLoading(true);
+            const response = await axios.post(`${config.APPBACK_URL}/api/payrolls/review`, {
+                start_date: format(startDate, 'yyyy-MM-dd'),
+                end_date: format(endDate, 'yyyy-MM-dd'),
+            });
+            setReview(response.data.review);
+            setOpen(true);
+            setIsLoading(false);
+        } catch (error) {
+            console.log(error);
+            toast.error('Error generating review');
+            setIsLoading(false);
+        }
+    };
+    const setDateRange = () => {
+        const currentDate = new Date();
+        // validate currentDay
+        if (Number(format(currentDate, 'dd')) > 15) {
+            setStartDate(new Date(`${format(new Date(), 'yyyy-MM-16')}T00:00:00`));
+            setEndDate(lastDayOfMonth(currentDate));
+        }
+        else {
+            setStartDate(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
+            setEndDate(new Date(`${format(new Date(), 'yyyy-MM-15')}T00:00:00`));
+        }
+    }
 
     const handleDeletePayroll = async (id) => {
         try {
@@ -186,6 +274,7 @@ export const PayrollPage = () => {
 
     useEffect(() => {
         getPayrolls();
+        setDateRange();
     }, []);
 
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - payrolls.length) : 0;
@@ -193,6 +282,15 @@ export const PayrollPage = () => {
     const filteredReports = applySortFilter(payrolls, getComparator(order, orderBy), filterDate);
 
     const isNotFound = !filteredReports.length && !!filterDate;
+
+    /* ------------------------------------------------------ */
+
+    const emptyRowsReview = review ? pageReview > 0 ? Math.max(0, (1 + pageReview) * rowsPerPage - review.length) : 0 : 0;
+
+    const filteredReview = review ? applySortFilterReview(review, getComparator(order, orderBy), filterDateReview) : [];
+
+    const isNotFoundReview = review ? !filteredReview.length && !!filterDateReview : false;
+
     return (
         <>
             <Helmet>
@@ -254,7 +352,7 @@ export const PayrollPage = () => {
                         <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} sx={{ ml: 1, width: '15%' }} onClick={
                             () => {
                                 setIsLoading(true);
-                                handleGeneratePayroll();
+                                handleReviewPayroll();
                             }
                         }>
                             Generate
@@ -411,7 +509,7 @@ export const PayrollPage = () => {
 
             {/* Dialog - report result */}
             {
-                payrolls ? (
+                payroll ? (
                     <Dialog
                         open={open}
                         TransitionComponent={Transition}
@@ -502,14 +600,172 @@ export const PayrollPage = () => {
                                 }}
                                 onClick={() => {
                                     setOpen(false);
-                                    setStartDate(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
-                                    setEndDate(new Date());
                                 }}
                             >Cerrar</Button>
                         </DialogActions>
                     </Dialog>
                 ) : null
             }
+
+            {/* Dialog - review result */}
+            {
+                review ? (
+                    <Dialog
+                        open={open}
+                        TransitionComponent={Transition}
+                        keepMounted
+                        aria-describedby="alert-dialog-slide-description"
+                        fullWidth
+                        maxWidth='md'
+                    >
+                        <DialogTitle id="alert-dialog-title">
+                            {"Services provided more than a month ago"}
+                        </DialogTitle>
+                        <DialogContent dividers>
+
+                            <Card>
+                                <ReviewListToolbar numSelected={selected.length} filterDate={filterDateReview} onFilterName={handleFilterByDate} setOpen={setOpen} selected={selected} getPayrolls={getPayrolls} startDate={startDate} endDate={endDate} setDateRange={setDateRange} toast={toast}/>
+
+                                <Scrollbar>
+                                    <TableContainer sx={{ minWidth: 800 }}>
+                                        <Table>
+                                            <ReviewListHead
+                                                order={order}
+                                                orderBy={orderByReview}
+                                                headLabel={TABLE_HEAD_REVIEW}
+                                                rowCount={review.length}
+                                                numSelected={selected.length}
+                                                onRequestSort={handleRequestSort}
+                                                onSelectAllClick={handleSelectAllClick}
+                                            />
+                                            {/* Tiene que cargar primero... */}
+                                            {review.length > 0 ? (
+                                                <TableBody>
+                                                    {filteredReview.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+                                                        const { id, invoice_number: invoiceNumber, assignment_number: assignment, date_of_service_provided: date, agency, interpreter, total_amount: total, status } = row;
+
+                                                        const selectedReview = selected.indexOf(id) !== -1;
+
+                                                        return (
+                                                            <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedReview}>
+                                                                <TableCell padding="checkbox">
+                                                                    <Checkbox checked={selectedReview} onChange={(event) => handleClick(event, id)} />
+                                                                </TableCell>
+                                                                <TableCell component="th" scope="row" padding="normal">
+                                                                    <Stack direction="row" alignItems="center" spacing={2}>
+                                                                        <Typography variant="subtitle2" noWrap>
+                                                                            {assignment}
+                                                                        </Typography>
+                                                                    </Stack>
+                                                                </TableCell>
+
+                                                                <TableCell align="left">{date}</TableCell>
+                                                                <TableCell align="left">{agency.name}</TableCell>
+                                                                <TableCell align="left">{interpreter.full_name}</TableCell>
+                                                                <TableCell align="left">
+                                                                    <Label color={status === 'paid' ? 'success' : status === 'open' ? 'warning' : status === 'cancelled' ? 'error' : 'info'}>
+                                                                        {sentenceCase(status === 'paid' ? 'Paid' : status === 'open' ? 'Open' : status === 'cancelled' ? 'Cancelled' : 'Pending')}
+                                                                    </Label>
+                                                                </TableCell>
+                                                                <TableCell align="left">{total}</TableCell>
+
+                                                            </TableRow>
+                                                        );
+                                                    })}
+                                                    {emptyRowsReview > 0 && (
+                                                        <TableRow style={{ height: 53 * emptyRowsReview }}>
+                                                            <TableCell colSpan={6} />
+                                                        </TableRow>
+                                                    )}
+                                                </TableBody>
+                                            )
+                                                :
+                                                (
+                                                    <TableBody>
+                                                        <TableRow>
+                                                            <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                                                                <Paper
+                                                                    sx={{
+                                                                        textAlign: 'center',
+                                                                    }}
+                                                                >
+                                                                    <Typography variant="h6" paragraph>
+                                                                        No results found
+                                                                    </Typography>
+
+                                                                    <Typography variant="body2">
+                                                                        Please <strong>reload</strong> the page.
+                                                                    </Typography>
+                                                                </Paper>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    </TableBody>
+                                                )
+                                            }
+
+
+                                            {isNotFoundReview && (
+                                                <TableBody>
+                                                    <TableRow>
+                                                        <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                                                            <Paper
+                                                                sx={{
+                                                                    textAlign: 'center',
+                                                                }}
+                                                            >
+                                                                <Typography variant="h6" paragraph>
+                                                                    Not found
+                                                                </Typography>
+
+                                                                <Typography variant="body2">
+                                                                    No results found for &nbsp;
+                                                                    <strong>&quot;{filterDate}&quot;</strong>.
+                                                                    <br /> Try to check for errors or use complete words.
+                                                                </Typography>
+                                                            </Paper>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                </TableBody>
+                                            )}
+                                        </Table>
+                                    </TableContainer>
+                                </Scrollbar>
+
+                                <TablePagination
+                                    rowsPerPageOptions={[5, 10, 25]}
+                                    component="div"
+                                    count={review.length}
+                                    rowsPerPage={rowsPerPage}
+                                    page={pageReview}
+                                    onPageChange={handleChangePage}
+                                    onRowsPerPageChange={handleChangeRowsPerPage}
+                                />
+
+                            </Card>
+
+                        </DialogContent>
+                        <DialogActions
+                            sx={{
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Button
+                                variant="contained"
+                                size='large'
+                                sx={{
+                                    margin: 2,
+                                }}
+                                onClick={() => {
+                                    setOpen(false);
+                                    setDateRange();
+                                }}
+                            >Cancelar</Button>
+                        </DialogActions>
+                    </Dialog>
+                ) : null
+            }
+
         </>
     )
 }

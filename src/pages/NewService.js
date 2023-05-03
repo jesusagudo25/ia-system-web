@@ -29,9 +29,11 @@ import { SearchInterpreter } from '../sections/@manage/interpreter/SearchInterpr
 import { SearchAgency } from '../sections/@manage/agency/SearchAgency';
 import { InterpreterData } from '../sections/@manage/interpreter/InterpreterData';
 import { SearchDescription } from '../sections/@manage/description/SearchDescription';
+import { SearchAddress } from '../sections/@manage/interpreter/SearchAddress';
 import config from '../config.json';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
+
 
 const steps = ['Agency and Interpreter data', 'Service data', 'Summary'];
 
@@ -61,6 +63,9 @@ export const NewService = () => {
 
     const [interpreterContainer, setInterpreterContainer] = useState(false);
 
+    /* Service address */
+    
+    const [serviceAddressId, setServiceAddressId] = useState(''); // [1]
     const [serviceAddress, setServiceAddress] = useState('');
     const [serviceCity, setServiceCity] = useState('');
     const [serviceState, setServiceState] = useState('none');
@@ -148,6 +153,16 @@ export const NewService = () => {
         setInterpreterZipCode(interpreter.zip_code);
         setInterpreterContainer(true);
         setInterpreterSelected(true);
+    }
+
+    /* Autocomplete address */
+    const handleOnChangeAddress = (address) => {
+        console.log(address);
+        setServiceAddressId(address.id);
+        setServiceAddress(address.address);
+        setServiceCity(address.city);
+        setServiceState(address.state);
+        setServiceZipCode(address.zipCode);
     }
 
     /* Autocomplete description */
@@ -278,20 +293,19 @@ export const NewService = () => {
                     Enter the address of the service
                 </Typography>
                 <Stack direction="row" sx={{flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <FormControl sx={{ width: '37%' }}>
-                        <TextField
-                            id="address"
-                            label="Address"
-                            variant="outlined"
-                            multiline
-                            placeholder="Enter the address"
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                            value={serviceAddress}
-                            onChange={(e) => setServiceAddress(e.target.value)}
-                        />
-                    </FormControl>
+                <FormControl sx={{ width: '37%' }}>
+                    <SearchAddress
+                        handleOnChangeAddress={handleOnChangeAddress}
+                        setAddress={setServiceAddress}
+                        address={serviceAddress}
+                        serviceCity={serviceCity}
+                        setServiceCity={setServiceCity}
+                        serviceState={serviceState}
+                        setServiceState={setServiceState}
+                        serviceZipCode={serviceZipCode}
+                        setServiceZipCode={setServiceZipCode}
+                    />
+                </FormControl>
                     <FormControl sx={{ width: '20%' }}>
                         <TextField
                             id="city"
@@ -741,11 +755,12 @@ export const NewService = () => {
 
     function handleSubmitNewInvoice() {
         const newInvoice = {
-            'description_id': descriptionId,
+            'coordinator_id': 1,
             'user_id': 1,
             'agency_id': agencyId,
             'interpreter_id': interpreterId,
-            'coordinator_id': 1,
+            'address_id': serviceAddressId,
+            'description_id': descriptionId,
             'total_amount': (totalService + totalMileage).toFixed(2),
             'date_of_service_provided': format(dateServiceProvided, 'yyyy-MM-dd'),
             'arrival_time': format(arrivalTime, 'HH:mm'),

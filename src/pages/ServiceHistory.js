@@ -234,40 +234,50 @@ export const ServiceHistory = () => {
                                                     </TableCell>
 
                                                     <TableCell align="left">
-                                                        <Label color={status === 'closed' ? 'success' : status === 'open' ? 'warning' : 'error'}>
-                                                            {sentenceCase(status === 'closed' ? 'Paid' : status === 'open' ? 'Pending' : 'Canceled')}
+                                                        <Label color={status === 'paid' ? 'success' : status === 'open' ? 'warning' : status === 'cancelled' ? 'error' : 'info'}>
+                                                            {sentenceCase(status === 'paid' ? 'Paid' : status === 'open' ? 'Open' : status === 'cancelled' ? 'Cancelled' : 'Pending')}
                                                         </Label>
                                                     </TableCell>
 
                                                     <TableCell align="right">
                                                         {
-                                                            status === 'closed' ?
+                                                            status === 'paid' ?
                                                                 (
                                                                     <>
-                                                                    <a
-                                                                        style={{ textDecoration: 'none', color: 'inherit' }}
-                                                                        target="_blank"
-                                                                        href={`${config.APPBACK_URL}/api/invoices/${id}/download`}
-                                                                        rel="noreferrer"
-                                                                    >
-                                                                        <IconButton size="large" color="inherit">
-                                                                        <Iconify icon="bx:bxs-file-pdf" />
+                                                                        <a
+                                                                            style={{ textDecoration: 'none', color: 'inherit' }}
+                                                                            target="_blank"
+                                                                            href={`${config.APPBACK_URL}/api/invoices/${id}/download`}
+                                                                            rel="noreferrer"
+                                                                        >
+                                                                            <IconButton size="large" color="inherit">
+                                                                                <Iconify icon="bx:bxs-file-pdf" />
+                                                                            </IconButton>
+                                                                        </a>
+                                                                        <IconButton size="large" color="error">
+                                                                            <Iconify icon={'mdi:close'} />
+                                                                            {/* Anular */}
                                                                         </IconButton>
-                                                                    </a>
-                                                                    <IconButton size="large" color="error">
-                                                                        <Iconify icon={'mdi:close'} />
-                                                                    </IconButton>
                                                                     </>
                                                                 )
                                                                 :
-                                                            status === 'open' ?
-                                                                (
-                                                                    <IconButton size="large" color="inherit">
-                                                                        <Iconify icon={'mdi:arrow-right'} />
-                                                                    </IconButton>
-                                                                )
-                                                                :
-                                                            null
+                                                                status === 'open' ?
+                                                                    (
+                                                                        <IconButton size="large" color="warning">
+                                                                            <Iconify icon={'mdi:arrow-right'} />
+                                                                            {/* Ir a seguir orden */}
+                                                                        </IconButton>
+                                                                    )
+                                                                    :
+                                                                    status === 'pending' ?
+                                                                        (
+                                                                            <IconButton size="large" color="success">
+                                                                                <Iconify icon="bx:money-withdraw" />
+                                                                                {/* Pagar */}
+                                                                            </IconButton>
+                                                                        )
+                                                                        :
+                                                                        null
                                                         }
                                                     </TableCell>
                                                 </TableRow>
