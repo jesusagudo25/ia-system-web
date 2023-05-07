@@ -98,7 +98,7 @@ function applySortFilter(array, comparator, query) {
 }
 
 export const ReportPage = () => {
-  /* Payrolls */
+  /* Reports */
 
   const [reports, setReports] = useState([]);
 
@@ -150,7 +150,7 @@ export const ReportPage = () => {
   return (
     <>
       <Helmet>
-        <title> Payroll | IA System </title>
+        <title> Report | IA System </title>
       </Helmet>
 
       <Container>

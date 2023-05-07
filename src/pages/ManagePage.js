@@ -62,7 +62,7 @@ export const ManagePage = () => {
                             },
                             {
                                 name: 'Lenguages',
-                                path: '/dashboard/manage/observations',
+                                path: '/dashboard/manage/lenguages',
                                 icon: <Iconify icon={'mdi:file-document-edit'} color="#2065D1" width={32} />,
                                 role: [1, 2, 3]
                             },
@@ -80,7 +80,7 @@ export const ManagePage = () => {
                             },
                             {
                                 name: 'Descriptions',
-                                path: '/dashboard/manage/techexpenses',
+                                path: '/dashboard/manage/descriptions',
                                 icon: <Iconify icon={'mdi:currency-usd-off'} color="#2065D1" width={32} />,
                                 role: [1, 2, 3]
                             },
