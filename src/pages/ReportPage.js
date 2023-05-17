@@ -31,7 +31,7 @@ import Slide from '@mui/material/Slide';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 // date-fns
-import { format, lastDayOfMonth } from 'date-fns';
+import { differenceInDays, format, lastDayOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
@@ -43,22 +43,20 @@ import Scrollbar from '../components/scrollbar';
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import config from '../config.json';
 
-
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'description', label: 'Description', alignRight: false },
+  { id: 'user', label: 'User', alignRight: false },
   { id: 'type', label: 'Type', alignRight: false },
   { id: 'start_date', label: 'Start date', alignRight: false },
   { id: 'end_date', label: 'End date', alignRight: false },
-  { id: 'user', label: 'User', alignRight: false },
   { id: '' },
 ];
 
 const options = [
   {
-    value: 'f',
-    label: 'Income per fortnight',
+    value: 'm',
+    label: 'Income per month',
   },
   {
     value: 'a',
@@ -98,6 +96,12 @@ function applySortFilter(array, comparator, query) {
 }
 
 export const ReportPage = () => {
+
+
+  /* Report */
+  const [startDate, setStartDate] = useState(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
+  const [endDate, setEndDate] = useState(new Date(`${format(new Date(), 'yyyy-MM-dd')}T00:00:00`));
+
   /* Reports */
 
   const [reports, setReports] = useState([]);
@@ -113,12 +117,6 @@ export const ReportPage = () => {
   const [filterDate, setFilterDate] = useState('');
 
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  const [itemSelected, setItemSelected] = useState(null);
-
-  const [startDate, setStartDate] = useState(new Date());
-
-  const [endDate, setEndDate] = useState(new Date());
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -141,6 +139,76 @@ export const ReportPage = () => {
     setPage(0);
     setFilterDate(event.target.value);
   };
+
+  /* -------------------------- */
+
+  const handleGenerateReport = async () => {
+
+    /* Get differenceInDays */
+
+    const difference = differenceInDays(endDate, startDate);
+    let type = 'a';
+    
+    if (difference > 15 && difference <= 31) {
+      type = 'm';
+    }
+    else if (difference > 31 && difference <= 365) {
+      type = 'a';
+    }
+    else {
+      toast.error('Error generating report');
+      setIsLoading(false);
+      type = null;
+    }
+
+    console.log(type);
+    if (type) {
+      try {
+        const response = await axios.post(`${config.APPBACK_URL}/api/reports`, {
+          start_date: format(startDate, 'yyyy-MM-dd'),
+          end_date: format(endDate, 'yyyy-MM-dd'),
+          type,
+          user_id: 1,
+        });
+        console.log(response);
+        toast.success('Report generated successfully');
+        getReports();
+      } catch (error) {
+        console.log(error);
+        toast.error('Error generating report');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+
+  };
+
+  const handleDeleteReport = async (id) => {
+    try {
+      const response = await axios.delete(`${config.APPBACK_URL}/api/reports/${id}`);
+      console.log(response);
+      toast.success('Report deleted successfully');
+      getReports();
+    } catch (error) {
+      console.log(error);
+      toast.error('Error deleting report');
+    }
+  };
+
+
+  const getReports = async () => {
+    try {
+      const response = await axios.get(`${config.APPBACK_URL}/api/reports`);
+      setReports(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getReports();
+  }, []);
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - reports.length) : 0;
 
@@ -182,11 +250,9 @@ export const ReportPage = () => {
               <DatePicker
                 label="Start date"
                 value={startDate}
-                renderInput={(params) => <TextField sx={
-                  {
-                    width: '30%',
-                  }
-                } {...params} />}
+                onChange={(newValue) => {
+                  setStartDate(newValue);
+              }}
               />
             </LocalizationProvider>
             <Avatar
@@ -202,16 +268,15 @@ export const ReportPage = () => {
               <DatePicker
                 label="End date"
                 value={endDate}
-                renderInput={(params) => <TextField sx={
-                  {
-                    width: '30%',
-                  }
-                } {...params} />}
+                onChange={(newValue) => {
+                  setEndDate(newValue);
+              }}
               />
             </LocalizationProvider>
             <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} sx={{ ml: 1, width: '15%' }} onClick={
               () => {
                 setIsLoading(true);
+                handleGenerateReport();
               }
             }>
               Generate
@@ -240,33 +305,37 @@ export const ReportPage = () => {
                 {reports.length > 0 ? (
                   <TableBody>
                     {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                      const { id, user, month, start_date: startDate, end_date: endDate, type } = row;
+                      const { id, type, start_date: startDate, end_date: endDate, user } = row;
 
                       return (
                         <TableRow hover key={id} tabIndex={-1} role="checkbox">
 
+                          <TableCell align="left">{user.full_name}</TableCell>
                           <TableCell component="th" scope="row" padding="normal">
                             <Stack direction="row" alignItems="center" spacing={2}>
                               <Typography variant="subtitle2" noWrap>
-                                {month}
+                                {type === 'm' ? 'Month' : 'Annual'}
                               </Typography>
                             </Stack>
                           </TableCell>
-                          <TableCell align="left">
-                            <Label color={type === 'g' ? 'success' : type === 'v' ? 'warning' : 'error'}>{sentenceCase(type === 'g' ? 'General' : type === 'v' ? 'Visitas' : 'Insumos')}</Label>
-                          </TableCell>
-                          <TableCell align="left">{user.name}</TableCell>
 
                           <TableCell align="left">{startDate}</TableCell>
 
                           <TableCell align="left">{endDate}</TableCell>
-
                           <TableCell align="right">
-                            <IconButton size="large" color="inherit" onClick={(event) => {
-                              setItemSelected(id);
-                              setOpen(event.currentTarget);
-                            }}>
-                              <Iconify icon={'eva:more-vertical-fill'} />
+                            <a
+                              style={{ textDecoration: 'none', color: 'inherit' }}
+                              target="_blank"
+                              href={`${config.APPBACK_URL}/api/reports/${id}/download`}
+                              rel="noreferrer"
+                            >
+                              <IconButton size="large" color="inherit">
+                                <Iconify icon="bx:bxs-file-pdf" />
+                              </IconButton>
+                            </a>
+
+                            <IconButton size="large" color="error" onClick={() => handleDeleteReport(id)}>
+                              <Iconify icon="bx:bxs-trash" />
                             </IconButton>
                           </TableCell>
                         </TableRow>
@@ -342,6 +411,11 @@ export const ReportPage = () => {
           />
         </Card>
       </Container>
+
+
+      {/* Toastify */}
+
+      <ToastContainer />
     </>
   )
 }

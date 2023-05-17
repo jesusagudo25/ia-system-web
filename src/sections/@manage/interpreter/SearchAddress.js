@@ -10,12 +10,8 @@ export const SearchAddress = ({
     handleOnChangeAddress,
     setAddress,
     address,
-    serviceCity,
-    setServiceCity,
-    serviceState,
-    setServiceState,
-    serviceZipCode,
-    setServiceZipCode,
+    toast,
+    handleClearAddress
     }) => {
 
     const previousController = useRef();
@@ -59,8 +55,11 @@ export const SearchAddress = ({
                 console.log(newValue);
                 if (typeof newValue === 'string') {
                     setAddress(newValue);
+                    toast.info('Please fill the address data');
                 } else if (newValue && newValue.inputValue) {
                     setAddress(newValue.inputValue);
+
+                    toast.info('Please fill the address data');
                 } else if (newValue) {
                     handleOnChangeAddress({
                         id: newValue.value,
@@ -71,15 +70,18 @@ export const SearchAddress = ({
                         zipCode: newValue.zipCode,
                     });
                     setAddress(newValue.address);
+                    toast.success('Address selected');
                 }
             }}
             onInputChange={(event, newInputValue) => {
-                setAddress(newInputValue);
+                if (newInputValue !== '') setAddress(newInputValue);
                 if (event) {
+                    handleClearAddress();
                     if (event.target.value) {
                         if (event.target.value.length > 3) getDataAutocomplete(event.target.value);
                     }
                     else {
+                        if(newInputValue === '') toast.warning('The field is empty');
                         setAddress('');
                         setOptions([]);
                     }

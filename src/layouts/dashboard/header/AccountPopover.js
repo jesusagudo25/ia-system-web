@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 // @mui
 import { alpha } from '@mui/material/styles';
 import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover } from '@mui/material';
-// mocks_
-import account from '../../../_mock/account';
+import axios from 'axios';
 
 // ----------------------------------------------------------------------
 
@@ -19,6 +18,7 @@ const MENU_OPTIONS = [
 
 export default function AccountPopover() {
   const [open, setOpen] = useState(null);
+  const [account, setAccount] = useState({});
 
   const handleOpen = (event) => {
     setOpen(event.currentTarget);
@@ -27,6 +27,15 @@ export default function AccountPopover() {
   const handleClose = () => {
     setOpen(null);
   };
+
+  const getUser = async () => {
+    const user = await axios.get('/api/users/1');
+    setAccount(user.data);
+  }
+
+  useEffect(() => {
+    getUser();
+  }, []);
 
   return (
     <>
@@ -71,7 +80,7 @@ export default function AccountPopover() {
       >
         <Box sx={{ my: 1.5, px: 2.5 }}>
           <Typography variant="subtitle2" noWrap>
-            {account.displayName}
+            {account.full_name}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
             {account.email}
@@ -91,9 +100,6 @@ export default function AccountPopover() {
 
         <Divider sx={{ borderStyle: 'dashed' }} />
 
-        <MenuItem onClick={handleClose} sx={{ m: 1 }}>
-          Logout
-        </MenuItem>
       </Popover>
     </>
   );

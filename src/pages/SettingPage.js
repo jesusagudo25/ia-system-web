@@ -52,7 +52,7 @@ export const SettingPage = () => {
 
     const [showPassword, setShowPassword] = useState(false);
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-    
+
     const [value, setValue] = React.useState(0);
 
     const handleChange = (event, newValue) => {
@@ -81,7 +81,7 @@ export const SettingPage = () => {
                 </Breadcrumbs>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2} mt={3}>
                     <Typography variant="h4" gutterBottom>
-                        Account
+                        Settings
                     </Typography>
                 </Stack>
 
@@ -93,8 +93,8 @@ export const SettingPage = () => {
                 >
                     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-                            <Tab label="General" {...a11yProps(0)} />
-                            <Tab label="Password change" {...a11yProps(1)} />
+                            <Tab label="User" {...a11yProps(0)} />
+                            <Tab label="Coordinator" {...a11yProps(1)} />
                         </Tabs>
                     </Box>
                     <TabPanel value={value} index={0}>
@@ -163,74 +163,40 @@ export const SettingPage = () => {
                         }>
                             <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
                                 <Typography variant="h6" gutterBottom>
-                                    Password change
+                                    General information
                                 </Typography>
                             </Stack>
-
-                            <Stack direction="row" alignItems="center" justifyContent="space-start" mb={2} sx={
-                                {
-                                    gap: '10px',
-                                }
-                            }>
-                                <Typography variant="body1" gutterBottom>
-                                    Current password
-                                </Typography>
-                                <FormControl
-                                    sx={{ width: '60%' }}
-                                >
-                                    <TextField
-                                        name="password"
-                                        placeholder='Enter your current password'
-                                        type={showCurrentPassword ? 'text' : 'password'}
-                                        InputProps={{
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <IconButton onClick={() => setShowCurrentPassword(!showCurrentPassword)} edge="end">
-                                                        <Iconify icon={showCurrentPassword ? 'eva:eye-fill' : 'eva:eye-off-fill'} />
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                        value={currentPassword}
-                                        onChange={
-                                            (e) => {
-                                                setCurrentPassword(e.target.value)
-                                            }
-                                        }
-                                    />
+                            <Stack direction="row" sx={{
+                                flexWrap: 'wrap',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                minWidth: 550,
+                                gap: 3
+                            }}
+                            >
+                                <FormControl sx={{ width: '48%' }}>
+                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
                                 </FormControl>
-                            </Stack>
-                            <Stack direction="row" alignItems="center" justifyContent="space-start" mb={2} sx={
-                                {
-                                    gap: '10px',
-                                }
-                            }>
-                                <Typography variant="body1" gutterBottom>
-                                    New password
-                                </Typography>
-                                <FormControl
-                                    sx={{ width: '60%' }}
-                                >
-                                    <TextField
-                                        name="password"
-                                        placeholder="Enter your new password"
-                                        type={showPassword ? 'text' : 'password'}
-                                        InputProps={{
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                                                        <Iconify icon={showPassword ? 'eva:eye-fill' : 'eva:eye-off-fill'} />
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                        value={newPassword}
-                                        onChange={
-                                            (e) => {
-                                                setNewPassword(e.target.value)
-                                            }
-                                        }
-                                    />
+                                <FormControl sx={{ width: '48%' }}>
+                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                </FormControl>
+                                <FormControl sx={{ width: '48%' }}>
+                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                </FormControl>
+                                <FormControl sx={{ width: '48%' }}>
+                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                </FormControl>
+                                <FormControl sx={{ width: '48%' }}>
+                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                </FormControl>
+                                <FormControl sx={{ width: '48%' }}>
+                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                </FormControl>
+                                <FormControl sx={{ width: '48%' }}>
+                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                </FormControl>
+                                <FormControl sx={{ width: '48%' }}>
+                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
                                 </FormControl>
                             </Stack>
                             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={
@@ -238,8 +204,7 @@ export const SettingPage = () => {
                                     mt: '30px',
                                 }
                             }>
-                                <LoadingButton variant="contained" color="primary" loading={isLoading}
-                                >
+                                <LoadingButton variant="contained" color="primary" loading={isLoading}>
                                     Save
                                 </LoadingButton>
                             </Stack>

@@ -6,7 +6,7 @@ import config from '../../../config.json';
 
 const filter = createFilterOptions();
 
-export const SearchDescription = ({handleOnChangeDescription, setDescription, description}) => {
+export const SearchDescription = ({handleOnChangeDescription, setDescription, description, toast, setDescriptionId}) => {
     const previousController = useRef();
 
     const [options, setOptions] = React.useState([]);
@@ -44,22 +44,27 @@ export const SearchDescription = ({handleOnChangeDescription, setDescription, de
                 console.log(newValue);
                 if (typeof newValue === 'string') {
                     setDescription(newValue);
+                    toast.info('Add a new description');
                 } else if (newValue && newValue.inputValue) {
                     setDescription(newValue.inputValue);
+                    toast.info('Add a new description');
                 } else if (newValue) {
                     handleOnChangeDescription({
                         id: newValue.value,
                     });
                     setDescription(newValue.label);
+                    toast.success('Description selected');
                 }
             }}
             onInputChange={(event, newInputValue) => {
-                setDescription(newInputValue);
+                if(newInputValue !== '') setDescription(newInputValue);
                 if (event) {
+                    setDescriptionId('');
                     if (event.target.value) {
                         if (event.target.value.length > 3) getDataAutocomplete(event.target.value);
                     }
                     else {
+                        if(newInputValue === '') toast.warning('The field is empty');
                         setDescription('');
                         setOptions([]);
                     }

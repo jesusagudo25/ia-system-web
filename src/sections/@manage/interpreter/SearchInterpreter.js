@@ -6,7 +6,7 @@ import config from '../../../config.json';
 
 const filter = createFilterOptions();
 
-export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, interpreterLenguageId, setInterpreterContainer, setInterpreterName, interpreterName }) => {
+export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, interpreterLenguageId, setInterpreterContainer, setInterpreterName, interpreterName, toast, handleClearInterpreter }) => {
 
     const previousController = useRef();
 
@@ -57,10 +57,12 @@ export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, int
             onChange={(event, newValue) => {
                 if (typeof newValue === 'string') {
                     setInterpreterName(newValue);
+                    toast.info('Please fill the interpreter data');
                 } else if (newValue && newValue.inputValue) {
                     setInterpreterName(newValue.inputValue);
                     /* Se debe abrir el espacio para crear una nueva entrada */
                     setInterpreterContainer(true);
+                    toast.info('Please fill the interpreter data');
                 } else if (newValue) {
                     handleOnChangeInterpreter({
                         id: newValue.value,
@@ -73,16 +75,19 @@ export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, int
                         zip_code: newValue.zip_code,
                         selected: true,
                     });
-                    setInterpreterName(newValue.label);
+                    setInterpreterName(newValue.label); 
+                    toast.success('Interpreter selected');
                 }
             }}
             onInputChange={(event, newInputValue) => {
-                setInterpreterName(newInputValue);
+                if(newInputValue !== '') setInterpreterName(newInputValue);
                 if (event) {
+                    handleClearInterpreter();
                     if (event.target.value) {
                         if(event.target.value.length > 3) getDataAutocomplete(event.target.value);
                     }
                     else {
+                        if(newInputValue === '') toast.warning('The field is empty');  
                         setInterpreterName('');
                         setOptions([]);
                     }

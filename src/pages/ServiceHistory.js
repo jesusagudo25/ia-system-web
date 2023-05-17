@@ -148,6 +148,12 @@ export const ServiceHistory = () => {
         setInvoices(data);
     };
 
+    const handleOnChangeStatus = async (id, status) => {
+        const { data } = await axios.put(`${config.APPBACK_URL}/api/invoices/new-status/${id}`, { status });
+        getInvoices();
+    };
+
+
     useEffect(() => {
         getInvoices();
     }, []);
@@ -254,7 +260,7 @@ export const ServiceHistory = () => {
                                                                                 <Iconify icon="bx:bxs-file-pdf" />
                                                                             </IconButton>
                                                                         </a>
-                                                                        <IconButton size="large" color="error">
+                                                                        <IconButton size="large" color="error" onClick={() => handleOnChangeStatus(id, 'cancelled')}>
                                                                             <Iconify icon={'mdi:close'} />
                                                                             {/* Anular */}
                                                                         </IconButton>
@@ -263,18 +269,35 @@ export const ServiceHistory = () => {
                                                                 :
                                                                 status === 'open' ?
                                                                     (
-                                                                        <IconButton size="large" color="warning">
-                                                                            <Iconify icon={'mdi:arrow-right'} />
-                                                                            {/* Ir a seguir orden */}
-                                                                        </IconButton>
+                                                                        <>
+                                                                            <IconButton size="large" color="inherit">
+                                                                                <Iconify icon={'mdi:arrow-right'} />
+                                                                                {/* Ir a seguir orden */}
+                                                                            </IconButton>
+                                                                            <IconButton size="large" color="error" onClick={() => handleOnChangeStatus(id, 'cancelled')}>
+                                                                                <Iconify icon={'mdi:close'} />
+                                                                                {/* Anular */}
+                                                                            </IconButton>
+                                                                        </>
                                                                     )
                                                                     :
                                                                     status === 'pending' ?
-                                                                        (
-                                                                            <IconButton size="large" color="success">
+                                                                        (<>
+                                                                            <a
+                                                                                style={{ textDecoration: 'none', color: 'inherit' }}
+                                                                                target="_blank"
+                                                                                href={`${config.APPBACK_URL}/api/invoices/${id}/download`}
+                                                                                rel="noreferrer"
+                                                                            >
+                                                                                <IconButton size="large" color="inherit">
+                                                                                    <Iconify icon="bx:bxs-file-pdf" />
+                                                                                </IconButton>
+                                                                            </a>
+                                                                            <IconButton size="large" color="success" onClick={() => handleOnChangeStatus(id, 'paid')}>
                                                                                 <Iconify icon="bx:money-withdraw" />
                                                                                 {/* Pagar */}
                                                                             </IconButton>
+                                                                        </>
                                                                         )
                                                                         :
                                                                         null

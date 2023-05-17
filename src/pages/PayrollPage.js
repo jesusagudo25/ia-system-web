@@ -175,27 +175,6 @@ export const PayrollPage = () => {
         }
     };
 
-    const handleGeneratePayroll = async () => {
-        try {
-            setIsLoading(true);
-            const response = await axios.post(`${config.APPBACK_URL}/api/payrolls/review`, {
-                user_id: 1,
-                start_date: format(startDate, 'yyyy-MM-dd'),
-                end_date: format(endDate, 'yyyy-MM-dd'),
-            });
-            console.log(response);
-            toast.success('Payroll generated successfully');
-            /*             setPayroll(response.data.payroll);
-                        setOpen(true);
-                        getPayrolls();
-                        setIsLoading(false); */
-        } catch (error) {
-            console.log(error);
-            toast.error('Error generating payroll');
-            setIsLoading(false);
-        }
-    };
-
     /* Review */
     const [review, setReview] = useState(null);
 
@@ -624,7 +603,7 @@ export const PayrollPage = () => {
                         <DialogContent dividers>
 
                             <Card>
-                                <ReviewListToolbar numSelected={selected.length} filterDate={filterDateReview} onFilterName={handleFilterByDate} setOpen={setOpen} selected={selected} getPayrolls={getPayrolls} startDate={startDate} endDate={endDate} setDateRange={setDateRange} toast={toast}/>
+                                <ReviewListToolbar numSelected={selected.length} filterDate={filterDateReview} onFilterName={handleFilterByDate} setOpen={setOpen} selected={selected} getPayrolls={getPayrolls} startDate={startDate} endDate={endDate} setDateRange={setDateRange} toast={toast} />
 
                                 <Scrollbar>
                                     <TableContainer sx={{ minWidth: 800 }}>

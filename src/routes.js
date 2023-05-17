@@ -3,7 +3,6 @@ import { Navigate, useRoutes } from 'react-router-dom';
 import DashboardLayout from './layouts/dashboard';
 import SimpleLayout from './layouts/simple';
 //
-import LoginPage from './pages/LoginPage';
 import Page404 from './pages/Page404';
 import DashboardAppPage from './pages/DashboardAppPage';
 import { NewService } from './pages/NewService';
@@ -11,9 +10,6 @@ import { SettingPage } from './pages/SettingPage';
 import { PayrollPage } from './pages/PayrollPage';
 import { ManagePage } from './pages/ManagePage';
 import { ReportPage } from './pages/ReportPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
-import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { ServiceHistory } from './pages/ServiceHistory';
 import { InvoicePage } from './pages/InvoicePage';
 import { DescriptionPage } from './pages/DescriptionPage';
@@ -46,22 +42,6 @@ export default function Router() {
         { path: 'manage/lenguages', element: <LenguagePage />},
         { path: 'manage/agencies', element: <AgencyPage />}
       ],
-    },
-    {
-      path: 'login',
-      element: <LoginPage />,
-    },
-    {
-      path: 'register',
-      element: <RegisterPage />,
-    },
-    {
-      path: 'forgot-password',
-      element: <ForgotPasswordPage />,
-    },
-    {
-      path: 'reset-password/:token',
-      element: <ResetPasswordPage />,
     },
     {
       element: <SimpleLayout />,

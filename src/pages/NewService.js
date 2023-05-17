@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import axios, { Axios } from 'axios';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Helmet } from 'react-helmet-async';
+import { History, Blocker, Transition } from 'history';
+
 import {
     Box,
     Button,
@@ -15,7 +17,7 @@ import {
     FormControl, InputLabel, Select, MenuItem,
     TextField,
     Paper,
-    Grid
+    Grid,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -32,13 +34,15 @@ import { SearchDescription } from '../sections/@manage/description/SearchDescrip
 import { SearchAddress } from '../sections/@manage/interpreter/SearchAddress';
 import config from '../config.json';
 import Iconify from '../components/iconify';
-import Scrollbar from '../components/scrollbar';
 
 
 const steps = ['Agency and Interpreter data', 'Service data', 'Summary'];
 
 export const NewService = () => {
 
+    /* Detect exit --------------------------------------------- ************* */
+
+    
     /* get data external */
     const [states, setStates] = useState([]);
     const [lenguages, setLenguages] = useState([]);
@@ -53,6 +57,7 @@ export const NewService = () => {
     const [interpreterId, setInterpreterId] = useState('');
     const [interpreterPhoneNum, setInterpreterPhoneNum] = useState('');
     const [interpreterSSN, setInterpreterSSN] = useState('');
+
     const [interpreterAddress, setInterpreterAddress] = useState('');
     const [interpreterCity, setInterpreterCity] = useState('');
     const [interpreterState, setInterpreterState] = useState('');
@@ -155,6 +160,19 @@ export const NewService = () => {
         setInterpreterSelected(true);
     }
 
+    const handleClearInterpreter = () => {
+        setInterpreterId('');
+        setInterpreterPhoneNum('');
+        setInterpreterSSN('');
+        setInterpreterAddress('');
+        setInterpreterCity('');
+        setInterpreterState('');
+        setInterpreterEmail('');
+        setInterpreterZipCode('');
+        setInterpreterContainer(false);
+        setInterpreterSelected(false);
+    }
+
     /* Autocomplete address */
     const handleOnChangeAddress = (address) => {
         console.log(address);
@@ -163,6 +181,13 @@ export const NewService = () => {
         setServiceCity(address.city);
         setServiceState(address.state);
         setServiceZipCode(address.zipCode);
+    }
+
+    const handleClearAddress = () => {
+        setServiceAddressId('');
+        setServiceCity('');
+        setServiceState('');
+        setServiceZipCode('');
     }
 
     /* Autocomplete description */
@@ -239,10 +264,66 @@ export const NewService = () => {
         }
     }
 
+    /* Handle submit new service */
+
+    const handleSubmitNewInvoice = () => {
+        const newInvoice = {
+            'coordinator_id': 1,
+            'user_id': 1,
+            'agency_id': agencyId,
+            'interpreter_id': interpreterId,
+            'interpreterName': interpreterName,
+            'interpreterPhoneNum': interpreterPhoneNum,
+            'interpreterSSN': interpreterSSN,
+            'interpreterAddress': interpreterAddress,
+            'interpreterCity': interpreterCity,
+            'interpreterState': interpreterState,
+            'interpreterZipCode': interpreterZipCode,
+            'interpreterEmail': interpreterEmail,
+            'interpreterLenguageId': interpreterLenguageId,
+
+            'description_id': descriptionId,
+            'description': description,
+
+            'address_id': serviceAddressId,
+            'address': serviceAddress,
+            'city': serviceCity,
+            'state': serviceState,
+            'state_abbr': states.find((item) => item.name === serviceState).iso2,
+            'zip_code': serviceZipCode,
+
+            'total_amount': (totalService + totalMileage).toFixed(2),
+            'date_of_service_provided': format(dateServiceProvided, 'yyyy-MM-dd'),
+            'arrival_time': format(arrivalTime, 'HH:mm'),
+            'start_time': format(startTime, 'HH:mm'),
+            'end_time': format(endTime, 'HH:mm'),
+            'travel_time_to_assignment': travelTimeToAssignment,
+            'time_back_from_assignment': timeBackFromAssignment,
+            'travel_mileage': travelMileage,
+            'cost_per_mile': costPerMile,
+            'total_amount_miles': totalMileage,
+            'total_amount_hours': totalService,
+            'total_interpreter': (totalServiceInterpreter + totalMileageInterpreter).toFixed(2),
+            'total_coordinator': (totalServiceCoordinator + totalMileageCoordinator).toFixed(2),
+            comments,
+        };
+
+        axios.post(`${config.APPBACK_URL}/api/invoices`, newInvoice)
+            .then((response) => {
+                console.log(response);
+                setInvoiceId(response.data.invoice);
+                setActiveStep((prevActiveStep) => prevActiveStep + 1);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+
+    }
+
     /* Get axios */
 
     const getLenguages = () => {
-        axios.get(`${config.APPBACK_URL}/api/lenguages`)
+        axios.get(`${config.APPBACK_URL}/api/lenguages/status`)
             .then((response) => {
                 setLenguages(response.data);
             })
@@ -304,6 +385,8 @@ export const NewService = () => {
                         setServiceState={setServiceState}
                         serviceZipCode={serviceZipCode}
                         setServiceZipCode={setServiceZipCode}
+                        toast={toast}
+                        handleClearAddress={handleClearAddress}
                     />
                 </FormControl>
                     <FormControl sx={{ width: '20%' }}>
@@ -383,6 +466,8 @@ export const NewService = () => {
                             setInterpreterContainer={setInterpreterContainer}
                             setInterpreterName={setInterpreterName}
                             interpreterName={interpreterName}
+                            toast={toast}
+                            handleClearInterpreter={handleClearInterpreter}
                             />
                     </FormControl>
                 </Stack>
@@ -425,7 +510,7 @@ export const NewService = () => {
                 <Typography variant="subtitle1" gutterBottom marginBottom={2}>
                     Enter the service data
                 </Typography>
-                <SearchDescription handleOnChangeDescription={handleOnChangeDescription} setDescription={setDescription} description={description} />
+                <SearchDescription handleOnChangeDescription={handleOnChangeDescription} setDescription={setDescription} description={description} toast={toast} setDescriptionId={setDescriptionId} />
                 <Stack direction="row" sx={{ marginTop: '20px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
                     <FormControl sx={{ width: '37%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -751,46 +836,6 @@ export const NewService = () => {
                 </Grid>
             </Container>
         );
-    }
-
-    function handleSubmitNewInvoice() {
-        const newInvoice = {
-            'coordinator_id': 1,
-            'user_id': 1,
-            'agency_id': agencyId,
-            'interpreter_id': interpreterId,
-            'address_id': serviceAddressId,
-            'description_id': descriptionId,
-            'total_amount': (totalService + totalMileage).toFixed(2),
-            'date_of_service_provided': format(dateServiceProvided, 'yyyy-MM-dd'),
-            'arrival_time': format(arrivalTime, 'HH:mm'),
-            'start_time': format(startTime, 'HH:mm'),
-            'end_time': format(endTime, 'HH:mm'),
-            'travel_time_to_assignment': travelTimeToAssignment,
-            'time_back_from_assignment': timeBackFromAssignment,
-            'travel_mileage': travelMileage,
-            'cost_per_mile': costPerMile,
-            'total_amount_miles': totalMileage,
-            'total_amount_hours': totalService,
-            'total_interpreter': (totalServiceInterpreter + totalMileageInterpreter).toFixed(2),
-            'total_coordinator': (totalServiceCoordinator + totalMileageCoordinator).toFixed(2),
-            'address': serviceAddress,
-            'city': serviceCity,
-            'state': serviceState,
-            'zip_code': serviceZipCode,
-            comments,
-        };
-
-        axios.post(`${config.APPBACK_URL}/api/invoices`, newInvoice)
-            .then((response) => {
-                console.log(response);
-                setInvoiceId(response.data.invoice);
-                setActiveStep((prevActiveStep) => prevActiveStep + 1);
-            })
-            .catch((error) => {
-                console.log(error);
-            });
-
     }
 
     return (
