@@ -81,7 +81,7 @@ export const ManagePage = () => {
                             {
                                 name: 'Descriptions',
                                 path: '/dashboard/manage/descriptions',
-                                icon: <Iconify icon={'mdi:currency-usd-off'} color="#2065D1" width={32} />,
+                                icon: <Iconify icon={'mdi:settings'} color="#2065D1" width={32} />,
                                 role: [1, 2, 3]
                             },
                         ]}
