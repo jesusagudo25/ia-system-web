@@ -101,6 +101,7 @@ function applySortFilter(array, comparator, query) {
         if (order !== 0) return order;
         return a[1] - b[1];
     });
+    console.log(stabilizedThis);
     if (query) {
         return filter(array, (_invoice) => _invoice.id.toString(2).toLowerCase().indexOf(query.toLowerCase()) !== -1);
     }
@@ -117,7 +118,7 @@ export const ServiceHistory = () => {
 
     const [order, setOrder] = useState('desc');
 
-    const [orderBy, setOrderBy] = useState('date');
+    const [orderBy, setOrderBy] = useState('id');
 
     const [filterName, setFilterName] = useState('');
 

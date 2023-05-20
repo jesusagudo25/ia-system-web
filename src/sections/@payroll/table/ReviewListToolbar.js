@@ -43,7 +43,7 @@ ReviewListToolbar.propTypes = {
     onFilterName: PropTypes.func,
 };
 
-export default function ReviewListToolbar({ numSelected, filterName, onFilterName, setOpen, selected, getPayrolls, startDate, endDate, setDateRange, toast }) {
+export default function ReviewListToolbar({ numSelected, filterName, onFilterName, setOpen, selected, getPayrolls, startDate, endDate, setDateRange, toast, setReview, setSelected, setPageReview }) {
     return (
         <StyledRoot
             sx={{
@@ -83,7 +83,8 @@ export default function ReviewListToolbar({ numSelected, filterName, onFilterNam
                         getPayrolls();
                         setDateRange();
                         toast.success('Payroll generated successfully');
-                        /* Se debe actualizar la tabla */
+                        setSelected([]);
+                        setPageReview(0);
                     }
                 }>
                     <IconButton>

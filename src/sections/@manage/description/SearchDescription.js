@@ -6,7 +6,7 @@ import config from '../../../config.json';
 
 const filter = createFilterOptions();
 
-export const SearchDescription = ({handleOnChangeDescription, setDescription, description, toast, setDescriptionId}) => {
+export const SearchDescription = ({handleOnChangeDescription, setDescription, description, toast, setDescriptionId,errors}) => {
     const previousController = useRef();
 
     const [options, setOptions] = React.useState([]);
@@ -41,7 +41,6 @@ export const SearchDescription = ({handleOnChangeDescription, setDescription, de
             options={options}
             value={description}
             onChange={(event, newValue) => {
-                console.log(newValue);
                 if (typeof newValue === 'string') {
                     setDescription(newValue);
                     toast.info('Add a new description');
@@ -118,6 +117,8 @@ export const SearchDescription = ({handleOnChangeDescription, setDescription, de
                     InputLabelProps={{
                         shrink: true,
                     }}
+                    error={errors.description}
+                    helperText={errors.description}
                 />
             )}
         />

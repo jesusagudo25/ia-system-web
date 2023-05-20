@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
+import axios from 'axios';
 import { Helmet } from 'react-helmet-async';
+import { ToastContainer, toast } from 'react-toastify';
 import {
-    Breadcrumbs, Link, Typography, Container, Stack, Card, Box, Tab, Tabs, FormControl, TextField, IconButton, InputAdornment, Backdrop,
-    CircularProgress
+    Breadcrumbs, Link, Typography, Container, Stack, Card, Box, Tab, Tabs, FormControl, TextField, InputLabel, Select, MenuItem, FormHelperText
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 
 import PropTypes from 'prop-types';
-import Iconify from '../components/iconify';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -45,24 +45,194 @@ function a11yProps(index) {
 export const SettingPage = () => {
 
     const [isLoading, setIsLoading] = React.useState(false);
+    const [states, setStates] = React.useState([]);
+
+    /* User settings */
     const [name, setName] = React.useState('');
     const [email, setEmail] = React.useState('');
-    const [currentPassword, setCurrentPassword] = React.useState('');
-    const [newPassword, setNewPassword] = React.useState('');
+    const [errors, setErrors] = React.useState({});
 
-    const [showPassword, setShowPassword] = useState(false);
-    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const getUser = () => {
+        setIsLoading(true);
+        axios.get('/api/users/1')
+            .then((response) => {
+                setName(response.data.full_name);
+                setEmail(response.data.email);
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                console.log(error);
+                setIsLoading(false);
+            });
+    }
 
+    const updateUser = () => {
+
+        const errors = {};
+
+        if (name === '') {
+            errors.name = 'Name is required';
+        }
+
+        if (email === '') {
+            errors.email = 'Email is required';
+        }
+
+        if (Object.keys(errors).length === 0) {
+
+            setIsLoading(true);
+            axios.put('/api/users/1', {
+                full_name: name,
+                email
+            })
+                .then((response) => {
+                    setIsLoading(false);
+                })
+                .catch((error) => {
+                    console.log(error);
+                    setIsLoading(false);
+                });
+            setErrors({});
+            toast.success('User updated successfully');
+        }
+        else {
+            setErrors(errors);
+        }
+    }
+
+    /* Select option */
     const [value, setValue] = React.useState(0);
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
 
+    /* Coordinator settings */
+
+    const [coordinatorName, setCoordinatorName] = React.useState('');
+    const [coordinatorEmail, setCoordinatorEmail] = React.useState('');
+    const [coordinatorPhone, setCoordinatorPhone] = React.useState('');
+    const [coordinatorAddress, setCoordinatorAddress] = React.useState('');
+    const [coordinatorCity, setCoordinatorCity] = React.useState('');
+    const [coordinatorState, setCoordinatorState] = React.useState('');
+    const [coordinatorZipCode, setCoordinatorZipCode] = React.useState('');
+    const [coordinatorSSN, setCoordinatorSSN] = React.useState('');
+
+    const getCoordinator = () => {
+        setIsLoading(true);
+        axios.get('/api/coordinators/1')
+            .then((response) => {
+                setCoordinatorName(response.data.full_name);
+                setCoordinatorEmail(response.data.email);
+                setCoordinatorPhone(response.data.phone_number);
+                setCoordinatorAddress(response.data.address);
+                setCoordinatorCity(response.data.city);
+                setCoordinatorState(response.data.state);
+                setCoordinatorZipCode(response.data.zip_code);
+                setCoordinatorSSN(response.data.ssn);
+
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                console.log(error);
+                setIsLoading(false);
+
+            });
+    }
+
+    const updateCoordinator = () => {
+
+        const errors = {};
+
+        if (coordinatorName === '') {
+            errors.nameCoordinator = 'Name is required';
+        }
+
+        if (coordinatorEmail === '') {
+            errors.emailCoordinator = 'Email is required';
+        }
+
+        if (coordinatorPhone === '') {
+            errors.phone = 'Phone number is required';
+        }
+
+        if (coordinatorAddress === '') {
+            errors.address = 'Address is required';
+        }
+
+        if (coordinatorCity === '') {
+            errors.city = 'City is required';
+        }
+
+        if (coordinatorState === '') {
+            errors.state = 'State is required';
+        }
+
+        if (coordinatorZipCode === '') {
+            errors.zip_code = 'Zip code is required';
+        }
+
+        if (coordinatorSSN === '') {
+            errors.ssn = 'SSN is required';
+        }
+
+        if (Object.keys(errors).length === 0) {
+
+        setIsLoading(true);
+        axios.put('/api/coordinators/1', {
+            full_name: coordinatorName,
+            email: coordinatorEmail,
+            phone_number: coordinatorPhone,
+            address: coordinatorAddress,
+            city: coordinatorCity,
+            state: coordinatorState,
+            zip_code: coordinatorZipCode,
+            ssn: coordinatorSSN
+
+        })
+            .then((response) => {
+                setIsLoading(false);
+                setErrors({});
+                toast.success('Coordinator updated successfully');
+            })
+            .catch((error) => {
+                console.log(error);
+                setIsLoading(false);
+            });
+        }
+        else {
+            setErrors(errors);
+        }
+
+    }
+
+    const getStates = () => {
+        axios.get('https://api.countrystatecity.in/v1/countries/US/states', {
+            headers: {
+                'X-CSCAPI-KEY': 'N3NXRVN4V1Y1YVJmSTd6ZHR3b1NlMDlMRkRRVFQ2c0JWWmcxbmNUWg=='
+            }
+        })
+            .then((response) => {
+                setStates(response.data);
+            })
+            .catch((error) => {
+                console.log(error);
+            }
+            );
+    }
+
+    /* Get all */
+
+    useEffect(() => {
+        getUser();
+        getCoordinator();
+        getStates();
+    }, []);
+
     return (
         <>
             <Helmet>
-                <title> Mi cuenta | Fab Lab System </title>
+                <title> Settings | IA System </title>
             </Helmet>
 
             <Container>
@@ -75,7 +245,7 @@ export const SettingPage = () => {
                         color="inherit"
                         href="#"
                     >
-                        User
+                        System
                     </Link>
                     <Typography color="text.primary">Settings</Typography>
                 </Breadcrumbs>
@@ -123,7 +293,10 @@ export const SettingPage = () => {
                                         (e) => {
                                             setName(e.target.value)
                                         }
-                                    } />
+                                    }
+                                        error={errors.name}
+                                        helperText={errors.name}
+                                    />
 
                                 </FormControl>
                             </Stack>
@@ -141,7 +314,10 @@ export const SettingPage = () => {
                                         (e) => {
                                             setEmail(e.target.value)
                                         }
-                                    } placeholder='Ingrese su correo electrónico' />
+                                    } placeholder='Ingrese su correo electrónico'
+                                        error={errors.email}
+                                        helperText={errors.email}
+                                    />
                                 </FormControl>
                             </Stack>
                             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={
@@ -149,7 +325,7 @@ export const SettingPage = () => {
                                     mt: '30px',
                                 }
                             }>
-                                <LoadingButton variant="contained" color="primary" loading={isLoading}>
+                                <LoadingButton variant="contained" color="primary" loading={isLoading} onClick={updateUser}>
                                     Save
                                 </LoadingButton>
                             </Stack>
@@ -175,28 +351,47 @@ export const SettingPage = () => {
                             }}
                             >
                                 <FormControl sx={{ width: '48%' }}>
-                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                    <TextField id="outlined-basic" label="Name" variant="outlined" value={coordinatorName} onChange={(e) => { setCoordinatorName(e.target.value) }} error={errors.nameCoordinator} helperText={errors.nameCoordinator} />
                                 </FormControl>
                                 <FormControl sx={{ width: '48%' }}>
-                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                    <TextField id="outlined-basic" label="SSN" variant="outlined" value={coordinatorSSN} onChange={(e) => { setCoordinatorSSN(e.target.value) }} error={errors.ssn} helperText={errors.ssn} />
                                 </FormControl>
                                 <FormControl sx={{ width: '48%' }}>
-                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                    <TextField id="outlined-basic" label="Email" variant="outlined" value={coordinatorEmail} onChange={(e) => { setCoordinatorEmail(e.target.value) }} error={errors.emailCoordinator} helperText={errors.emailCoordinator} />
                                 </FormControl>
                                 <FormControl sx={{ width: '48%' }}>
-                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                    <TextField id="outlined-basic" label="Phone number" variant="outlined" value={coordinatorPhone} onChange={(e) => { setCoordinatorPhone(e.target.value) }} error={errors.phone} helperText={errors.phone} />
                                 </FormControl>
                                 <FormControl sx={{ width: '48%' }}>
-                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                    <TextField id="outlined-basic" label="Address" variant="outlined" value={coordinatorAddress} onChange={(e) => { setCoordinatorAddress(e.target.value) }} error={errors.address} helperText={errors.address} />
                                 </FormControl>
                                 <FormControl sx={{ width: '48%' }}>
-                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                    <TextField id="outlined-basic" label="City" variant="outlined" value={coordinatorCity} onChange={(e) => { setCoordinatorCity(e.target.value) }} error={errors.city} helperText={errors.city} />
+                                </FormControl>
+                                <FormControl sx={{ width: '48%' }} error={errors.state}>
+                                    <InputLabel id="state-select-label"
+                                        sx={{ width: 400 }}
+                                    >State</InputLabel>
+                                    <Select
+                                        labelId="state-select-label"
+                                        id="state-select"
+                                        label="State"
+                                        value={coordinatorState}
+                                        onChange={(e) => {
+                                            setCoordinatorState(e.target.value)
+                                        }}
+                                    >
+                                        <MenuItem disabled value="none">
+                                            <em style={{ color: 'gray' }}>Choose</em>
+                                        </MenuItem>
+                                        {states.map((state) => (
+                                            <MenuItem key={state.iso2} value={state.name}>{state.name}</MenuItem>
+                                        ))}
+                                    </Select>
+                                    <FormHelperText>{errors.state ? errors.state : null}</FormHelperText>
                                 </FormControl>
                                 <FormControl sx={{ width: '48%' }}>
-                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
-                                </FormControl>
-                                <FormControl sx={{ width: '48%' }}>
-                                    <TextField id="outlined-basic" label="Nombre del evento" variant="outlined" />
+                                    <TextField id="outlined-basic" label="Zip code" variant="outlined" value={coordinatorZipCode} onChange={(e) => { setCoordinatorZipCode(e.target.value) }} error={errors.zip_code} helperText={errors.zip_code} />
                                 </FormControl>
                             </Stack>
                             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={
@@ -204,7 +399,7 @@ export const SettingPage = () => {
                                     mt: '30px',
                                 }
                             }>
-                                <LoadingButton variant="contained" color="primary" loading={isLoading}>
+                                <LoadingButton variant="contained" color="primary" loading={isLoading} onClick={updateCoordinator}>
                                     Save
                                 </LoadingButton>
                             </Stack>
@@ -213,6 +408,10 @@ export const SettingPage = () => {
                 </Card>
 
             </Container>
+
+            {/* Toastify */}
+
+            <ToastContainer />
         </>
     )
 }

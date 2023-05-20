@@ -5,7 +5,7 @@ import axios from 'axios';
 import { Autocomplete, TextField } from '@mui/material';
 import config from '../../../config.json';
 
-export const SearchAgency = ({handleOnChangeAgency, setAgencyName, agencyName}) => {
+export const SearchAgency = ({ handleOnChangeAgency, setAgencyName, agencyName, errors, toast, setAgencyId }) => {
 
     const previousController = useRef();
 
@@ -46,11 +46,13 @@ export const SearchAgency = ({handleOnChangeAgency, setAgencyName, agencyName}) 
                     id: newValue.value,
                 });
                 setAgencyName(newValue.label);
+                toast.success('Agency selected');
             }}
             onInputChange={(event, newInputValue) => {
-                setAgencyName(newInputValue);
-                if(event){
-                    if(event.target.value.length > 0){
+                if(newInputValue !== '') setAgencyName(newInputValue);
+                if (event) {
+                    setAgencyId('');
+                    if (event.target.value.length > 0) {
                         getDataAutocomplete(event.target.value);
                     }
                     else {
@@ -75,6 +77,8 @@ export const SearchAgency = ({handleOnChangeAgency, setAgencyName, agencyName}) 
                         shrink: true,
                     }}
                     placeholder="Enter Agency Name"
+                    error={errors.agency}
+                    helperText={errors.agency ? errors.agency : null}
                 />
             )}
         />

@@ -21,6 +21,7 @@ import {
   Breadcrumbs,
   Link,
 } from '@mui/material';
+import { format, parseISO } from 'date-fns';
 // components
 import CloseIcon from '@mui/icons-material/Close';
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
@@ -31,6 +32,7 @@ import Scrollbar from '../components/scrollbar';
 
 // Sections - Se debe reempazar el nombre del componente por uno mas general
 import config from '../config.json';
+
 
 const TABLE_HEAD = [
   { id: 'id', label: 'Invoice #', alignRight: false },
@@ -139,7 +141,7 @@ export const InvoicePage = () => {
   };
 
   const getInvoices = async () => {
-    const { data } = await axios.get(`${config.APPBACK_URL}/api/invoices/closed`);
+    const { data } = await axios.get(`${config.APPBACK_URL}/api/invoices/paid`);
     setInvoices(data);
   };
 
@@ -224,7 +226,7 @@ export const InvoicePage = () => {
                           </TableCell>
 
                           <TableCell align="left">
-                            {invoiceDetails[0].date_of_service_provided}
+                            {format(parseISO(`${invoiceDetails[0].date_of_service_provided.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}
                           </TableCell>
 
                           <TableCell align="left">

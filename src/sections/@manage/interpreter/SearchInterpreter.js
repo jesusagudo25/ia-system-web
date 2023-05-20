@@ -6,7 +6,7 @@ import config from '../../../config.json';
 
 const filter = createFilterOptions();
 
-export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, interpreterLenguageId, setInterpreterContainer, setInterpreterName, interpreterName, toast, handleClearInterpreter }) => {
+export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, interpreterLenguageId, setInterpreterContainer, setInterpreterName, interpreterName, toast, handleClearInterpreter, errors }) => {
 
     const previousController = useRef();
 
@@ -141,6 +141,8 @@ export const SearchInterpreter = ({ handleOnChangeInterpreter, serviceState, int
                     InputLabelProps={{
                         shrink: true,
                     }}
+                    error={errors.interpreter}
+                    helperText={errors.interpreter}
                 />
             )}
         />

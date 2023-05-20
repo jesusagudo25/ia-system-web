@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Stack, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
+import { Stack, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material'
 import axios from 'axios';
 
 export const InterpreterData = ({
@@ -17,7 +17,8 @@ export const InterpreterData = ({
     interpreterState,
     setInterpreterZipCode,
     interpreterZipCode,
-    interpreterSelected
+    interpreterSelected,
+    errors
 }) => {
     /* get data external */
     const [states, setStates] = useState([]);
@@ -44,21 +45,21 @@ export const InterpreterData = ({
     return (
         <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
             <FormControl sx={{ marginTop: '20px', width: '37%' }}>
-                <TextField label="Phone number" variant="outlined" value={interpreterPhoneNum} onChange={(e) => setInterpreterPhoneNum(e.target.value)} disabled={interpreterSelected} />
+                <TextField label="Phone number" variant="outlined" value={interpreterPhoneNum} onChange={(e) => setInterpreterPhoneNum(e.target.value)} disabled={interpreterSelected} error={errors.interpreterPhoneNum} helperText={errors.interpreterPhoneNum} />
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '61%' }}>
-                <TextField label="Email" variant="outlined" value={interpreterEmail} onChange={(e) => setInterpreterEmail(e.target.value)} disabled={interpreterSelected} />
+                <TextField label="Email" variant="outlined" value={interpreterEmail} onChange={(e) => setInterpreterEmail(e.target.value)} disabled={interpreterSelected} error={errors.interpreterEmail} helperText={errors.interpreterEmail} />
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '37%' }}>
-                <TextField label="Social Security Number" variant="outlined" value={interpreterSSN} onChange={(e) => setInterpreterSSN(e.target.value)} disabled={interpreterSelected} />
+                <TextField label="Social Security Number" variant="outlined" value={interpreterSSN} onChange={(e) => setInterpreterSSN(e.target.value)} disabled={interpreterSelected} error={errors.interpreterSSN} helperText={errors.interpreterSSN} />
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '61%' }}>
-                <TextField label="Address" variant="outlined" value={interpreterAddress} onChange={(e) => setInterpreterAddress(e.target.value)} disabled={interpreterSelected} />
+                <TextField label="Address" variant="outlined" value={interpreterAddress} onChange={(e) => setInterpreterAddress(e.target.value)} disabled={interpreterSelected} error={errors.interpreterAddress} helperText={errors.interpreterAddress} />
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '37%' }}>
-                <TextField label="City" variant="outlined" value={interpreterCity} onChange={(e) => setInterpreterCity(e.target.value)} disabled={interpreterSelected} />
+                <TextField label="City" variant="outlined" value={interpreterCity} onChange={(e) => setInterpreterCity(e.target.value)} disabled={interpreterSelected} error={errors.interpreterCity} helperText={errors.interpreterCity} />
             </FormControl>
-            <FormControl sx={{ marginTop: '20px', width: '34%' }}>
+            <FormControl sx={{ marginTop: '20px', width: '34%' }} error={errors.interpreterState}>
                 <InputLabel id="customer-select-label"
                             sx={{ width: 400 }}
                         >State</InputLabel>
@@ -77,9 +78,10 @@ export const InterpreterData = ({
                                 <MenuItem key={state.iso2} value={state.name}>{state.name}</MenuItem>
                             ))}
                         </Select>
+                        <FormHelperText>{errors.interpreterState}</FormHelperText>
             </FormControl>
             <FormControl sx={{ marginTop: '20px', width: '25%' }}>
-                <TextField label="Zip Code" variant="outlined" value={interpreterZipCode} onChange={(e) => setInterpreterZipCode(e.target.value)} disabled={interpreterSelected} />
+                <TextField label="Zip Code" variant="outlined" value={interpreterZipCode} onChange={(e) => setInterpreterZipCode(e.target.value)} disabled={interpreterSelected} error={errors.interpreterZipCode} helperText={errors.interpreterZipCode} />
             </FormControl>
         </Stack>
     )

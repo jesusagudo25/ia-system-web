@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import axios from 'axios';
 // material
 import { Autocomplete, TextField, createFilterOptions } from '@mui/material';
@@ -11,7 +11,8 @@ export const SearchAddress = ({
     setAddress,
     address,
     toast,
-    handleClearAddress
+    handleClearAddress,
+    errors
     }) => {
 
     const previousController = useRef();
@@ -135,6 +136,8 @@ export const SearchAddress = ({
                     InputLabelProps={{
                         shrink: true,
                     }}
+                    error={errors.serviceAddress}
+                    helperText={errors.serviceAddress ? 'Service address is required' : ''}
                 />
             )}
         />

@@ -37,7 +37,7 @@ import Slide from '@mui/material/Slide';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 // date-fns
-import { format, lastDayOfMonth } from 'date-fns';
+import { format, lastDayOfMonth, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
@@ -308,6 +308,7 @@ export const PayrollPage = () => {
                                 onChange={(newValue) => {
                                     setStartDate(newValue);
                                 }}
+                                format='MM/dd/yyyy'
                             />
                         </LocalizationProvider>
                         <Avatar
@@ -326,6 +327,7 @@ export const PayrollPage = () => {
                                 onChange={(newValue) => {
                                     setEndDate(newValue);
                                 }}
+                                format='MM/dd/yyyy'
                             />
                         </LocalizationProvider>
                         <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} sx={{ ml: 1, width: '15%' }} onClick={
@@ -373,9 +375,9 @@ export const PayrollPage = () => {
                                                         </Stack>
                                                     </TableCell>
 
-                                                    <TableCell align="left">{startDate}</TableCell>
+                                                    <TableCell align="left">{format(parseISO(`${startDate.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}</TableCell>
 
-                                                    <TableCell align="left">{endDate}</TableCell>
+                                                    <TableCell align="left">{format(parseISO(`${endDate.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}</TableCell>
 
                                                     <TableCell align="left">{user.full_name}</TableCell>
 
@@ -603,7 +605,7 @@ export const PayrollPage = () => {
                         <DialogContent dividers>
 
                             <Card>
-                                <ReviewListToolbar numSelected={selected.length} filterDate={filterDateReview} onFilterName={handleFilterByDate} setOpen={setOpen} selected={selected} getPayrolls={getPayrolls} startDate={startDate} endDate={endDate} setDateRange={setDateRange} toast={toast} />
+                                <ReviewListToolbar numSelected={selected.length} filterDate={filterDateReview} onFilterName={handleFilterByDate} setOpen={setOpen} selected={selected} getPayrolls={getPayrolls} startDate={startDate} endDate={endDate} setDateRange={setDateRange} toast={toast} setReview={setReview} setSelected={setSelected} setPageReview={setPageReview} />
 
                                 <Scrollbar>
                                     <TableContainer sx={{ minWidth: 800 }}>

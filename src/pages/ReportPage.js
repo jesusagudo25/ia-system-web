@@ -1,6 +1,5 @@
 import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
-import { sentenceCase } from 'change-case';
 import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
@@ -21,7 +20,6 @@ import {
   IconButton,
   TableContainer,
   TablePagination,
-  TextField,
   Breadcrumbs, Link,
 } from '@mui/material';
 
@@ -31,7 +29,7 @@ import Slide from '@mui/material/Slide';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 // date-fns
-import { differenceInDays, format, lastDayOfMonth } from 'date-fns';
+import { differenceInDays, format, lastDayOfMonth, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
@@ -52,18 +50,6 @@ const TABLE_HEAD = [
   { id: 'end_date', label: 'End date', alignRight: false },
   { id: '' },
 ];
-
-const options = [
-  {
-    value: 'm',
-    label: 'Income per month',
-  },
-  {
-    value: 'a',
-    label: 'Annual income',
-  },
-];
-
 // ----------------------------------------------------------------------
 
 function descendingComparator(a, b, orderBy) {
@@ -99,14 +85,12 @@ export const ReportPage = () => {
 
 
   /* Report */
-  const [startDate, setStartDate] = useState(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
-  const [endDate, setEndDate] = useState(new Date(`${format(new Date(), 'yyyy-MM-dd')}T00:00:00`));
+  const [startDate, setStartDate] = useState(new Date(`${format(new Date(), 'yyyy-01-01')}T00:00:00`));
+  const [endDate, setEndDate] = useState(new Date(`${format(new Date(), 'yyyy-12-31')}T00:00:00`));
 
   /* Reports */
 
   const [reports, setReports] = useState([]);
-
-  const [open, setOpen] = useState(null);
 
   const [page, setPage] = useState(0);
 
@@ -148,11 +132,13 @@ export const ReportPage = () => {
 
     const difference = differenceInDays(endDate, startDate);
     let type = 'a';
+
+    console.log(difference);
     
-    if (difference > 15 && difference <= 31) {
+    if (difference >= 300 && difference <= 365) {
       type = 'm';
     }
-    else if (difference > 31 && difference <= 365) {
+    else if (difference > 365) {
       type = 'a';
     }
     else {
@@ -172,6 +158,8 @@ export const ReportPage = () => {
         });
         console.log(response);
         toast.success('Report generated successfully');
+        setStartDate(new Date(`${format(new Date(), 'yyyy-01-01')}T00:00:00`));
+        setEndDate(new Date(`${format(new Date(), 'yyyy-12-31')}T00:00:00`));
         getReports();
       } catch (error) {
         console.log(error);
@@ -187,7 +175,6 @@ export const ReportPage = () => {
   const handleDeleteReport = async (id) => {
     try {
       const response = await axios.delete(`${config.APPBACK_URL}/api/reports/${id}`);
-      console.log(response);
       toast.success('Report deleted successfully');
       getReports();
     } catch (error) {
@@ -195,7 +182,6 @@ export const ReportPage = () => {
       toast.error('Error deleting report');
     }
   };
-
 
   const getReports = async () => {
     try {
@@ -253,6 +239,7 @@ export const ReportPage = () => {
                 onChange={(newValue) => {
                   setStartDate(newValue);
               }}
+              format='MM/dd/yyyy'
               />
             </LocalizationProvider>
             <Avatar
@@ -271,6 +258,7 @@ export const ReportPage = () => {
                 onChange={(newValue) => {
                   setEndDate(newValue);
               }}
+              format='MM/dd/yyyy'
               />
             </LocalizationProvider>
             <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} sx={{ ml: 1, width: '15%' }} onClick={
@@ -319,9 +307,9 @@ export const ReportPage = () => {
                             </Stack>
                           </TableCell>
 
-                          <TableCell align="left">{startDate}</TableCell>
+                          <TableCell align="left">{format(parseISO(`${startDate.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}</TableCell>
 
-                          <TableCell align="left">{endDate}</TableCell>
+                          <TableCell align="left">{format(parseISO(`${endDate.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}</TableCell>
                           <TableCell align="right">
                             <a
                               style={{ textDecoration: 'none', color: 'inherit' }}

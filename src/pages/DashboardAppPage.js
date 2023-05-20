@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
-import { faker } from '@faker-js/faker';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 // @mui
 import { useTheme } from '@mui/material/styles';
 import { Grid, Container, Typography } from '@mui/material';
@@ -15,7 +16,29 @@ import {
 // ----------------------------------------------------------------------
 
 export default function DashboardAppPage() {
-  const theme = useTheme();
+
+  const [agencyCount, setAgencyCount] = useState(0);
+  const [interpreterCount, setInterpreterCount] = useState(0);
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [monthlyExpenditure, setMonthlyExpenditure] = useState(0);
+
+  const getStatastics = () => {
+    axios.get('/api/reports/dashboards')
+      .then((response) => {
+        setAgencyCount(response.data.total_agencies);
+        setInterpreterCount(response.data.total_interpreters);
+        setMonthlyIncome(response.data.total_income);
+        setMonthlyExpenditure(response.data.total_expenses);
+        console.log(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
+  useEffect(() => {
+    getStatastics();   
+  }, []);
 
   return (
     <>
@@ -30,19 +53,19 @@ export default function DashboardAppPage() {
 
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Agencies" total={714000} icon={'ant-design:android-filled'} />
+            <AppWidgetSummary title="Agencies" total={agencyCount} icon={'ant-design:android-filled'} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Interpreters" total={1352831} color="info" icon={'ant-design:apple-filled'} />
+            <AppWidgetSummary title="Interpreters" total={interpreterCount} color="info" icon={'ant-design:apple-filled'} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Monthly income" total={1723315} color="warning" icon={'ant-design:windows-filled'} />
+            <AppWidgetSummary title="Monthly income" total={monthlyIncome} color="warning" icon={'ant-design:windows-filled'} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Monthly expenditure" total={234} color="error" icon={'ant-design:bug-filled'} />
+            <AppWidgetSummary title="Monthly expenditure" total={monthlyExpenditure} color="error" icon={'ant-design:bug-filled'} />
           </Grid>
 
         </Grid>

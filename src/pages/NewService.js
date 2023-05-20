@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Helmet } from 'react-helmet-async';
-import { History, Blocker, Transition } from 'history';
-
 import {
     Box,
     Button,
@@ -18,6 +16,9 @@ import {
     TextField,
     Paper,
     Grid,
+    FormHelperText,
+    CircularProgress,
+    Backdrop,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -36,13 +37,17 @@ import config from '../config.json';
 import Iconify from '../components/iconify';
 
 
+
 const steps = ['Agency and Interpreter data', 'Service data', 'Summary'];
 
 export const NewService = () => {
 
-    /* Detect exit --------------------------------------------- ************* */
+    /* ***** ------------------------------- Detect exit ---------------------------------- ***** */
 
-    
+    /* Form */
+    const [errors, setErrors] = useState({});
+    const [isLoading, setIsLoading] = useState(false);
+
     /* get data external */
     const [states, setStates] = useState([]);
     const [lenguages, setLenguages] = useState([]);
@@ -69,12 +74,13 @@ export const NewService = () => {
     const [interpreterContainer, setInterpreterContainer] = useState(false);
 
     /* Service address */
-    
+
     const [serviceAddressId, setServiceAddressId] = useState(''); // [1]
     const [serviceAddress, setServiceAddress] = useState('');
     const [serviceCity, setServiceCity] = useState('');
     const [serviceState, setServiceState] = useState('none');
     const [serviceZipCode, setServiceZipCode] = useState('');
+    const [addressSelected, setAddressSelected] = useState(false); // [1
 
     /* New service variable */
 
@@ -118,21 +124,164 @@ export const NewService = () => {
     /*  Active step variable */
 
     const [activeStep, setActiveStep] = React.useState(0);
-    const [skipped, setSkipped] = React.useState(new Set());
-
-    const isStepSkipped = (step) => {
-        return skipped.has(step);
-    };
 
     const handleNext = () => {
-        let newSkipped = skipped;
-        if (isStepSkipped(activeStep)) {
-            newSkipped = new Set(newSkipped.values());
-            newSkipped.delete(activeStep);
+        const errors = {};
+        let flag;
+        if (activeStep === 0) {
+            if (agencyId === '') {
+                errors.agency = 'Agency is required';
+                flag = true;
+            }
+
+            if (interpreterId === '' && interpreterContainer === false) {
+                errors.interpreter = 'Interpreter is required';
+                flag = true;
+            }
+
+            if (interpreterContainer === true) {
+                if (interpreterName === '') {
+                    errors.interpreterName = 'Name is required';
+                    flag = true;
+                }
+
+                if (interpreterEmail === '') {
+                    errors.interpreterEmail = 'Email is required';
+                    flag = true;
+                }
+
+                if (interpreterPhoneNum === '') {
+                    errors.interpreterPhoneNum = 'Phone number is required';
+                    flag = true;
+                }
+
+                if (interpreterSSN === '') {
+                    errors.interpreterSSN = 'SSN is required';
+                    flag = true;
+                }
+
+                if (interpreterAddress === '') {
+                    errors.interpreterAddress = 'Address is required';
+                    flag = true;
+                }
+
+                if (interpreterCity === '') {
+                    errors.interpreterCity = 'City is required';
+                    flag = true;
+                }
+
+                if (interpreterState === '') {
+                    errors.interpreterState = 'State is required';
+                    flag = true;
+                }
+
+                if (interpreterZipCode === '') {
+                    errors.interpreterZipCode = 'Zip code is required';
+                    flag = true;
+                }
+
+                if (interpreterLenguageId === 'none') {
+                    errors.lenguage = 'Lenguage is required';
+                    flag = true;
+                }
+            }
+
+            if (serviceAddressId === '') {
+
+                if (serviceAddress === '') {
+                    errors.serviceAddress = 'Address is required';
+                    flag = true;
+                }
+
+                if (serviceCity === '') {
+                    errors.serviceCity = 'City is required';
+                    flag = true;
+                }
+
+                if (serviceState === '' || serviceState === 'none') {
+                    errors.serviceState = 'State is required';
+                    flag = true;
+                }
+
+                if (serviceZipCode === '') {
+                    errors.serviceZipCode = 'Zip is required';
+                    flag = true;
+                }
+
+            }
+
+
+            if (interpreterLenguageId === 'none') {
+                errors.lenguage = 'Lenguage is required';
+                flag = true;
+            }
+        }
+        if (activeStep === 1) {
+            if (description === '') {
+                errors.description = 'Description is required';
+                flag = true;
+            }
+
+            if (dateServiceProvided === '' || JSON.stringify(dateServiceProvided) === 'null') {
+                errors.dateServiceProvided = 'Date of service provided is required';
+                flag = true;
+            }
+
+            if (arrivalTime === '') {
+                errors.arrivalTime = 'Arrival time is required';
+                flag = true;
+            }
+
+            if (startTime === '') {
+                errors.startTime = 'Start time is required';
+                flag = true;
+            }
+
+            if (endTime === '') {
+                errors.endTime = 'End time is required';
+                flag = true;
+            }
+
+            if (travelTimeToAssignment === '') {
+                errors.travelTimeToAssignment = 'Travel time to assignment is required';
+                flag = true;
+            }
+
+            if (timeBackFromAssignment === '') {
+                errors.timeBackFromAssignment = 'Time back from assignment is required';
+                flag = true;
+            }
+
+            if (travelMileage === '') {
+                errors.travelMileage = 'Travel mileage is required';
+                flag = true;
+            }
+
+            if (costPerMile === '') {
+                errors.costPerMile = 'Cost per mile is required';
+                flag = true;
+            }
+
+            if (containerOrderDetails === false) {
+                toast.warning('Please calculate the service, the date is not correct');
+                flag = true;
+            }
         }
 
+        if (flag) {
+            toast.error('Please fill in the required fields');
+            setErrors(errors);
+            return;
+        }
+
+        setErrors({});
         setActiveStep((prevActiveStep) => prevActiveStep + 1);
-        setSkipped(newSkipped);
+
+        switch (activeStep) {
+            case 0:
+                break;
+            default:
+        }
     };
 
     const handleBack = () => {
@@ -171,16 +320,18 @@ export const NewService = () => {
         setInterpreterZipCode('');
         setInterpreterContainer(false);
         setInterpreterSelected(false);
+        setErrors({});
     }
 
     /* Autocomplete address */
+
     const handleOnChangeAddress = (address) => {
-        console.log(address);
         setServiceAddressId(address.id);
         setServiceAddress(address.address);
         setServiceCity(address.city);
         setServiceState(address.state);
         setServiceZipCode(address.zipCode);
+        setAddressSelected(true);
     }
 
     const handleClearAddress = () => {
@@ -188,6 +339,8 @@ export const NewService = () => {
         setServiceCity('');
         setServiceState('');
         setServiceZipCode('');
+        setAddressSelected(false);
+        setErrors({});
     }
 
     /* Autocomplete description */
@@ -267,6 +420,8 @@ export const NewService = () => {
     /* Handle submit new service */
 
     const handleSubmitNewInvoice = () => {
+        setIsLoading(true);
+
         const newInvoice = {
             'coordinator_id': 1,
             'user_id': 1,
@@ -313,6 +468,7 @@ export const NewService = () => {
                 console.log(response);
                 setInvoiceId(response.data.invoice);
                 setActiveStep((prevActiveStep) => prevActiveStep + 1);
+                setIsLoading(false);
             })
             .catch((error) => {
                 console.log(error);
@@ -369,26 +525,27 @@ export const NewService = () => {
                 <Typography variant="subtitle1" gutterBottom marginBottom={2}>
                     Enter the data of the agency
                 </Typography>
-                <SearchAgency handleOnChangeAgency={handleOnChangeAgency} setAgencyName={setAgencyName} agencyName={agencyName} />
+                <SearchAgency handleOnChangeAgency={handleOnChangeAgency} setAgencyName={setAgencyName} agencyName={agencyName} errors={errors} toast={toast} setAgencyId={setAgencyId} />
                 <Typography variant="subtitle1" gutterBottom marginBottom={2} marginTop={2} sx={{ width: '100%' }}>
                     Enter the address of the service
                 </Typography>
-                <Stack direction="row" sx={{flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-                <FormControl sx={{ width: '37%' }}>
-                    <SearchAddress
-                        handleOnChangeAddress={handleOnChangeAddress}
-                        setAddress={setServiceAddress}
-                        address={serviceAddress}
-                        serviceCity={serviceCity}
-                        setServiceCity={setServiceCity}
-                        serviceState={serviceState}
-                        setServiceState={setServiceState}
-                        serviceZipCode={serviceZipCode}
-                        setServiceZipCode={setServiceZipCode}
-                        toast={toast}
-                        handleClearAddress={handleClearAddress}
-                    />
-                </FormControl>
+                <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <FormControl sx={{ width: '37%' }}>
+                        <SearchAddress
+                            handleOnChangeAddress={handleOnChangeAddress}
+                            setAddress={setServiceAddress}
+                            address={serviceAddress}
+                            serviceCity={serviceCity}
+                            setServiceCity={setServiceCity}
+                            serviceState={serviceState}
+                            setServiceState={setServiceState}
+                            serviceZipCode={serviceZipCode}
+                            setServiceZipCode={setServiceZipCode}
+                            toast={toast}
+                            handleClearAddress={handleClearAddress}
+                            errors={errors}
+                        />
+                    </FormControl>
                     <FormControl sx={{ width: '20%' }}>
                         <TextField
                             id="city"
@@ -400,9 +557,12 @@ export const NewService = () => {
                             }}
                             value={serviceCity}
                             onChange={(e) => setServiceCity(e.target.value)}
+                            error={errors.serviceCity}
+                            helperText={errors.serviceCity ? errors.serviceCity : null}
+                            disabled={addressSelected}
                         />
                     </FormControl>
-                    <FormControl sx={{ width: '25%' }}>
+                    <FormControl sx={{ width: '25%' }} error={errors.serviceState}>
                         <InputLabel id="customer-select-label"
                             sx={{ width: 400 }}
                         >State</InputLabel>
@@ -412,6 +572,7 @@ export const NewService = () => {
                             label="State"
                             value={serviceState}
                             onChange={(e) => setServiceState(e.target.value)}
+                            disabled={addressSelected}
                         >
                             <MenuItem disabled value="none">
                                 <em style={{ color: 'gray' }}>Choose</em>
@@ -420,6 +581,7 @@ export const NewService = () => {
                                 <MenuItem key={state.iso2} value={state.name}>{state.name}</MenuItem>
                             ))}
                         </Select>
+                        <FormHelperText error={errors.serviceState}>{errors.serviceState ? errors.serviceState : null}</FormHelperText>
                     </FormControl>
                     <FormControl sx={{ width: '12%' }}>
                         <TextField
@@ -432,6 +594,9 @@ export const NewService = () => {
                             }}
                             value={serviceZipCode}
                             onChange={(e) => setServiceZipCode(e.target.value)}
+                            disabled={addressSelected}
+                            error={errors.serviceZipCode}
+                            helperText={errors.serviceZipCode ? errors.serviceZipCode : null}
                         />
                     </FormControl>
 
@@ -439,7 +604,7 @@ export const NewService = () => {
                         Enter the data of the interpreter
                     </Typography>
 
-                    <FormControl sx={{ width: '37%' }}>
+                    <FormControl sx={{ width: '37%' }} error={errors.lenguage}>
                         <InputLabel id="lenguage-select-label"
                             sx={{ width: 400 }}
                         >Lenguage</InputLabel>
@@ -448,7 +613,11 @@ export const NewService = () => {
                             id="lenguage-select"
                             label="Lenguage"
                             value={interpreterLenguageId}
-                            onChange={(e) => setInterpreterLenguageId(e.target.value)}
+                            onChange={(e) => {
+                                setInterpreterLenguageId(e.target.value);
+                                setInterpreterName('');
+                                handleClearInterpreter();
+                            }}
                         >
                             <MenuItem disabled value="none">
                                 <em style={{ color: 'gray' }}>Choose</em>
@@ -457,6 +626,7 @@ export const NewService = () => {
                                 <MenuItem key={lenguage.id} value={lenguage.id}>{lenguage.name}</MenuItem>
                             ))}
                         </Select>
+                        <FormHelperText>{errors.lenguage ? errors.lenguage : null}</FormHelperText>
                     </FormControl>
                     <FormControl sx={{ width: '61%' }}>
                         <SearchInterpreter
@@ -468,7 +638,8 @@ export const NewService = () => {
                             interpreterName={interpreterName}
                             toast={toast}
                             handleClearInterpreter={handleClearInterpreter}
-                            />
+                            errors={errors}
+                        />
                     </FormControl>
                 </Stack>
                 {
@@ -489,6 +660,7 @@ export const NewService = () => {
                             setInterpreterZipCode={setInterpreterZipCode}
                             interpreterZipCode={interpreterZipCode}
                             interpreterSelected={interpreterSelected}
+                            errors={errors}
                         />
                         : null
                 }
@@ -510,7 +682,7 @@ export const NewService = () => {
                 <Typography variant="subtitle1" gutterBottom marginBottom={2}>
                     Enter the service data
                 </Typography>
-                <SearchDescription handleOnChangeDescription={handleOnChangeDescription} setDescription={setDescription} description={description} toast={toast} setDescriptionId={setDescriptionId} />
+                <SearchDescription handleOnChangeDescription={handleOnChangeDescription} setDescription={setDescription} description={description} toast={toast} setDescriptionId={setDescriptionId} errors={errors} />
                 <Stack direction="row" sx={{ marginTop: '20px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
                     <FormControl sx={{ width: '37%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -520,6 +692,13 @@ export const NewService = () => {
                                 onChange={(newValue) => {
                                     setDateServiceProvided(newValue);
                                 }}
+                                slotProps={{
+                                    textField: {
+                                        error: errors.dateServiceProvided,
+                                        helperText: errors.dateServiceProvided ? errors.dateServiceProvided : null,
+                                    },
+                                }}
+                                format='MM/dd/yyyy'
                             />
                         </LocalizationProvider>
                     </FormControl>
@@ -531,6 +710,12 @@ export const NewService = () => {
                                 onChange={(newValue) => {
                                     setArrivalTime(newValue);
                                     calculateInterpreterService(newValue, startTime, endTime);
+                                }}
+                                slotProps={{
+                                    textField: {
+                                        error: errors.arrivalTime,
+                                        helperText: errors.arrivalTime ? errors.arrivalTime : null,
+                                    },
                                 }}
                             />
                         </LocalizationProvider>
@@ -544,6 +729,12 @@ export const NewService = () => {
                                     setStartTime(newValue);
                                     calculateInterpreterService(arrivalTime, newValue, endTime);
                                 }}
+                                slotProps={{
+                                    textField: {
+                                        error: errors.startTime,
+                                        helperText: errors.startTime ? errors.startTime : null,
+                                    },
+                                }}
                             />
                         </LocalizationProvider>
                     </FormControl>
@@ -555,6 +746,12 @@ export const NewService = () => {
                                 onChange={(newValue) => {
                                     setEndTime(newValue);
                                     calculateInterpreterService(arrivalTime, startTime, newValue);
+                                }}
+                                slotProps={{
+                                    textField: {
+                                        error: errors.endTime,
+                                        helperText: errors.endTime ? errors.endTime : null,
+                                    },
                                 }}
                             />
                         </LocalizationProvider>
@@ -568,6 +765,8 @@ export const NewService = () => {
                             InputProps={{
                                 endAdornment: <InputAdornment position="end">Minutes</InputAdornment>,
                             }}
+                            error={errors.travelTimeToAssignment}
+                            helperText={errors.travelTimeToAssignment ? errors.travelTimeToAssignment : null}
                         />
                     </FormControl>
                     <FormControl sx={{ width: '61%', marginTop: '20px' }}>
@@ -579,6 +778,8 @@ export const NewService = () => {
                             InputProps={{
                                 endAdornment: <InputAdornment position="end">Minutes</InputAdornment>,
                             }}
+                            error={errors.timeBackFromAssignment}
+                            helperText={errors.timeBackFromAssignment ? errors.timeBackFromAssignment : null}
                         />
                     </FormControl>
                     <FormControl sx={{ width: '37%', marginTop: '20px' }}>
@@ -593,6 +794,8 @@ export const NewService = () => {
                             InputProps={{
                                 endAdornment: <InputAdornment position="end">Miles</InputAdornment>,
                             }}
+                            error={errors.travelMileage}
+                            helperText={errors.travelMileage ? errors.travelMileage : null}
                         />
                     </FormControl>
                     <FormControl sx={{ width: '61%', marginTop: '20px' }}>
@@ -607,6 +810,8 @@ export const NewService = () => {
                             InputProps={{
                                 endAdornment: <InputAdornment position="end">USD</InputAdornment>,
                             }}
+                            error={errors.costPerMile}
+                            helperText={errors.costPerMile ? errors.costPerMile : null}
                         />
                     </FormControl>
                 </Stack>
@@ -785,7 +990,7 @@ export const NewService = () => {
                 <Typography variant="h6" sx={{ marginY: 2 }}>
                     Actions
                 </Typography>
-                
+
                 <Grid item xs={12} md={6} lg={4}>
                     <Box
                         sx={{
@@ -819,6 +1024,7 @@ export const NewService = () => {
                         <Button
                             style={{ textDecoration: 'none', color: 'inherit' }}
                             onClick={handleSubmitNewInvoice}
+                            disabled={isLoading}
                         >
                             <Paper variant="outlined" sx={{
                                 py: 2, textAlign: 'center',
@@ -877,9 +1083,6 @@ export const NewService = () => {
                                 {steps.map((label, index) => {
                                     const stepProps = {};
                                     const labelProps = {};
-                                    if (isStepSkipped(index)) {
-                                        stepProps.completed = false;
-                                    }
                                     return (
                                         <Step key={label} {...stepProps}>
                                             <StepLabel {...labelProps}>{label}</StepLabel>
@@ -982,6 +1185,13 @@ export const NewService = () => {
             </Container>
 
             <ToastContainer />
+
+            <Backdrop
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                open={isLoading}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
         </>
     )
 }
