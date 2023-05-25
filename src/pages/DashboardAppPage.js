@@ -2,14 +2,10 @@ import { Helmet } from 'react-helmet-async';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 // @mui
-import { useTheme } from '@mui/material/styles';
-import { Grid, Container, Typography } from '@mui/material';
+import { Grid, Container, Typography, Backdrop, CircularProgress } from '@mui/material';
 // components
-import Iconify from '../components/iconify';
 // sections
 import {
-  AppCurrentVisits,
-  AppWebsiteVisits,
   AppWidgetSummary,
 } from '../sections/@dashboard/app';
 
@@ -21,8 +17,10 @@ export default function DashboardAppPage() {
   const [interpreterCount, setInterpreterCount] = useState(0);
   const [monthlyIncome, setMonthlyIncome] = useState(0);
   const [monthlyExpenditure, setMonthlyExpenditure] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getStatastics = () => {
+    setIsLoading(true);
     axios.get('/api/reports/dashboards')
       .then((response) => {
         setAgencyCount(response.data.total_agencies);
@@ -30,14 +28,16 @@ export default function DashboardAppPage() {
         setMonthlyIncome(response.data.total_income);
         setMonthlyExpenditure(response.data.total_expenses);
         console.log(response.data);
+        setIsLoading(false);
       })
       .catch((error) => {
         console.log(error);
+        setIsLoading(false);
       });
   }
 
   useEffect(() => {
-    getStatastics();   
+    getStatastics();
   }, []);
 
   return (
@@ -70,6 +70,14 @@ export default function DashboardAppPage() {
 
         </Grid>
       </Container>
+
+
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 }

@@ -40,7 +40,7 @@ import Iconify from '../components/iconify';
 
 const steps = ['Agency and Interpreter data', 'Service data', 'Summary'];
 
-export const NewService = () => {
+export const NewServicePage = () => {
 
     /* ***** ------------------------------- Detect exit ---------------------------------- ***** */
 
@@ -472,6 +472,7 @@ export const NewService = () => {
             })
             .catch((error) => {
                 console.log(error);
+                setIsLoading(false);
             });
 
     }

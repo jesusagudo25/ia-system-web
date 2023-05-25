@@ -5,8 +5,8 @@ import SimpleLayout from './layouts/simple';
 //
 import Page404 from './pages/Page404';
 import DashboardAppPage from './pages/DashboardAppPage';
-import { NewService } from './pages/NewService';
-import { SettingPage } from './pages/SettingPage';
+import { NewServicePage } from './pages/NewServicePage';
+import { MyAccountPage } from './pages/MyAccountPage';
 import { PayrollPage } from './pages/PayrollPage';
 import { ManagePage } from './pages/ManagePage';
 import { ReportPage } from './pages/ReportPage';
@@ -17,6 +17,11 @@ import { InterpreterPage } from './pages/InterpreterPage';
 import { UserPage } from './pages/UserPage';
 import { LenguagePage } from './pages/LenguagePage';
 import { AgencyPage } from './pages/AgencyPage';
+import LoginPage from './pages/LoginPage';
+import { CoordinatorPage } from './pages/CoordinatorPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import { PrivateRoute } from './components/auth/PrivateRoute';
 
 // ----------------------------------------------------------------------
 
@@ -24,12 +29,13 @@ export default function Router() {
   const routes = useRoutes([
     {
       path: '/dashboard',
-      element: <DashboardLayout />,
+      element: <PrivateRoute><DashboardLayout /></PrivateRoute>,
       children: [
         { element: <Navigate to="/dashboard/app" />, index: true },
         { path: 'app', element: <DashboardAppPage /> },
-        { path: 'setting', element: <SettingPage/> },
-        { path: 'new-service', element: <NewService />},
+        { path: 'my-account', element: <MyAccountPage/> },
+        { path: 'coordinator', element: <CoordinatorPage />},
+        { path: 'new-service', element: <NewServicePage />},
         { path: 'service-history', element: <ServiceHistory />},
         { path: 'payroll', element: <PayrollPage />},
         { path: 'report', element: <ReportPage /> },
@@ -44,9 +50,21 @@ export default function Router() {
       ],
     },
     {
+      path: 'login',
+      element: <LoginPage />,
+    },
+    {
+      path: 'forgot-password',
+      element: <ForgotPasswordPage />,
+    },
+    {
+      path: 'reset-password/:token',
+      element: <ResetPasswordPage />,
+    },
+    {
       element: <SimpleLayout />,
       children: [
-        { element: <Navigate to="/dashboard/app" />, index: true },
+        { element: <Navigate to="/login" />, index: true },
         { path: '404', element: <Page404 /> },
         { path: '*', element: <Navigate to="/404" /> },
       ],

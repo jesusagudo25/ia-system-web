@@ -3,8 +3,7 @@ import axios from 'axios';
 import { Helmet } from 'react-helmet-async';
 import { ToastContainer, toast } from 'react-toastify';
 import {
-    Breadcrumbs, Link, Typography, Container, Stack, Card, Box, Tab, Tabs, FormControl, TextField, InputLabel, Select, MenuItem, FormHelperText
-} from '@mui/material';
+    Breadcrumbs, Link, Typography, Container, Stack, Card, Box, Tab, Tabs, FormControl, TextField, InputLabel, Select, MenuItem, FormHelperText, CircularProgress, Backdrop} from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 
 import PropTypes from 'prop-types';
@@ -42,63 +41,13 @@ function a11yProps(index) {
     };
 }
 
-export const SettingPage = () => {
+export const CoordinatorPage = () => {
 
     const [isLoading, setIsLoading] = React.useState(false);
     const [states, setStates] = React.useState([]);
 
     /* User settings */
-    const [name, setName] = React.useState('');
-    const [email, setEmail] = React.useState('');
     const [errors, setErrors] = React.useState({});
-
-    const getUser = () => {
-        setIsLoading(true);
-        axios.get('/api/users/1')
-            .then((response) => {
-                setName(response.data.full_name);
-                setEmail(response.data.email);
-                setIsLoading(false);
-            })
-            .catch((error) => {
-                console.log(error);
-                setIsLoading(false);
-            });
-    }
-
-    const updateUser = () => {
-
-        const errors = {};
-
-        if (name === '') {
-            errors.name = 'Name is required';
-        }
-
-        if (email === '') {
-            errors.email = 'Email is required';
-        }
-
-        if (Object.keys(errors).length === 0) {
-
-            setIsLoading(true);
-            axios.put('/api/users/1', {
-                full_name: name,
-                email
-            })
-                .then((response) => {
-                    setIsLoading(false);
-                })
-                .catch((error) => {
-                    console.log(error);
-                    setIsLoading(false);
-                });
-            setErrors({});
-            toast.success('User updated successfully');
-        }
-        else {
-            setErrors(errors);
-        }
-    }
 
     /* Select option */
     const [value, setValue] = React.useState(0);
@@ -141,7 +90,7 @@ export const SettingPage = () => {
     }
 
     const updateCoordinator = () => {
-
+        setIsLoading(true);
         const errors = {};
 
         if (coordinatorName === '') {
@@ -178,7 +127,6 @@ export const SettingPage = () => {
 
         if (Object.keys(errors).length === 0) {
 
-        setIsLoading(true);
         axios.put('/api/coordinators/1', {
             full_name: coordinatorName,
             email: coordinatorEmail,
@@ -202,11 +150,13 @@ export const SettingPage = () => {
         }
         else {
             setErrors(errors);
+            setIsLoading(false);
         }
 
     }
 
     const getStates = () => {
+        setIsLoading(true);
         axios.get('https://api.countrystatecity.in/v1/countries/US/states', {
             headers: {
                 'X-CSCAPI-KEY': 'N3NXRVN4V1Y1YVJmSTd6ZHR3b1NlMDlMRkRRVFQ2c0JWWmcxbmNUWg=='
@@ -214,9 +164,11 @@ export const SettingPage = () => {
         })
             .then((response) => {
                 setStates(response.data);
+                setIsLoading(false);
             })
             .catch((error) => {
                 console.log(error);
+                setIsLoading(false);
             }
             );
     }
@@ -224,7 +176,6 @@ export const SettingPage = () => {
     /* Get all */
 
     useEffect(() => {
-        getUser();
         getCoordinator();
         getStates();
     }, []);
@@ -240,18 +191,11 @@ export const SettingPage = () => {
                     <Link underline="hover" color="inherit" href="/dashboard/app">
                         Dashboard
                     </Link>
-                    <Link
-                        underline="hover"
-                        color="inherit"
-                        href="#"
-                    >
-                        System
-                    </Link>
-                    <Typography color="text.primary">Settings</Typography>
+                    <Typography color="text.primary">Coordinator</Typography>
                 </Breadcrumbs>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2} mt={3}>
                     <Typography variant="h4" gutterBottom>
-                        Settings
+                        Coordinator
                     </Typography>
                 </Stack>
 
@@ -263,75 +207,10 @@ export const SettingPage = () => {
                 >
                     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-                            <Tab label="User" {...a11yProps(0)} />
-                            <Tab label="Coordinator" {...a11yProps(1)} />
+                            <Tab label="Coordinator" {...a11yProps(0)} />
                         </Tabs>
                     </Box>
                     <TabPanel value={value} index={0}>
-                        <Container sx={
-                            {
-                                padding: '20px',
-                            }
-                        }>
-                            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-                                <Typography variant="h6" gutterBottom>
-                                    General information
-                                </Typography>
-                            </Stack>
-                            <Stack direction="row" alignItems="center" justifyContent="space-start" mb={2} sx={
-                                {
-                                    gap: '10px',
-                                }
-                            }>
-                                <Typography variant="body1" gutterBottom>
-                                    Name
-                                </Typography>
-                                <FormControl
-                                    sx={{ width: '60%' }}
-                                >
-                                    <TextField id="outlined-basic" placeholder='Ingrese su nombre completo' variant="outlined" value={name} onChange={
-                                        (e) => {
-                                            setName(e.target.value)
-                                        }
-                                    }
-                                        error={errors.name}
-                                        helperText={errors.name}
-                                    />
-
-                                </FormControl>
-                            </Stack>
-                            <Stack direction="row" alignItems="center" justifyContent="space-start" sx={
-                                {
-                                    gap: '10px',
-                                    mt: '20px',
-                                }
-                            }>
-                                <Typography variant="body1" gutterBottom>
-                                    Email
-                                </Typography>
-                                <FormControl sx={{ width: '60%' }}>
-                                    <TextField id="outlined-basic" variant="outlined" value={email} onChange={
-                                        (e) => {
-                                            setEmail(e.target.value)
-                                        }
-                                    } placeholder='Ingrese su correo electrónico'
-                                        error={errors.email}
-                                        helperText={errors.email}
-                                    />
-                                </FormControl>
-                            </Stack>
-                            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={
-                                {
-                                    mt: '30px',
-                                }
-                            }>
-                                <LoadingButton variant="contained" color="primary" loading={isLoading} onClick={updateUser}>
-                                    Save
-                                </LoadingButton>
-                            </Stack>
-                        </Container>
-                    </TabPanel>
-                    <TabPanel value={value} index={1}>
                         <Container sx={
                             {
                                 padding: '20px',
@@ -412,6 +291,14 @@ export const SettingPage = () => {
             {/* Toastify */}
 
             <ToastContainer />
+
+            
+            <Backdrop
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                open={isLoading}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
         </>
     )
 }

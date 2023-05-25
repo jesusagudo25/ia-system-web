@@ -20,11 +20,10 @@ export default function AppShortCuts({ list, ...other }) {
           sx={{
             display: 'grid',
             gap: 3,
-            gridTemplateColumns: JSON.parse(userRole) === 1 ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(3, 1fr)',
           }}
         >
           {list.map((site, index) => (
-            site.role.includes(JSON.parse(roleId)) ?
             <Link
             to={site.path}
             style={{ textDecoration: 'none', color: 'inherit' }}
@@ -38,7 +37,6 @@ export default function AppShortCuts({ list, ...other }) {
                 </Typography>
               </Paper>
             </Link>
-            : null
           ))}
         </Box>
       </CardContent>

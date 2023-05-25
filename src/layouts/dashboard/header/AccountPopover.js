@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 // @mui
 import { alpha } from '@mui/material/styles';
 import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover } from '@mui/material';
@@ -7,10 +8,16 @@ import axios from 'axios';
 // ----------------------------------------------------------------------
 
 const MENU_OPTIONS = [
+
   {
-    label: 'Settings',
+    label: 'My Account',
     icon: 'eva:settings-2-fill',
-    linkTo: '/dashboard/setting',
+    linkTo: '/dashboard/my-account',
+  },
+  {
+    label: 'Coordinator',
+    icon: 'eva:person-fill',
+    linkTo: '/dashboard/coordinator',
   },
 ];
 
@@ -20,6 +27,8 @@ export default function AccountPopover() {
   const [open, setOpen] = useState(null);
   const [account, setAccount] = useState({});
 
+  const navigate = useNavigate();
+
   const handleOpen = (event) => {
     setOpen(event.currentTarget);
   };
@@ -28,13 +37,24 @@ export default function AccountPopover() {
     setOpen(null);
   };
 
-  const getUser = async () => {
-    const user = await axios.get('/api/users/1');
-    setAccount(user.data);
+  const handleLogout = async () => {
+    handleClose();
+    await axios.post('api/logout')
+    localStorage.removeItem('token')
+    localStorage.removeItem('name')
+    localStorage.removeItem('id')
+    navigate('/login')
+  };
+
+  const getProfile = () => {
+    axios.get(`api/users/${localStorage.getItem('id')}}`)
+      .then((response) => {
+        setAccount(response.data)
+      })
   }
 
   useEffect(() => {
-    getUser();
+    getProfile()
   }, []);
 
   return (
@@ -99,6 +119,10 @@ export default function AccountPopover() {
         </Stack>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
+
+        <MenuItem onClick={handleLogout} sx={{ m: 1 }}>
+          Logout
+        </MenuItem>
 
       </Popover>
     </>
