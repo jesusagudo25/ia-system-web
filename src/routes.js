@@ -22,6 +22,7 @@ import { CoordinatorPage } from './pages/CoordinatorPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import { PrivateRoute } from './components/auth/PrivateRoute';
+import { PublicRoute } from './components/auth/PublicRoute';
 
 // ----------------------------------------------------------------------
 
@@ -51,15 +52,15 @@ export default function Router() {
     },
     {
       path: 'login',
-      element: <LoginPage />,
+      element: <PublicRoute><LoginPage /></PublicRoute>,
     },
     {
       path: 'forgot-password',
-      element: <ForgotPasswordPage />,
+      element: <PublicRoute><ForgotPasswordPage /></PublicRoute>,
     },
     {
       path: 'reset-password/:token',
-      element: <ResetPasswordPage />,
+      element: <PublicRoute><ResetPasswordPage /></PublicRoute>,
     },
     {
       element: <SimpleLayout />,

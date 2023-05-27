@@ -46,6 +46,7 @@ import {
   OutlinedInput,
   Breadcrumbs,
   Link,
+  FormHelperText,
 } from '@mui/material';
 
 import CloseIcon from '@mui/icons-material/Close';
@@ -224,6 +225,7 @@ export const UserPage = () => {
   const [containerPassword, setContainerPassword] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showPassword, setshowPassword] = useState(true);
+  const [errors, setErrors] = useState({});
 
   /* Db */
 
@@ -253,32 +255,7 @@ export const UserPage = () => {
 
   const handleCloseDialog = () => {
     setOpen(false);
-  };
-
-  const handleSubmitDialog = async (event) => {
-    event.preventDefault();
-    if (id) {
-      if (containerPassword) {
-        await axios.put(`/api/users/${id}/password`, {
-          password,
-        });
-      }
-      else {
-        await axios.put(`/api/users/${id}`, {
-          'full_name': name, // 'full_name' es el nombre del campo en la base de datos, 'name' es el nombre del campo en el formulario
-          email,
-        });
-      }
-    } else {
-      await axios.post('/api/users', {
-        'full_name': name, // 'full_name' es el nombre del campo en la base de datos, 'name' es el nombre del campo en el formulario
-        email,
-        password,
-      });
-    }
-    handleCloseDialog();
-    showToastMessage();
-    getUsers();
+    setErrors({});
   };
 
   const handleRequestSort = (event, property) => {
@@ -309,6 +286,72 @@ export const UserPage = () => {
   useEffect(() => {
     getUsers();
   }, []);
+
+  const handleSubmitDialog = async () => {
+    const displayErrors = {};
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+    if (id) {
+      if (containerPassword) {
+        if(password === '') {
+          displayErrors.password = 'Password is required';
+        }
+        else if (!passwordRegex.test(password)) {
+          displayErrors.password = 'Password must contain at least 8 characters, one uppercase, one lowercase and one number';
+        }
+
+        if (Object.keys(displayErrors).length > 0) {
+          setErrors(displayErrors);
+          return;
+        }
+        await axios.put(`/api/users/${id}/password`, {
+          password,
+        });
+      }
+      else {
+        if (name === '') {
+          displayErrors.name = 'Name is required';
+        }
+        if (email === '') {
+          displayErrors.email = 'Email is required';
+        }
+        if (Object.keys(displayErrors).length > 0) {
+          setErrors(displayErrors);
+          return;
+        }
+        await axios.put(`/api/users/${id}`, {
+          'full_name': name, // 'full_name' es el nombre del campo en la base de datos, 'name' es el nombre del campo en el formulario
+          email,
+        });
+      }
+    } else {
+
+      if (name === '') {
+        displayErrors.name = 'Name is required';
+      }
+      if (email === '') {
+        displayErrors.email = 'Email is required';
+      }
+      if (password === '') {
+        displayErrors.password = 'Password is required';
+      }
+      else if (!passwordRegex.test(password)) {
+        displayErrors.password = 'Password must contain at least 8 characters, one uppercase, one lowercase and one number';
+      }
+      
+      if (Object.keys(displayErrors).length > 0) {
+        setErrors(displayErrors);
+        return;
+      }
+      await axios.post('/api/users', {
+        'full_name': name, // 'full_name' es el nombre del campo en la base de datos, 'name' es el nombre del campo en el formulario
+        email,
+        password,
+      });
+    }
+    handleCloseDialog();
+    showToastMessage();
+    getUsers();
+  };
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - users.length) : 0;
 
@@ -529,8 +572,7 @@ export const UserPage = () => {
                   <>
                     <FormControl sx={{ width: '100%' }}>
                       <TextField id="outlined-basic" label="Name" variant="outlined" value={name} size="small" onChange={(event) => {
-                        setName(event.target.value)
-                      }} />
+                        setName(event.target.value)}} error={errors.name} helperText={errors.name} />
                     </FormControl>
 
                     <FormControl sx={{ width: '100%' }}>
@@ -538,7 +580,7 @@ export const UserPage = () => {
                         (event) => {
                           setEmail(event.target.value)
                         }
-                      } />
+                      } error={errors.email} helperText={errors.email} />
                     </FormControl>
 
                     <FormControl sx={{ width: '100%' }} variant="outlined">
@@ -568,7 +610,9 @@ export const UserPage = () => {
                         }
                         label="Contraseña"
                         size='small'
+                        error={errors.password}
                       />
+                      <FormHelperText error={errors.password}>{errors.password}</FormHelperText>
                     </FormControl>
                   </>
                 )
@@ -601,7 +645,9 @@ export const UserPage = () => {
                           </InputAdornment>
                         }
                         label="Contraseña"
+                        error={errors.password}
                       />
+                      <FormHelperText error={errors.password}>{errors.password}</FormHelperText>
                     </FormControl>
                   )
                   :
@@ -610,7 +656,7 @@ export const UserPage = () => {
                       <FormControl sx={{ width: '100%' }}>
                         <TextField id="outlined-basic" label="Nombre" variant="outlined" value={name} size="small" onChange={(event) => {
                           setName(event.target.value)
-                        }} />
+                        }} error={errors.name} helperText={errors.name} />
                       </FormControl>
 
                       <FormControl sx={{ width: '100%' }}>
@@ -618,7 +664,7 @@ export const UserPage = () => {
                           (event) => {
                             setEmail(event.target.value)
                           }
-                        } />
+                        } error={errors.email} helperText={errors.email} />
                       </FormControl>
                     </>
                   )

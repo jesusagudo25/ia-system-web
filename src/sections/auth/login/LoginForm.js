@@ -50,7 +50,7 @@ export default function LoginForm() {
         }).catch(error => {
           setError('backend', {
             type: 'manual',
-            message: 'Invalid email or password'
+            message: error.response.data.message
           });
           console.log(error.response.data.message);
           setIsLoading(false)

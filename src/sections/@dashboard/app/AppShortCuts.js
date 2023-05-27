@@ -9,8 +9,6 @@ AppShortCuts.propTypes = {
 };
 
 export default function AppShortCuts({ list, ...other }) {
-  const [roleId, setRoleId] = localStorage.getItem('role_id');
-  const [userRole, setUserRole] = localStorage.getItem('role_id');
 
   return (
     <Card {...other}>

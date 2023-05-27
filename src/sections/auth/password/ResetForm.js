@@ -40,18 +40,18 @@ const ResetForm = () => {
                 setIsLoading(false)
                 localStorage.setItem('token', response.data.token)
                 localStorage.setItem('id', response.data.id)
-                localStorage.setItem('role_id', response.data.role_id)
                 navigate('/login', { replace: true });
                 setIsLoading(false)
             }).catch((error) => {
                 console.log(error)
+                alert('The token is invalid or has expired')
                 setIsLoading(false)
             })
     }
 
     useEffect(() => {
         setIsLoading(true)
-        axios.get('api/validate-token', {
+        axios.get('api/validate-token-reset', {
             params: {
                 token
             }
@@ -60,7 +60,7 @@ const ResetForm = () => {
                 setIsLoading(false)
             }).catch((error) => {
                 navigate('/login', { replace: true });
-                console.log(error)
+                alert('The token is invalid or has expired')
                 setIsLoading(false)
             })
     }, [])
@@ -151,6 +151,8 @@ const ResetForm = () => {
             >
                 <CircularProgress color="inherit" />
             </Backdrop>
+
+            <ToastContainer />
         </>
     )
 }

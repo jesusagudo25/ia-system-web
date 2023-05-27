@@ -2,16 +2,12 @@ import axios from 'axios';
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 
-export const PrivateRoute = ({ children }) => {
+export const PublicRoute = ({ children }) => {
     const isAuthenticated = localStorage.getItem('token');
     const id = localStorage.getItem('id');
     const navigate = useNavigate();
     useEffect(() => {
-
-        if (!isAuthenticated) {
-            navigate('/login');
-        }
-        else{
+        if (isAuthenticated) {
             axios.get('api/validate-token-access', {
                 params: {
                     token: isAuthenticated,
@@ -20,10 +16,17 @@ export const PrivateRoute = ({ children }) => {
             })
                 .then((response) => {
 /*                     console.log(response.data) */
-                }).catch((error) => {
+                    if(response.data.status === 'success'){
+                        navigate('/dashboard/app');
+                    }
+                }).catch((error) => async () => {
                     console.log(error)
-                    navigate('/login');
+                    await axios.post('api/logout')
+                    localStorage.removeItem('token')
+                    localStorage.removeItem('name')
+                    localStorage.removeItem('id')
                 })
+
         }
     }, [isAuthenticated, id, navigate]);
     

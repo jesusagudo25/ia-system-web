@@ -104,7 +104,7 @@ export const MyAccountPage = () => {
     }
 
     const updateUser = () => {
-setIsLoading(true);
+        setIsLoading(true);
         const errors = {};
 
         if (name === '') {
@@ -381,7 +381,7 @@ setIsLoading(true);
 
             <ToastContainer />
 
-            
+
             <Backdrop
                 sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
                 open={isLoading}
