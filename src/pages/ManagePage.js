@@ -2,8 +2,6 @@ import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
 // @mui
 import { Container, Breadcrumbs, Link, Typography, Grid } from '@mui/material';
-// mock
-import PRODUCTS from '../_mock/products';
 import {
     AppShortCuts,
 } from '../sections/@dashboard/app';

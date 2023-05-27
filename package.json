@@ -83,5 +83,6 @@
   },
   "overrides": {
     "@svgr/webpack": "^6.5.0"
-  }
+  },
+  "homepage": "http://smiajax.com"
 }
