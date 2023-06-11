@@ -28,7 +28,10 @@ import {
     Box,
     Breadcrumbs, Link,
     Button,
-    Checkbox
+    Checkbox,
+    Backdrop,
+    CircularProgress,
+    DialogContentText,
 } from '@mui/material';
 
 // components
@@ -109,7 +112,7 @@ function applySortFilterReview(array, comparator, query) {
         return a[1] - b[1];
     });
     if (query) {
-        return filter(array, (_review) => _review.date.toString().indexOf(query.toLowerCase()) !== -1);
+        return filter(array, (_review) => _review.assignment_number.indexOf(query.toLowerCase()) !== -1);
     }
     return stabilizedThis.map((el) => el[0]);
 }
@@ -129,8 +132,11 @@ export const PayrollPage = () => {
 
     const [payroll, setPayroll] = useState(null);
     const [open, setOpen] = useState(false);
+    const [openDelete, setOpenDelete] = useState(false);
+    const [openPayroll, setOpenPayroll] = useState(false);
+    const [currentId, setCurrentId] = useState(null);
 
-    /* Payrolls */
+    /* -------------------------------  Payrolls -------------------------------  */
 
     const [payrolls, setPayrolls] = useState([]);
 
@@ -167,24 +173,51 @@ export const PayrollPage = () => {
     };
 
     const getPayrolls = async () => {
+        setIsLoading(true);
         try {
             const response = await axios.get(`${config.APPBACK_URL}/api/payrolls`);
             setPayrolls(response.data);
+            setIsLoading(false);
         } catch (error) {
             console.log(error);
+            setIsLoading(false);
         }
     };
 
-    /* Review */
+    /* ------------------------------- Review --------------------------------------- */
     const [review, setReview] = useState(null);
 
     const [pageReview, setPageReview] = useState(0);
 
+    const [orderReview, setOrderReview] = useState('asc');
+
     const [orderByReview, setOrderByReview] = useState('date');
 
-    const [filterDateReview, setFilterDateReview] = useState('');
-
     const [selected, setSelected] = useState([]);
+
+    const [rowsPerPageReview, setRowsPerPageReview] = useState(5);
+
+    const [filterAssignmentReview, setFilterAssignmentReview] = useState('');
+
+    const handleRequestSortReview = (event, property) => {
+        const isAsc = orderBy === property && order === 'asc';
+        setOrderReview(isAsc ? 'desc' : 'asc');
+        setOrderByReview(property);
+    };
+
+    const handleChangePageReview = (event, newPage) => {
+        setPageReview(newPage);
+    };
+
+    const handleChangeRowsPerPageReview = (event) => {
+        setPageReview(0);
+        setRowsPerPageReview(parseInt(event.target.value, 10));
+    };
+
+    const handleFilterByAssignment = (event) => {
+        setPageReview(0);
+        setFilterAssignmentReview(event.target.value);
+    };
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
@@ -239,14 +272,18 @@ export const PayrollPage = () => {
         }
     }
 
-    const handleDeletePayroll = async (id) => {
+    const handleDeletePayroll = async () => {
+        setIsLoading(true);
+        setOpenDelete(false);
         try {
-            const response = await axios.delete(`${config.APPBACK_URL}/api/payrolls/${id}`);
+            const response = await axios.delete(`${config.APPBACK_URL}/api/payrolls/${currentId}`);
             console.log(response);
             toast.success('Payroll deleted successfully');
             getPayrolls();
+            setIsLoading(false);
         } catch (error) {
             console.log(error);
+            setIsLoading(false);
             toast.error('Error deleting payroll');
         }
     };
@@ -258,17 +295,28 @@ export const PayrollPage = () => {
 
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - payrolls.length) : 0;
 
-    const filteredReports = applySortFilter(payrolls, getComparator(order, orderBy), filterDate);
+    const filteredPayrolls = applySortFilter(payrolls, getComparator(order, orderBy), filterDate);
 
-    const isNotFound = !filteredReports.length && !!filterDate;
+    const isNotFound = !filteredPayrolls.length && !!filterDate;
 
-    /* ------------------------------------------------------ */
+    /* ------------- REVIEW ----------------------------- */
 
-    const emptyRowsReview = review ? pageReview > 0 ? Math.max(0, (1 + pageReview) * rowsPerPage - review.length) : 0 : 0;
+    const emptyRowsReview = review ? pageReview > 0 ? Math.max(0, (1 + pageReview) * rowsPerPageReview - review.length) : 0 : 0;
 
-    const filteredReview = review ? applySortFilterReview(review, getComparator(order, orderBy), filterDateReview) : [];
+    const filteredReview = review ? applySortFilterReview(review, getComparator(orderReview, orderByReview), filterAssignmentReview) : [];
 
-    const isNotFoundReview = review ? !filteredReview.length && !!filterDateReview : false;
+    const isNotFoundReview = review ? !filteredReview.length && !!filterAssignmentReview : false;
+
+    /* Dialog delete */
+    const handleClickDelete = (id) => {
+        setOpenDelete(true);
+        setCurrentId(id);
+    };
+
+    const handleClose = () => {
+        setOpenDelete(false);
+        setCurrentId(null);
+    };
 
     return (
         <>
@@ -332,7 +380,6 @@ export const PayrollPage = () => {
                         </LocalizationProvider>
                         <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} sx={{ ml: 1, width: '15%' }} onClick={
                             () => {
-                                setIsLoading(true);
                                 handleReviewPayroll();
                             }
                         }>
@@ -361,7 +408,7 @@ export const PayrollPage = () => {
                                 {/* Tiene que cargar primero... */}
                                 {payrolls.length > 0 ? (
                                     <TableBody>
-                                        {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+                                        {filteredPayrolls.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
                                             const { id, user, month, start_date: startDate, end_date: endDate, total_amount: totalAmount } = row;
 
                                             return (
@@ -406,7 +453,7 @@ export const PayrollPage = () => {
                                                         </a>
 
 
-                                                        <IconButton size="large" color="error" onClick={() => handleDeletePayroll(id)}>
+                                                        <IconButton size="large" color="error" onClick={() => handleClickDelete(id)}>
                                                             <Iconify icon="bx:bxs-trash" />
                                                         </IconButton>
                                                     </TableCell>
@@ -488,11 +535,11 @@ export const PayrollPage = () => {
 
             <ToastContainer />
 
-            {/* Dialog - report result */}
+            {/* Dialog - Payroll result */}
             {
                 payroll ? (
                     <Dialog
-                        open={open}
+                        open={openPayroll}
                         TransitionComponent={Transition}
                         keepMounted
                         aria-describedby="alert-dialog-slide-description"
@@ -545,6 +592,7 @@ export const PayrollPage = () => {
                                     fontWeight: '400'
                                 }}>You can download the payroll in PDF format</Typography>
 
+                                <Stack direction="row" spacing={2}>
                                 <a
                                     href={`${config.APPBACK_URL}/api/payrolls/${payroll.id}/download/`}
                                     target="_blank"
@@ -560,9 +608,29 @@ export const PayrollPage = () => {
                                         color="error"
                                         startIcon={<Iconify icon="mdi:file-pdf" />}
                                     >
-                                        Descargar
+                                        Download payroll
                                     </Button>
                                 </a>
+
+                                <a
+                                    href={`${config.APPBACK_URL}/api/payrolls/${payroll.id}/download/`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download
+                                    style={{ textDecoration: 'none' }}
+                                >
+                                    <Button variant="contained"
+                                        size='large'
+                                        sx={{
+                                            width: '100%',
+                                        }}
+                                        color="success"
+                                        startIcon={<Iconify icon="mdi:file-pdf" />}
+                                    >
+                                        Download bank checks
+                                    </Button>
+                                </a>
+                                </Stack>
 
                             </Stack>
 
@@ -580,9 +648,9 @@ export const PayrollPage = () => {
                                     margin: 2,
                                 }}
                                 onClick={() => {
-                                    setOpen(false);
+                                    setOpenPayroll(false);
                                 }}
-                            >Cerrar</Button>
+                            >Close</Button>
                         </DialogActions>
                     </Dialog>
                 ) : null
@@ -600,23 +668,40 @@ export const PayrollPage = () => {
                         maxWidth='md'
                     >
                         <DialogTitle id="alert-dialog-title">
-                            {"Services provided more than a month ago"}
+                            {"Services provided"}
                         </DialogTitle>
                         <DialogContent dividers>
 
                             <Card>
-                                <ReviewListToolbar numSelected={selected.length} filterDate={filterDateReview} onFilterName={handleFilterByDate} setOpen={setOpen} selected={selected} getPayrolls={getPayrolls} startDate={startDate} endDate={endDate} setDateRange={setDateRange} toast={toast} setReview={setReview} setSelected={setSelected} setPageReview={setPageReview} />
+                                <ReviewListToolbar
+                                    numSelected={selected.length}
+                                    filterAssignment={filterAssignmentReview}
+                                    onFilterAssignment={handleFilterByAssignment}
+
+                                    setOpen={setOpen}
+                                    selected={selected}
+                                    getPayrolls={getPayrolls}
+                                    startDate={startDate}
+                                    endDate={endDate}
+                                    setDateRange={setDateRange}
+                                    toast={toast}
+                                    setReview={setReview}
+                                    setSelected={setSelected}
+                                    setPageReview={setPageReview}
+                                    setIsLoading={setIsLoading}
+                                    setPayroll={setPayroll}
+                                    setOpenPayroll={setOpenPayroll} />
 
                                 <Scrollbar>
                                     <TableContainer sx={{ minWidth: 800 }}>
                                         <Table>
                                             <ReviewListHead
-                                                order={order}
+                                                order={orderReview}
                                                 orderBy={orderByReview}
                                                 headLabel={TABLE_HEAD_REVIEW}
                                                 rowCount={review.length}
                                                 numSelected={selected.length}
-                                                onRequestSort={handleRequestSort}
+                                                onRequestSort={handleRequestSortReview}
                                                 onSelectAllClick={handleSelectAllClick}
                                             />
                                             {/* Tiene que cargar primero... */}
@@ -664,7 +749,7 @@ export const PayrollPage = () => {
                                                 (
                                                     <TableBody>
                                                         <TableRow>
-                                                            <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                                                            <TableCell align="center" colSpan={8} sx={{ py: 3 }}>
                                                                 <Paper
                                                                     sx={{
                                                                         textAlign: 'center',
@@ -688,7 +773,7 @@ export const PayrollPage = () => {
                                             {isNotFoundReview && (
                                                 <TableBody>
                                                     <TableRow>
-                                                        <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                                                        <TableCell align="center" colSpan={8} sx={{ py: 3 }}>
                                                             <Paper
                                                                 sx={{
                                                                     textAlign: 'center',
@@ -700,7 +785,7 @@ export const PayrollPage = () => {
 
                                                                 <Typography variant="body2">
                                                                     No results found for &nbsp;
-                                                                    <strong>&quot;{filterDate}&quot;</strong>.
+                                                                    <strong>&quot;{filterAssignmentReview}&quot;</strong>.
                                                                     <br /> Try to check for errors or use complete words.
                                                                 </Typography>
                                                             </Paper>
@@ -716,10 +801,10 @@ export const PayrollPage = () => {
                                     rowsPerPageOptions={[5, 10, 25]}
                                     component="div"
                                     count={review.length}
-                                    rowsPerPage={rowsPerPage}
+                                    rowsPerPage={rowsPerPageReview}
                                     page={pageReview}
-                                    onPageChange={handleChangePage}
-                                    onRowsPerPageChange={handleChangeRowsPerPage}
+                                    onPageChange={handleChangePageReview}
+                                    onRowsPerPageChange={handleChangeRowsPerPageReview}
                                 />
 
                             </Card>
@@ -740,12 +825,48 @@ export const PayrollPage = () => {
                                 onClick={() => {
                                     setOpen(false);
                                     setDateRange();
+                                    setReview(false);
+                                    setPageReview(0);
+                                    setOrderByReview('date');
+                                    setFilterAssignmentReview('');
+                                    setSelected([]);
                                 }}
-                            >Cancelar</Button>
+                            >Close</Button>
                         </DialogActions>
                     </Dialog>
                 ) : null
             }
+
+            {/* Dialog - delete */}
+
+            <Dialog
+                open={openDelete}
+                onClose={handleClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">
+                    {"Confirm action"}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure you want to delete?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClose}>Disagree</Button>
+                    <Button onClick={handleDeletePayroll} autoFocus>
+                        Agree
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Backdrop
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                open={isLoading}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
 
         </>
     )

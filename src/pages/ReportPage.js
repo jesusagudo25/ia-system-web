@@ -20,18 +20,26 @@ import {
   IconButton,
   TableContainer,
   TablePagination,
-  Breadcrumbs, Link,
+  Breadcrumbs,
+  Link,
+  Backdrop,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  Slide,
+  Box,
 } from '@mui/material';
 
 // components
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import Slide from '@mui/material/Slide';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 // date-fns
 import { differenceInDays, format, lastDayOfMonth, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
-import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 // date-fns
@@ -81,6 +89,10 @@ function applySortFilter(array, comparator, query) {
   return stabilizedThis.map((el) => el[0]);
 }
 
+// ----------------------------------------------------------------------
+
+const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
+
 export const ReportPage = () => {
 
 
@@ -91,6 +103,8 @@ export const ReportPage = () => {
   /* Reports */
 
   const [reports, setReports] = useState([]);
+
+  const [report, setReport] = useState({});
 
   const [page, setPage] = useState(0);
 
@@ -103,6 +117,12 @@ export const ReportPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const [openDelete, setOpenDelete] = useState(false);
+
+  const [openReport, setOpenReport] = useState(false);
+
+  const [currentId, setCurrentId] = useState(null);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -128,17 +148,18 @@ export const ReportPage = () => {
 
   const handleGenerateReport = async () => {
 
+    setIsLoading(true);
+
     /* Get differenceInDays */
 
     const difference = differenceInDays(endDate, startDate);
     let type = 'a';
 
     console.log(difference);
-    
-    if (difference >= 300 && difference <= 365) {
+    if (difference >= 300 && difference <= 364) {
       type = 'm';
     }
-    else if (difference > 365) {
+    else if (difference > 364) {
       type = 'a';
     }
     else {
@@ -148,23 +169,25 @@ export const ReportPage = () => {
     }
 
     console.log(type);
+;
     if (type) {
       try {
         const response = await axios.post(`${config.APPBACK_URL}/api/reports`, {
           start_date: format(startDate, 'yyyy-MM-dd'),
           end_date: format(endDate, 'yyyy-MM-dd'),
           type,
-          user_id: 1,
+          user_id: localStorage.getItem('id'),
         });
-        console.log(response);
+        setOpenReport(true)
+        setReport(response.data);
         toast.success('Report generated successfully');
         setStartDate(new Date(`${format(new Date(), 'yyyy-01-01')}T00:00:00`));
         setEndDate(new Date(`${format(new Date(), 'yyyy-12-31')}T00:00:00`));
         getReports();
+        setIsLoading(false);
       } catch (error) {
         console.log(error);
         toast.error('Error generating report');
-      } finally {
         setIsLoading(false);
       }
     }
@@ -172,23 +195,40 @@ export const ReportPage = () => {
 
   };
 
-  const handleDeleteReport = async (id) => {
+  const handleClickDelete = (id) => {
+    setOpenDelete(true);
+    setCurrentId(id);
+  };
+
+  const handleDeleteReport = async () => {
+    setIsLoading(true);
+    setOpenDelete(false);
     try {
-      const response = await axios.delete(`${config.APPBACK_URL}/api/reports/${id}`);
+      const response = await axios.delete(`${config.APPBACK_URL}/api/reports/${currentId}`);
       toast.success('Report deleted successfully');
       getReports();
+      setIsLoading(false);
     } catch (error) {
       console.log(error);
       toast.error('Error deleting report');
+      setIsLoading(false);
     }
   };
 
+  const handleClose = () => {
+    setOpenDelete(false);
+    setCurrentId(null);
+  };
+
   const getReports = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.get(`${config.APPBACK_URL}/api/reports`);
       setReports(response.data);
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -238,8 +278,8 @@ export const ReportPage = () => {
                 value={startDate}
                 onChange={(newValue) => {
                   setStartDate(newValue);
-              }}
-              format='MM/dd/yyyy'
+                }}
+                format='MM/dd/yyyy'
               />
             </LocalizationProvider>
             <Avatar
@@ -257,8 +297,8 @@ export const ReportPage = () => {
                 value={endDate}
                 onChange={(newValue) => {
                   setEndDate(newValue);
-              }}
-              format='MM/dd/yyyy'
+                }}
+                format='MM/dd/yyyy'
               />
             </LocalizationProvider>
             <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} sx={{ ml: 1, width: '15%' }} onClick={
@@ -322,7 +362,7 @@ export const ReportPage = () => {
                               </IconButton>
                             </a>
 
-                            <IconButton size="large" color="error" onClick={() => handleDeleteReport(id)}>
+                            <IconButton size="large" color="error" onClick={() => handleClickDelete(id)}>
                               <Iconify icon="bx:bxs-trash" />
                             </IconButton>
                           </TableCell>
@@ -400,10 +440,141 @@ export const ReportPage = () => {
         </Card>
       </Container>
 
+      {/* Dialog - Report result */}
+      {
+        report ? (
+          <Dialog
+            open={openReport}
+            TransitionComponent={Transition}
+            keepMounted
+            aria-describedby="alert-dialog-slide-description"
+            fullWidth
+            maxWidth='sm'
+          >
+            <DialogContent dividers>
+
+              <Stack
+                direction="column"
+                sx={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
+                <Box sx={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                  <Iconify icon="mdi:check-circle" color="#4caf50" width="130px" height="130px" />
+                </Box>
+
+                <Stack
+                  direction="row"
+                  sx={{
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: '100%',
+                    gap: 1,
+                    marginTop: 1,
+                  }}
+                >
+                  {/* Details */}
+                  <Typography variant="subtitle1" sx={{ fontWeight: '600' }}>Report type:</Typography>
+
+                  <Typography variant="subtitle1" sx={{ fontWeight: '600' }}>{report.type === 'm' ? 'Month' : 'Annual'}</Typography>
+
+                </Stack>
+
+                <Typography variant="h4" sx={{
+                  fontWeight: '600',
+                  marginTop: 2,
+                }}>Report generated successfully</Typography>
+
+                <Typography variant="h6" sx={{
+                  marginY: 2,
+                  fontWeight: '400'
+                }}>You can download the report in PDF format</Typography>
+
+                <a
+                  href={`${config.APPBACK_URL}/api/reports/${report.id}/download/`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  style={{ textDecoration: 'none' }}
+                >
+                  <Button variant="contained"
+                    size='large'
+                    sx={{
+                      width: '100%',
+                    }}
+                    color="error"
+                    startIcon={<Iconify icon="mdi:file-pdf" />}
+                  >
+                    Download
+                  </Button>
+                </a>
+
+              </Stack>
+
+            </DialogContent>
+            <DialogActions
+              sx={{
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Button
+                variant="contained"
+                size='large'
+                sx={{
+                  margin: 2,
+                }}
+                onClick={() => {
+                  setOpenReport(false);
+                }}
+              >Close</Button>
+            </DialogActions>
+          </Dialog>
+        ) : null
+      }
+
+      {/* Dialog - delete */}
+
+      <Dialog
+        open={openDelete}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Confirm action"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Disagree</Button>
+          <Button onClick={handleDeleteReport} autoFocus>
+            Agree
+          </Button>
+        </DialogActions>
+      </Dialog>
+
 
       {/* Toastify */}
 
       <ToastContainer />
+
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   )
 }

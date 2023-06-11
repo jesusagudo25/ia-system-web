@@ -6,7 +6,6 @@ import axios from 'axios';
 import { Controller, useForm } from 'react-hook-form';
 import PropTypes from 'prop-types';
 // @mui
-import { LoadingButton } from '@mui/lab';
 import {
   Card,
   Table,
@@ -31,18 +30,12 @@ import {
   FormControl,
   Breadcrumbs,
   Link,
+  Backdrop,
+  CircularProgress,
 } from '@mui/material';
 
 // components
 import CloseIcon from '@mui/icons-material/Close';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import Slide from '@mui/material/Slide';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-// date-fns
-import { format, lastDayOfMonth } from 'date-fns';
-import { es } from 'date-fns/locale';
-import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 // date-fns
@@ -248,6 +241,7 @@ export const LenguagePage = () => {
     try {
       const response = await axios.get(`${config.APPBACK_URL}/api/lenguages`);
       setLenguages(response.data);
+      setIsLoading(false);
     } catch (error) {
       console.log(error);
     }
@@ -266,11 +260,21 @@ export const LenguagePage = () => {
   };
 
   const handleSubmitDialog = async (event) => {
-    /*     event.preventDefault(); */
+    setIsLoading(true);
     if (id) {
-      await axios.put(`${config.APPBACK_URL}/api/lenguages/${id}`, { name: event.name, price_per_hour: event.price_per_hour });
+      await axios.put(`${config.APPBACK_URL}/api/lenguages/${id}`, { name: event.name, price_per_hour: event.price_per_hour }).then((response) => {
+        setIsLoading(false);
+      }).catch((error) => {
+        setIsLoading(false);
+      });
     } else {
-      await axios.post(`${config.APPBACK_URL}/api/lenguages`, { name: event.name, price_per_hour: event.price_per_hour });
+      await axios.post(`${config.APPBACK_URL}/api/lenguages`, { name: event.name, price_per_hour: event.price_per_hour }).then((response) => {
+        setIsLoading(false);
+      }
+      ).catch((error) => {
+        setIsLoading(false);
+      }
+      );
     }
 
     showToastMessage();
@@ -281,6 +285,7 @@ export const LenguagePage = () => {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     getLenguages();
   }, []);
 
@@ -365,6 +370,7 @@ export const LenguagePage = () => {
                           <TableCell align="left">
                             <ButtonSwitch checked={status} inputProps={{ 'aria-label': 'ant design' }} onClick={
                               async () => {
+                                setIsLoading(true);
                                 if (status) (
                                   showToastMessageStatus('error', 'Lenguage off')
                                 )
@@ -372,7 +378,13 @@ export const LenguagePage = () => {
                                   showToastMessageStatus('success', 'Lenguage on')
                                 )
                                 setLenguages(lenguages.map(lenguage => lenguage.id === id ? { ...lenguage, status: !status } : lenguage));
-                                await axios.put(`${config.APPBACK_URL}/api/lenguages/${id}`, { status: !status });
+                                await axios.put(`${config.APPBACK_URL}/api/lenguages/${id}`, { status: !status }).then((response) => {
+                                  setIsLoading(false);
+                                }
+                                ).catch((error) => {
+                                  setIsLoading(false);
+                                }
+                                );
                               }
                             } />
                           </TableCell>
@@ -545,13 +557,20 @@ export const LenguagePage = () => {
         </DialogContent>
         <DialogActions>
           <Button size="large" onClick={handleCloseDialog}  >
-            Cancelar
+            Cancel
           </Button>
-          <Button size="large" autoFocus onClick={handleSubmit(handleSubmitDialog)}>
-            Guardar
+          <Button size="large" autoFocus onClick={handleSubmit(handleSubmitDialog)} disabled={isLoading} >
+            Save
           </Button>
         </DialogActions>
       </BootstrapDialog>
+
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   )
 }

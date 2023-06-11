@@ -79,7 +79,7 @@ export const SearchAddress = ({
                 if (event) {
                     handleClearAddress();
                     if (event.target.value) {
-                        if (event.target.value.length > 3) getDataAutocomplete(event.target.value);
+                        if (event.target.value.length > 1) getDataAutocomplete(event.target.value);
                     }
                     else {
                         if(newInputValue === '') toast.warning('The field is empty');

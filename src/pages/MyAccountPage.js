@@ -90,7 +90,6 @@ export const MyAccountPage = () => {
 
 
     const getUser = () => {
-        setIsLoading(true);
         axios.get('/api/users/1')
             .then((response) => {
                 setName(response.data.full_name);
@@ -99,7 +98,6 @@ export const MyAccountPage = () => {
             })
             .catch((error) => {
                 console.log(error);
-                setIsLoading(false);
             });
     }
 
@@ -147,6 +145,7 @@ export const MyAccountPage = () => {
     /* Get all */
 
     useEffect(() => {
+        setIsLoading(true);
         getUser();
     }, []);
 
@@ -358,14 +357,12 @@ export const MyAccountPage = () => {
                                         .then((response) => {
                                             setIsLoading(false)
                                             showNotification('success', 'Password updated successfully')
-                                            window.location.reload();
+                                            reset()
                                         }).catch((error) => {
                                             console.log(error)
                                             showNotification('error', 'Current password is incorrect')
                                             setIsLoading(false)
-                                        })
-                                })
-                                }
+                                        })})}
                                     loading={isLoading}
                                 >
                                     Save

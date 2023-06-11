@@ -19,6 +19,8 @@ import {
     FormHelperText,
     CircularProgress,
     Backdrop,
+    FormControlLabel,
+    Checkbox,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -35,8 +37,6 @@ import { SearchDescription } from '../sections/@manage/description/SearchDescrip
 import { SearchAddress } from '../sections/@manage/interpreter/SearchAddress';
 import config from '../config.json';
 import Iconify from '../components/iconify';
-
-
 
 const steps = ['Agency and Interpreter data', 'Service data', 'Summary'];
 
@@ -83,6 +83,9 @@ export const NewServicePage = () => {
     const [addressSelected, setAddressSelected] = useState(false); // [1
 
     /* New service variable */
+
+    const [assignmentNumber, setAssignmentNumber] = useState('');
+    const [timeIsNull, setTimeIsNull] = useState(true);
 
     const [description, setDescription] = useState('');
     const [descriptionId, setDescriptionId] = useState('');
@@ -210,13 +213,18 @@ export const NewServicePage = () => {
 
             }
 
-
             if (interpreterLenguageId === 'none') {
                 errors.lenguage = 'Lenguage is required';
                 flag = true;
             }
         }
         if (activeStep === 1) {
+
+            if (assignmentNumber === '') {
+                errors.assignmentNumber = 'Assignment number is required';
+                flag = true;
+            }
+
             if (description === '') {
                 errors.description = 'Description is required';
                 flag = true;
@@ -227,19 +235,21 @@ export const NewServicePage = () => {
                 flag = true;
             }
 
-            if (arrivalTime === '') {
-                errors.arrivalTime = 'Arrival time is required';
-                flag = true;
-            }
-
-            if (startTime === '') {
-                errors.startTime = 'Start time is required';
-                flag = true;
-            }
-
-            if (endTime === '') {
-                errors.endTime = 'End time is required';
-                flag = true;
+            if(timeIsNull){
+                if (arrivalTime === '') {
+                    errors.arrivalTime = 'Arrival time is required';
+                    flag = true;
+                }
+    
+                if (startTime === '') {
+                    errors.startTime = 'Start time is required';
+                    flag = true;
+                }
+    
+                if (endTime === '') {
+                    errors.endTime = 'End time is required';
+                    flag = true;
+                }
             }
 
             if (travelTimeToAssignment === '') {
@@ -283,6 +293,19 @@ export const NewServicePage = () => {
             default:
         }
     };
+
+    const handleOnBlurAssignmentNumber = () => {
+        if (assignmentNumber !== '') {
+            axios.get(`${config.APPBACK_URL}/api/invoices/assignmentNumber/${assignmentNumber}`)
+                .then((response) => {
+                })
+                .catch((error) => {
+                    console.log(error);
+                    toast.error('Assignment number already exists');
+                    setAssignmentNumber('');
+                });
+        }
+    }
 
     const handleBack = () => {
         setActiveStep((prevActiveStep) => prevActiveStep - 1);
@@ -352,40 +375,62 @@ export const NewServicePage = () => {
 
     /* Functions for calculate service */
 
-    const calculateInterpreterService = (arrivalTime, startTime, endTime) => {
+    const calculateInterpreterService = (arrivalTime, startTime, endTime, timeIsNull) => {
         setContainerOrderDetails(false);
-        if (arrivalTime && startTime && endTime) {
+        if (timeIsNull) {
+            if (arrivalTime && startTime && endTime) {
 
-            const arrivalTimeFloat = timeStringToFloat(format(arrivalTime, 'HH:mm'));
-            const startTimeFloat = timeStringToFloat(format(startTime, 'HH:mm'));
-            const endTimeFloat = timeStringToFloat(format(endTime, 'HH:mm'));
+                const arrivalTimeFloat = timeStringToFloat(format(arrivalTime, 'HH:mm'));
+                const startTimeFloat = timeStringToFloat(format(startTime, 'HH:mm'));
+                const endTimeFloat = timeStringToFloat(format(endTime, 'HH:mm'));
 
+                const LenguageNameSelected = lenguages.find(lenguage => lenguage.id === interpreterLenguageId);
+
+                let totalTime = Math.round((endTimeFloat - startTimeFloat) * 100) / 100;
+                if (totalTime > 0 && totalTime <= 2) {
+                    totalTime = 2;
+                }
+                const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
+
+                if (totalCostService > 0) {
+                    let totalInterpreter = 0;
+
+                    if (LenguageNameSelected.name === 'Spanish') {
+                        totalInterpreter = 25 * totalTime;
+                    }
+                    else {
+                        totalInterpreter = 30 * totalTime;
+                    }
+
+                    const totalCoordinador = (LenguageNameSelected.price_per_hour - (totalInterpreter / totalTime)) * totalTime;
+
+                    setTotalServiceInterpreter(totalInterpreter);
+                    setTotalServiceCoordinator(totalCoordinador);
+                    setTotalService(totalCostService);
+                    setContainerOrderDetails(true);
+                }
+            }
+        }
+        else {
             const LenguageNameSelected = lenguages.find(lenguage => lenguage.id === interpreterLenguageId);
-
-            let totalTime = Math.round((endTimeFloat - startTimeFloat) * 100) / 100;
-            if (totalTime > 0 && totalTime < 2) {
-                totalTime = 2;
-            }
+            const totalTime = 2;
             const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
-            console.log(totalCostService, totalTime);
 
-            if (totalCostService > 0) {
-                let totalInterpreter = 0;
+            let totalInterpreter = 0;
 
-                if (LenguageNameSelected.name === 'Spanish') {
-                    totalInterpreter = 25 * totalTime;
-                }
-                else {
-                    totalInterpreter = 30 * totalTime;
-                }
-
-                const totalCoordinador = (LenguageNameSelected.price_per_hour - (totalInterpreter / totalTime)) * totalTime;
-
-                setTotalServiceInterpreter(totalInterpreter);
-                setTotalServiceCoordinator(totalCoordinador);
-                setTotalService(totalCostService);
-                setContainerOrderDetails(true);
+            if (LenguageNameSelected.name === 'Spanish') {
+                totalInterpreter = 25 * totalTime;
             }
+            else {
+                totalInterpreter = 30 * totalTime;
+            }
+
+            const totalCoordinador = (LenguageNameSelected.price_per_hour - (totalInterpreter / totalTime)) * totalTime;
+
+            setTotalServiceInterpreter(totalInterpreter);
+            setTotalServiceCoordinator(totalCoordinador);
+            setTotalService(totalCostService);
+            setContainerOrderDetails(true);
         }
     }
 
@@ -396,24 +441,27 @@ export const NewServicePage = () => {
 
     const calculateMileage = (travelMileage, costPerMile) => {
         setContainerTravelDetails(false);
-        if (travelMileage >= 50 && costPerMile > 0) {
+        if (travelMileage > 0 && costPerMile > 0) {
             const totalCostMileage = travelMileage * costPerMile;
             let totalInterpreter = 0;
             let totalCoordinator = 0;
-            if (costPerMile > 0.50) {
-                totalCoordinator = (costPerMile - 0.50) * travelMileage;
-                totalInterpreter = 0.50 * travelMileage;
+
+            if (travelMileage > 0 && travelMileage < 50) {
+                totalCoordinator = totalCostMileage;
             }
-            else {
+            else if (travelMileage >= 50) {
                 totalInterpreter = totalCostMileage;
             }
 
-            if (totalCostMileage > 0) {
-                setTotalMileageInterpreter(totalInterpreter);
-                setTotalMileageCoordinator(totalCoordinator);
-                setTotalMileage(totalCostMileage);
-                setContainerTravelDetails(true);
-            }
+            setTotalMileageInterpreter(totalInterpreter);
+            setTotalMileageCoordinator(totalCoordinator);
+            setTotalMileage(totalCostMileage);
+            setContainerTravelDetails(true);
+
+        } else {
+            setTotalMileageInterpreter(0);
+            setTotalMileageCoordinator(0);
+            setTotalMileage(0);
         }
     }
 
@@ -423,8 +471,9 @@ export const NewServicePage = () => {
         setIsLoading(true);
 
         const newInvoice = {
+            /* Interpreters and coordinators */
             'coordinator_id': 1,
-            'user_id': 1,
+            'user_id': localStorage.getItem('id'),
             'agency_id': agencyId,
             'interpreter_id': interpreterId,
             'interpreterName': interpreterName,
@@ -437,9 +486,7 @@ export const NewServicePage = () => {
             'interpreterEmail': interpreterEmail,
             'interpreterLenguageId': interpreterLenguageId,
 
-            'description_id': descriptionId,
-            'description': description,
-
+            /* Address service */
             'address_id': serviceAddressId,
             'address': serviceAddress,
             'city': serviceCity,
@@ -447,11 +494,16 @@ export const NewServicePage = () => {
             'state_abbr': states.find((item) => item.name === serviceState).iso2,
             'zip_code': serviceZipCode,
 
+            /* Invoice details */
+            'assignment_number': assignmentNumber,
+            'description_id': descriptionId,
+            'description': description,
+
             'total_amount': (totalService + totalMileage).toFixed(2),
             'date_of_service_provided': format(dateServiceProvided, 'yyyy-MM-dd'),
-            'arrival_time': format(arrivalTime, 'HH:mm'),
-            'start_time': format(startTime, 'HH:mm'),
-            'end_time': format(endTime, 'HH:mm'),
+            'arrival_time': timeIsNull ? format(arrivalTime, 'HH:mm') : null,
+            'start_time': timeIsNull ? format(startTime, 'HH:mm') : null,
+            'end_time': timeIsNull ? format(endTime, 'HH:mm') : null,
             'travel_time_to_assignment': travelTimeToAssignment,
             'time_back_from_assignment': timeBackFromAssignment,
             'travel_mileage': travelMileage,
@@ -497,7 +549,13 @@ export const NewServicePage = () => {
             }
         })
             .then((response) => {
-                setStates(response.data);
+                const states = response.data.map((item) => {
+                    return {
+                        name: item.name,
+                        iso2: item.iso2,
+                    }
+                }).sort((a, b) => a.name.localeCompare(b.name));
+                setStates(states);
             })
             .catch((error) => {
                 console.log(error);
@@ -608,7 +666,7 @@ export const NewServicePage = () => {
                     <FormControl sx={{ width: '37%' }} error={errors.lenguage}>
                         <InputLabel id="lenguage-select-label"
                             sx={{ width: 400 }}
-                        >Lenguage</InputLabel>
+                        >Language</InputLabel>
                         <Select
                             labelId="lenguage-select-label"
                             id="lenguage-select"
@@ -662,6 +720,7 @@ export const NewServicePage = () => {
                             interpreterZipCode={interpreterZipCode}
                             interpreterSelected={interpreterSelected}
                             errors={errors}
+                            setIsLoading={setIsLoading}
                         />
                         : null
                 }
@@ -683,6 +742,7 @@ export const NewServicePage = () => {
                 <Typography variant="subtitle1" gutterBottom marginBottom={2}>
                     Enter the service data
                 </Typography>
+                <TextField id="outlined-basic" label="Assignment number" variant="outlined" value={assignmentNumber} onChange={(e) => setAssignmentNumber(e.target.value)} sx={{ marginBottom: '20px' }} error={errors.assignmentNumber} helperText={errors.assignmentNumber ? errors.assignmentNumber : null} onBlur={handleOnBlurAssignmentNumber} />
                 <SearchDescription handleOnChangeDescription={handleOnChangeDescription} setDescription={setDescription} description={description} toast={toast} setDescriptionId={setDescriptionId} errors={errors} />
                 <Stack direction="row" sx={{ marginTop: '20px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
                     <FormControl sx={{ width: '37%' }}>
@@ -703,14 +763,23 @@ export const NewServicePage = () => {
                             />
                         </LocalizationProvider>
                     </FormControl>
-                    <FormControl sx={{ width: '19%' }}>
+                    <FormControl sx={{ width: '10%' }}>
+                        <FormControlLabel required control={<Checkbox />} label="Time:" checked={timeIsNull} onChange={(e) => {
+                            setTimeIsNull(e.target.checked);
+                            setArrivalTime('');
+                            setStartTime('');
+                            setEndTime('');
+                            calculateInterpreterService('', '', '', e.target.checked);
+                        } } />
+                    </FormControl>
+                    <FormControl sx={{ width: '15%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <TimePicker
                                 label="Arrival time"
                                 value={arrivalTime}
                                 onChange={(newValue) => {
                                     setArrivalTime(newValue);
-                                    calculateInterpreterService(newValue, startTime, endTime);
+                                    calculateInterpreterService(newValue, startTime, endTime, timeIsNull);
                                 }}
                                 slotProps={{
                                     textField: {
@@ -718,17 +787,18 @@ export const NewServicePage = () => {
                                         helperText: errors.arrivalTime ? errors.arrivalTime : null,
                                     },
                                 }}
+                                disabled={!timeIsNull}
                             />
                         </LocalizationProvider>
                     </FormControl>
-                    <FormControl sx={{ width: '19%' }}>
+                    <FormControl sx={{ width: '15%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <TimePicker
                                 label="Start time"
                                 value={startTime}
                                 onChange={(newValue) => {
                                     setStartTime(newValue);
-                                    calculateInterpreterService(arrivalTime, newValue, endTime);
+                                    calculateInterpreterService(arrivalTime, newValue, endTime, timeIsNull);
                                 }}
                                 slotProps={{
                                     textField: {
@@ -736,17 +806,18 @@ export const NewServicePage = () => {
                                         helperText: errors.startTime ? errors.startTime : null,
                                     },
                                 }}
+                                disabled={!timeIsNull}
                             />
                         </LocalizationProvider>
                     </FormControl>
-                    <FormControl sx={{ width: '19%' }}>
+                    <FormControl sx={{ width: '15%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <TimePicker
                                 label="End time"
                                 value={endTime}
                                 onChange={(newValue) => {
                                     setEndTime(newValue);
-                                    calculateInterpreterService(arrivalTime, startTime, newValue);
+                                    calculateInterpreterService(arrivalTime, startTime, newValue, timeIsNull);
                                 }}
                                 slotProps={{
                                     textField: {
@@ -754,6 +825,7 @@ export const NewServicePage = () => {
                                         helperText: errors.endTime ? errors.endTime : null,
                                     },
                                 }}
+                                disabled={!timeIsNull}
                             />
                         </LocalizationProvider>
                     </FormControl>

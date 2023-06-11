@@ -2,21 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import PropTypes from 'prop-types';
-import { sentenceCase } from 'change-case';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 // @mui
-import { LoadingButton } from '@mui/lab';
 import {
   Card,
   Table,
   Stack,
   Paper,
-  Avatar,
-  Popover,
-  Checkbox,
   TableRow,
-  MenuItem,
   TableBody,
   TableCell,
   Container,
@@ -27,20 +21,14 @@ import {
   Dialog,
   DialogContent,
   DialogActions,
-  Box,
   Backdrop,
   CircularProgress,
   TextField,
   Button,
   DialogTitle,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
   styled,
   Switch,
   FormControl,
-  FormLabel,
-  Select,
   InputLabel,
   InputAdornment,
   OutlinedInput,
@@ -52,14 +40,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import Slide from '@mui/material/Slide';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 // date-fns
-import { format, lastDayOfMonth } from 'date-fns';
-import { es } from 'date-fns/locale';
-import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 // date-fns
@@ -195,10 +176,10 @@ export const UserPage = () => {
   /* Toastify */
 
   const showToastMessage = () => {
-    if (!id) toast.success('¡New lenguage created!', {
+    if (!id) toast.success('¡New User created!', {
       position: toast.POSITION.TOP_RIGHT
     });
-    else toast.success('¡Lenguage updated!', {
+    else toast.success('¡User updated!', {
       position: toast.POSITION.TOP_RIGHT
     });
   };
@@ -243,6 +224,8 @@ export const UserPage = () => {
 
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleCreateDialog = (event) => {
     setOpen(true);
     setId('');
@@ -280,16 +263,19 @@ export const UserPage = () => {
 
   const getUsers = async () => {
     const response = await axios.get('/api/users');
+    setIsLoading(false);
     setUsers(response.data);
   }
 
   useEffect(() => {
+    setIsLoading(true);
     getUsers();
   }, []);
 
   const handleSubmitDialog = async () => {
     const displayErrors = {};
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+    const passwordRegex = /^^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]/;
+    setIsLoading(true);
     if (id) {
       if (containerPassword) {
         if(password === '') {
@@ -301,11 +287,17 @@ export const UserPage = () => {
 
         if (Object.keys(displayErrors).length > 0) {
           setErrors(displayErrors);
+          setIsLoading(false);
           return;
         }
         await axios.put(`/api/users/${id}/password`, {
           password,
-        });
+        }).then((res) => {
+          setIsLoading(false);
+        }).catch((err) => {
+          console.log(err);
+        }
+        );
       }
       else {
         if (name === '') {
@@ -316,12 +308,19 @@ export const UserPage = () => {
         }
         if (Object.keys(displayErrors).length > 0) {
           setErrors(displayErrors);
+          setIsLoading(false);
           return;
         }
         await axios.put(`/api/users/${id}`, {
           'full_name': name, // 'full_name' es el nombre del campo en la base de datos, 'name' es el nombre del campo en el formulario
           email,
-        });
+        }).then((res) => {
+          setIsLoading(false);
+        }
+        ).catch((err) => {
+          console.log(err);
+        }
+        );
       }
     } else {
 
@@ -335,18 +334,26 @@ export const UserPage = () => {
         displayErrors.password = 'Password is required';
       }
       else if (!passwordRegex.test(password)) {
+        console.log('password', password);
         displayErrors.password = 'Password must contain at least 8 characters, one uppercase, one lowercase and one number';
       }
       
       if (Object.keys(displayErrors).length > 0) {
         setErrors(displayErrors);
+        setIsLoading(false);
         return;
       }
       await axios.post('/api/users', {
         'full_name': name, // 'full_name' es el nombre del campo en la base de datos, 'name' es el nombre del campo en el formulario
         email,
         password,
-      });
+      }).then((res) => {
+        setIsLoading(false);
+      }
+      ).catch((err) => {
+        console.log(err);
+      }
+      );
     }
     handleCloseDialog();
     showToastMessage();
@@ -431,6 +438,7 @@ export const UserPage = () => {
                           <TableCell align="left">
                             <ButtonSwitch checked={status} inputProps={{ 'aria-label': 'ant design' }} onClick={
                               async () => {
+                                setIsLoading(true);
                                 if (status) (
                                   showToastMessageStatus('error', 'User off')
                                 )
@@ -446,6 +454,7 @@ export const UserPage = () => {
                                 await axios.put(`/api/users/${id}`, {
                                   status: !status
                                 });
+                                setIsLoading(false);
                               }
                             } />
                           </TableCell>
@@ -673,13 +682,20 @@ export const UserPage = () => {
         </DialogContent>
         <DialogActions>
           <Button size="large" onClick={handleCloseDialog}  >
-            Cancelar
+            Cancel
           </Button>
-          <Button size="large" autoFocus onClick={handleSubmitDialog}>
-            Guardar
+          <Button size="large" autoFocus onClick={handleSubmitDialog} disabled={isLoading}>
+            Save
           </Button>
         </DialogActions>
       </BootstrapDialog>
+
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   )
 }

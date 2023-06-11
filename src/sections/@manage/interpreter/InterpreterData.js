@@ -18,7 +18,8 @@ export const InterpreterData = ({
     setInterpreterZipCode,
     interpreterZipCode,
     interpreterSelected,
-    errors
+    errors,
+    setIsLoading
 }) => {
     /* get data external */
     const [states, setStates] = useState([]);
@@ -30,7 +31,14 @@ export const InterpreterData = ({
             }
         })
             .then((response) => {
-                setStates(response.data);
+                const states = response.data.map((item) => {
+                    return {
+                        name: item.name,
+                        iso2: item.iso2,
+                    }
+                }).sort((a, b) => a.name.localeCompare(b.name));
+                setStates(states);
+                setIsLoading(false);
             })
             .catch((error) => {
                 console.log(error);
@@ -39,6 +47,7 @@ export const InterpreterData = ({
     }
 
     useEffect(() => {
+        setIsLoading(true);
         getStates();
     }, []);
 

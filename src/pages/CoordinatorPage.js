@@ -68,7 +68,6 @@ export const CoordinatorPage = () => {
     const [coordinatorSSN, setCoordinatorSSN] = React.useState('');
 
     const getCoordinator = () => {
-        setIsLoading(true);
         axios.get('/api/coordinators/1')
             .then((response) => {
                 setCoordinatorName(response.data.full_name);
@@ -84,8 +83,6 @@ export const CoordinatorPage = () => {
             })
             .catch((error) => {
                 console.log(error);
-                setIsLoading(false);
-
             });
     }
 
@@ -156,7 +153,6 @@ export const CoordinatorPage = () => {
     }
 
     const getStates = () => {
-        setIsLoading(true);
         axios.get('https://api.countrystatecity.in/v1/countries/US/states', {
             headers: {
                 'X-CSCAPI-KEY': 'N3NXRVN4V1Y1YVJmSTd6ZHR3b1NlMDlMRkRRVFQ2c0JWWmcxbmNUWg=='
@@ -168,7 +164,6 @@ export const CoordinatorPage = () => {
             })
             .catch((error) => {
                 console.log(error);
-                setIsLoading(false);
             }
             );
     }
@@ -176,6 +171,7 @@ export const CoordinatorPage = () => {
     /* Get all */
 
     useEffect(() => {
+        setIsLoading(true);
         getCoordinator();
         getStates();
     }, []);

@@ -1,12 +1,11 @@
 import { Helmet } from 'react-helmet-async';
-import { filter, set } from 'lodash';
+import { filter } from 'lodash';
 import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 import { Controller, useForm } from 'react-hook-form';
 import PropTypes from 'prop-types';
 // @mui
-import { LoadingButton } from '@mui/lab';
 import {
   Card,
   Table,
@@ -34,19 +33,13 @@ import {
   MenuItem,
   Select,
   InputLabel,
-  FormHelperText
+  FormHelperText,
+  Backdrop,
+  CircularProgress,
 } from '@mui/material';
 
 // components
 import CloseIcon from '@mui/icons-material/Close';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import Slide from '@mui/material/Slide';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-// date-fns
-import { format, lastDayOfMonth } from 'date-fns';
-import { es } from 'date-fns/locale';
-import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 // date-fns
@@ -258,9 +251,11 @@ export const InterpreterPage = () => {
   };
 
   const getInterpreters = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.get(`${config.APPBACK_URL}/api/interpreters`);
       setInterpreters(response.data);
+      setIsLoading(false);
     } catch (error) {
       console.log(error);
     }
@@ -280,10 +275,13 @@ export const InterpreterPage = () => {
 
   const handleSubmitDialog = async (event) => {
     /*     event.preventDefault(); */
+    setIsLoading(true);
     if (id) {
       await axios.put(`${config.APPBACK_URL}/api/interpreters/${id}`, { full_name: event.full_name, lenguage_id: event.lenguage_id, ssn: event.ssn, phone_number: event.phone_number, email: event.email, address: event.address, city: event.city, state: event.state, zip_code: event.zip_code });
+      setIsLoading(false);
     } else {
       await axios.post(`${config.APPBACK_URL}/api/interpreters`, { full_name: event.full_name, lenguage_id: event.lenguage_id, ssn: event.ssn, phone_number: event.phone_number, email: event.email, address: event.address, city: event.city, state: event.state, zip_code: event.zip_code });
+      setIsLoading(false);
     }
 
     showToastMessage();
@@ -294,6 +292,7 @@ export const InterpreterPage = () => {
   };
 
   const getStates = () => {
+    setIsLoading(true);
     axios.get('https://api.countrystatecity.in/v1/countries/US/states', {
       headers: {
         'X-CSCAPI-KEY': 'N3NXRVN4V1Y1YVJmSTd6ZHR3b1NlMDlMRkRRVFQ2c0JWWmcxbmNUWg=='
@@ -301,20 +300,29 @@ export const InterpreterPage = () => {
     })
       .then((response) => {
         setStates(response.data);
+        setIsLoading(false);
       })
       .catch((error) => {
         console.log(error);
+        toast.error('Error to get states', {
+          position: toast.POSITION.TOP_RIGHT
+        });
       }
       );
   }
 
   const getLenguages = () => {
+    setIsLoading(true);
     axios.get('/api/lenguages/status')
       .then((response) => {
         setLenguages(response.data);
+        setIsLoading(false);
       })
       .catch((error) => {
         console.log(error);
+        toast.error('Error to get lenguages', {
+          position: toast.POSITION.TOP_RIGHT
+        });
       }
       );
   }
@@ -426,6 +434,7 @@ export const InterpreterPage = () => {
                           <TableCell align="left">
                             <ButtonSwitch checked={status} inputProps={{ 'aria-label': 'ant design' }} onClick={
                               async () => {
+                                setIsLoading(true);
                                 if (status) (
                                   showToastMessageStatus('error', 'Interpreter off')
                                 )
@@ -434,6 +443,7 @@ export const InterpreterPage = () => {
                                 )
                                 setInterpreters(interpreters.map(interpreter => interpreter.id === id ? { ...interpreter, status: !status } : interpreter));
                                 await axios.put(`/api/interpreters/${id}`, { status: !status });
+                                setIsLoading(false);
                               }
                             } />
                           </TableCell>
@@ -807,13 +817,20 @@ export const InterpreterPage = () => {
         </DialogContent>
         <DialogActions>
           <Button size="large" onClick={handleCloseDialog}  >
-            Cancelar
+            Cancel
           </Button>
           <Button size="large" autoFocus onClick={handleSubmit(handleSubmitDialog)}>
-            Guardar
+            Save
           </Button>
         </DialogActions>
       </BootstrapDialog>
+
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   )
 }

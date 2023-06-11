@@ -43,7 +43,24 @@ ReviewListToolbar.propTypes = {
     onFilterName: PropTypes.func,
 };
 
-export default function ReviewListToolbar({ numSelected, filterName, onFilterName, setOpen, selected, getPayrolls, startDate, endDate, setDateRange, toast, setReview, setSelected, setPageReview }) {
+export default function ReviewListToolbar({
+    numSelected,
+    filterAssignment,
+    onFilterAssignment,
+    setOpen,
+    selected,
+    getPayrolls,
+    startDate,
+    endDate,
+    setDateRange,
+    toast,
+    setReview,
+    setSelected,
+    setPageReview,
+    setIsLoading,
+    setPayroll,
+    setOpenPayroll,
+}) {
     return (
         <StyledRoot
             sx={{
@@ -59,8 +76,8 @@ export default function ReviewListToolbar({ numSelected, filterName, onFilterNam
                 </Typography>
             ) : (
                 <StyledSearch
-                    value={filterName}
-                    onChange={onFilterName}
+                    value={filterAssignment}
+                    onChange={onFilterAssignment}
                     placeholder="Search assignment..."
                     startAdornment={
                         <InputAdornment position="start">
@@ -71,21 +88,29 @@ export default function ReviewListToolbar({ numSelected, filterName, onFilterNam
             )}
 
             {numSelected > 0 ? (
-                <Tooltip title="Select all" onClick={
-                    async () => {
-                        await axios.post(`${config.APPBACK_URL}/api/payrolls`, {
-                            services: selected,
-                            start_date: format(startDate, 'yyyy-MM-dd'),
-                            end_date: format(endDate, 'yyyy-MM-dd'),
-                            user_id: 1,
-                        });
-                        setOpen(false);
+                <Tooltip title="Select all" onClick={() => {
+                    setIsLoading(true);
+                    setOpen(false);
+                    axios.post(`${config.APPBACK_URL}/api/payrolls`, {
+                        services: selected,
+                        start_date: format(startDate, 'yyyy-MM-dd'),
+                        end_date: format(endDate, 'yyyy-MM-dd'),
+                        user_id: localStorage.getItem('id'),
+                    }).then(({ data }) => {
+                        setPayroll(data.payroll);
+                        setOpenPayroll(true);
+                        setIsLoading(false);
                         getPayrolls();
                         setDateRange();
                         toast.success('Payroll generated successfully');
                         setSelected([]);
                         setPageReview(0);
+                    }).catch((error) => {
+                        setIsLoading(false);
+                        toast.error(error.response.data.message);
                     }
+                    );
+                }
                 }>
                     <IconButton>
                         <Iconify icon="eva:checkmark-square-2-fill" />

@@ -1,12 +1,11 @@
 import { Helmet } from 'react-helmet-async';
-import { filter } from 'lodash';
+import { filter, set } from 'lodash';
 import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 import { Controller, useForm } from 'react-hook-form';
 import PropTypes from 'prop-types';
 // @mui
-import { LoadingButton } from '@mui/lab';
 import {
   Card,
   Table,
@@ -31,6 +30,8 @@ import {
   FormControl,
   Breadcrumbs,
   Link,
+  Backdrop, 
+  CircularProgress,
 } from '@mui/material';
 
 // components
@@ -250,9 +251,11 @@ export const DescriptionPage = () => {
   };
 
   const getDescriptions = async () => {
+
     try {
       const response = await axios.get(`${config.APPBACK_URL}/api/descriptions`);
-      setDescriptions(response.data)
+      setDescriptions(response.data);
+      setIsLoading(false);
     } catch (error) {
       console.log(error);
     }
@@ -271,11 +274,23 @@ export const DescriptionPage = () => {
   };
 
   const handleSubmitDialog = async (event) => {
-    /*     event.preventDefault(); */
+    setIsLoading(true);
     if (id) {
-      await axios.put(`${config.APPBACK_URL}/api/descriptions/${id}`, { title: event.title });
+      await axios.put(`${config.APPBACK_URL}/api/descriptions/${id}`, { title: event.title }).then((response) => {
+        setIsLoading(false);
+      }).catch((error) => {
+        console.log(error);
+        setIsLoading(false);
+      });
     } else {
-      await axios.post(`${config.APPBACK_URL}/api/descriptions`, { title: event.title });
+      await axios.post(`${config.APPBACK_URL}/api/descriptions`, { title: event.title }).then((response) => {
+        setIsLoading(false);
+      }
+      ).catch((error) => {
+        console.log(error);
+        setIsLoading(false);
+      }
+      );
     }
 
     showToastMessage();
@@ -286,6 +301,7 @@ export const DescriptionPage = () => {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     getDescriptions();
   }, []);
 
@@ -365,6 +381,7 @@ export const DescriptionPage = () => {
                           <TableCell align="left">
                             <ButtonSwitch checked={status} inputProps={{ 'aria-label': 'ant design' }} onClick={
                               async () => {
+                                setIsLoading(true);
                                 if (status) (
                                   showToastMessageStatus('error', 'Description off')
                                 )
@@ -377,7 +394,13 @@ export const DescriptionPage = () => {
                                   }
                                   return description;
                                 }));
-                                await axios.put(`${config.APPBACK_URL}/api/descriptions/${id}`, { status: !status });
+                                await axios.put(`${config.APPBACK_URL}/api/descriptions/${id}`, { status: !status }).then((response) => {
+                                  setIsLoading(false);
+                                }
+                                ).catch((error) => {
+                                  setIsLoading(false);
+                                  console.log(error);
+                                });
                               }
                             } />
                           </TableCell>
@@ -522,13 +545,20 @@ export const DescriptionPage = () => {
         </DialogContent>
         <DialogActions>
           <Button size="large" onClick={handleCloseDialog}  >
-            Cancelar
+            Cancel
           </Button>
           <Button size="large" autoFocus onClick={handleSubmit(handleSubmitDialog)}>
-            Guardar
+            Save
           </Button>
         </DialogActions>
       </BootstrapDialog>
+
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   )
 }

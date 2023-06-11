@@ -34,19 +34,13 @@ import {
   MenuItem,
   Select,
   InputLabel,
-  FormHelperText
+  FormHelperText,
+  Backdrop,
+  CircularProgress,
 } from '@mui/material';
 
 // components
 import CloseIcon from '@mui/icons-material/Close';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import Slide from '@mui/material/Slide';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-// date-fns
-import { format, lastDayOfMonth } from 'date-fns';
-import { es } from 'date-fns/locale';
-import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 // date-fns
@@ -258,6 +252,7 @@ export const AgencyPage = () => {
     try {
       const response = await axios.get(`${config.APPBACK_URL}/api/agencies`);
       setAgencies(response.data);
+      setIsLoading(false);
     } catch (error) {
       console.log(error);
     }
@@ -276,11 +271,22 @@ export const AgencyPage = () => {
   };
 
   const handleSubmitDialog = async (event) => {
-    /*     event.preventDefault(); */
+
+    setIsLoading(true);
     if (id) {
-      await axios.put(`${config.APPBACK_URL}/api/agencies/${id}`, { name: event.name, phone_number: event.phone_number, email: event.email, address: event.address, city: event.city, state: event.state, zip_code: event.zip_code });
+      await axios.put(`${config.APPBACK_URL}/api/agencies/${id}`, { name: event.name, phone_number: event.phone_number, email: event.email, address: event.address, city: event.city, state: event.state, zip_code: event.zip_code }).then((response) => {
+        setIsLoading(false);
+      }).catch((error) => {
+        setIsLoading(false);
+      });
     } else {
-      await axios.post(`${config.APPBACK_URL}/api/agencies`, { name: event.name, phone_number: event.phone_number, email: event.email, address: event.address, city: event.city, state: event.state, zip_code: event.zip_code });
+      await axios.post(`${config.APPBACK_URL}/api/agencies`, { name: event.name, phone_number: event.phone_number, email: event.email, address: event.address, city: event.city, state: event.state, zip_code: event.zip_code }).then((response) => {
+        setIsLoading(false);
+      }
+      ).catch((error) => {
+        setIsLoading(false);
+      }
+      );
     }
 
     showToastMessage();
@@ -298,6 +304,7 @@ export const AgencyPage = () => {
     })
       .then((response) => {
         setStates(response.data);
+        setIsLoading(false);
       })
       .catch((error) => {
         console.log(error);
@@ -306,6 +313,7 @@ export const AgencyPage = () => {
   }
 
   useEffect(() => {
+    setIsLoading(true);
     getAgencies();
     getStates();
   }, []);
@@ -371,7 +379,7 @@ export const AgencyPage = () => {
                 {agencies.length > 0 ? (
                   <TableBody>
                     {filteredAgencies.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                      const { id, name, email, phone_number:phoneNumber, address, city, state, zip_code: zipCode, status } = row;
+                      const { id, name, email, phone_number: phoneNumber, address, city, state, zip_code: zipCode, status } = row;
 
                       return (
                         <TableRow hover key={id} tabIndex={-1} role="checkbox">
@@ -407,6 +415,7 @@ export const AgencyPage = () => {
                           <TableCell align="left">
                             <ButtonSwitch checked={status} inputProps={{ 'aria-label': 'ant design' }} onClick={
                               async () => {
+                                setIsLoading(true);
                                 if (status) (
                                   showToastMessageStatus('error', 'Agency off')
                                 )
@@ -414,7 +423,12 @@ export const AgencyPage = () => {
                                   showToastMessageStatus('success', 'Agency on')
                                 )
                                 setAgencies(agencies.map(agency => agency.id === id ? { ...agency, status: !status } : agency));
-                                await axios.put(`/api/agencies/${id}`, { status: !status });
+                                await axios.put(`/api/agencies/${id}`, { status: !status }).then((response) => {
+                                  setIsLoading(false);
+                                }).catch((error) => {
+                                  setIsLoading(false);
+                                }
+                                );
                               }
                             } />
                           </TableCell>
@@ -730,13 +744,20 @@ export const AgencyPage = () => {
         </DialogContent>
         <DialogActions>
           <Button size="large" onClick={handleCloseDialog}  >
-            Cancelar
+            Cancel
           </Button>
           <Button size="large" autoFocus onClick={handleSubmit(handleSubmitDialog)}>
-            Guardar
+            Save
           </Button>
         </DialogActions>
       </BootstrapDialog>
+
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   )
 }

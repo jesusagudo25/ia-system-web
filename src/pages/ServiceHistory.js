@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import PropTypes from 'prop-types';
+import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 // @mui
 import {
@@ -18,11 +19,16 @@ import {
     IconButton,
     TableContainer,
     TablePagination,
-    Dialog,
     DialogTitle,
-    styled,
     Breadcrumbs,
     Link,
+    Backdrop,
+    CircularProgress,
+    Dialog,
+    DialogContent,
+    DialogActions,
+    Button,
+    DialogContentText,
 } from '@mui/material';
 // components
 import CloseIcon from '@mui/icons-material/Close';
@@ -124,6 +130,16 @@ export const ServiceHistory = () => {
 
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
+    const [isLoading, setIsLoading] = useState(false);
+
+    const [open, setOpen] = React.useState(false);
+
+    const [currentInvoice, setCurrentInvoice] = useState(null);
+
+    const [currentAssignment, setCurrentAssignment] = useState(null);
+
+    const [currentStatus, setCurrentStatus] = useState(null);
+
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
         setOrder(isAsc ? 'desc' : 'asc');
@@ -145,15 +161,41 @@ export const ServiceHistory = () => {
     };
 
     const getInvoices = async () => {
+        setIsLoading(true);
         const { data } = await axios.get(`${config.APPBACK_URL}/api/invoices`);
         setInvoices(data);
+        setIsLoading(false);
     };
 
-    const handleOnChangeStatus = async (id, status) => {
-        const { data } = await axios.put(`${config.APPBACK_URL}/api/invoices/new-status/${id}`, { status });
-        getInvoices();
+    const handleOnChangeStatus = async () => {
+        setIsLoading(true);
+        setOpen(false);
+        try {
+            const { data } = await axios.put(`${config.APPBACK_URL}/api/invoices/new-status/${currentInvoice}`, { status: currentStatus });
+            toast.success('Status updated successfully');
+            setIsLoading(false);
+            getInvoices();
+        }
+        catch (error) {
+            console.log(error);
+            toast.error('You cannot cancel a service you have already paid for.');
+            setIsLoading(false);
+        }
     };
 
+    const handleClickOpen = (id, status, assignmentNumber) => {
+        setOpen(true);
+        setCurrentInvoice(id);
+        setCurrentAssignment(assignmentNumber);
+        setCurrentStatus(status);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+        setCurrentInvoice(null);
+        setCurrentStatus(null);
+        setCurrentAssignment(null);
+    };
 
     useEffect(() => {
         getInvoices();
@@ -261,7 +303,7 @@ export const ServiceHistory = () => {
                                                                                 <Iconify icon="bx:bxs-file-pdf" />
                                                                             </IconButton>
                                                                         </a>
-                                                                        <IconButton size="large" color="error" onClick={() => handleOnChangeStatus(id, 'cancelled')}>
+                                                                        <IconButton size="large" color="error" onClick={() => handleClickOpen(id, 'cancelled', invoiceDetails[0].assignment_number)}>
                                                                             <Iconify icon={'mdi:close'} />
                                                                             {/* Anular */}
                                                                         </IconButton>
@@ -275,7 +317,7 @@ export const ServiceHistory = () => {
                                                                                 <Iconify icon={'mdi:arrow-right'} />
                                                                                 {/* Ir a seguir orden */}
                                                                             </IconButton>
-                                                                            <IconButton size="large" color="error" onClick={() => handleOnChangeStatus(id, 'cancelled')}>
+                                                                            <IconButton size="large" color="error" onClick={() => handleClickOpen(id, 'cancelled', invoiceDetails[0].assignment_number)}>
                                                                                 <Iconify icon={'mdi:close'} />
                                                                                 {/* Anular */}
                                                                             </IconButton>
@@ -294,7 +336,7 @@ export const ServiceHistory = () => {
                                                                                     <Iconify icon="bx:bxs-file-pdf" />
                                                                                 </IconButton>
                                                                             </a>
-                                                                            <IconButton size="large" color="success" onClick={() => handleOnChangeStatus(id, 'paid')}>
+                                                                            <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'paid', invoiceDetails[0].assignment_number)}>
                                                                                 <Iconify icon="bx:money-withdraw" />
                                                                                 {/* Pagar */}
                                                                             </IconButton>
@@ -379,6 +421,41 @@ export const ServiceHistory = () => {
                     />
                 </Card>
             </Container>
+
+            {/* Dialog */}
+
+            <Dialog
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">
+                    {"Change of status"}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure you want to change the <b>status</b> of service <b>#{currentAssignment}</b> to <b>{currentStatus}?</b>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClose}>Disagree</Button>
+                    <Button onClick={handleOnChangeStatus} autoFocus>
+                        Agree
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Toastify */}
+
+            <ToastContainer />
+
+            <Backdrop
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                open={isLoading}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
         </>
     )
 }

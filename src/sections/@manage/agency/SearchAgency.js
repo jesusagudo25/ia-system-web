@@ -52,7 +52,7 @@ export const SearchAgency = ({ handleOnChangeAgency, setAgencyName, agencyName, 
                 if(newInputValue !== '') setAgencyName(newInputValue);
                 if (event) {
                     setAgencyId('');
-                    if (event.target.value.length > 0) {
+                    if (event.target.value.length > 1) {
                         getDataAutocomplete(event.target.value);
                     }
                     else {
