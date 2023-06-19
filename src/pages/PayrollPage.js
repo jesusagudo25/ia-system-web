@@ -277,7 +277,6 @@ export const PayrollPage = () => {
         setOpenDelete(false);
         try {
             const response = await axios.delete(`${config.APPBACK_URL}/api/payrolls/${currentId}`);
-            console.log(response);
             toast.success('Payroll deleted successfully');
             getPayrolls();
             setIsLoading(false);
@@ -707,7 +706,8 @@ export const PayrollPage = () => {
                                             {/* Tiene que cargar primero... */}
                                             {review.length > 0 ? (
                                                 <TableBody>
-                                                    {filteredReview.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+                                                    {filteredReview.slice(pageReview * rowsPerPageReview, pageReview * rowsPerPageReview + rowsPerPageReview
+                                                    ).map((row) => {
                                                         const { id, invoice_number: invoiceNumber, assignment_number: assignment, date_of_service_provided: date, agency, interpreter, total_amount: total, status } = row;
 
                                                         const selectedReview = selected.indexOf(id) !== -1;
