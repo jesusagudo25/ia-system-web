@@ -90,7 +90,7 @@ export const MyAccountPage = () => {
 
 
     const getUser = () => {
-        axios.get('/api/users/1')
+        axios.get(`/api/users/${id}`)
             .then((response) => {
                 setName(response.data.full_name);
                 setEmail(response.data.email);
@@ -115,7 +115,7 @@ export const MyAccountPage = () => {
 
         if (Object.keys(errors).length === 0) {
 
-            axios.put('/api/users/1', {
+            axios.put(`/api/users/${id}`, {
                 full_name: name,
                 email
             })

@@ -303,7 +303,13 @@ export const AgencyPage = () => {
       }
     })
       .then((response) => {
-        setStates(response.data);
+        const states = response.data.map((item) => {
+          return {
+            name: item.name,
+            iso2: item.iso2,
+          }
+        }).sort((a, b) => a.name.localeCompare(b.name));
+        setStates(states);
         setIsLoading(false);
       })
       .catch((error) => {

@@ -176,7 +176,7 @@ function applySortFilter(array, comparator, query) {
 }
 
 export const InterpreterPage = () => {
-    /* Toastify */
+  /* Toastify */
 
   const showToastMessage = () => {
     if (!id) toast.success('¡New interpreter created!', {
@@ -299,7 +299,13 @@ export const InterpreterPage = () => {
       }
     })
       .then((response) => {
-        setStates(response.data);
+        const states = response.data.map((item) => {
+          return {
+            name: item.name,
+            iso2: item.iso2,
+          }
+        }).sort((a, b) => a.name.localeCompare(b.name));
+        setStates(states);
         setIsLoading(false);
       })
       .catch((error) => {
@@ -394,7 +400,7 @@ export const InterpreterPage = () => {
                 {interpreters.length > 0 ? (
                   <TableBody>
                     {filteredInterpreters.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                      const { id, full_name:fullName, ssn, email, phone_number:phoneNumber, lenguage_id: lenguageId, address, city, state, zip_code: zipCode, status } = row;
+                      const { id, full_name: fullName, ssn, email, phone_number: phoneNumber, lenguage_id: lenguageId, address, city, state, zip_code: zipCode, status } = row;
 
                       return (
                         <TableRow hover key={id} tabIndex={-1} role="checkbox">
@@ -592,7 +598,7 @@ export const InterpreterPage = () => {
                 )}
               />
             </FormControl>
-            
+
             <FormControl sx={{ width: '100%' }}>
               <Controller
                 name="ssn"
@@ -648,7 +654,7 @@ export const InterpreterPage = () => {
               />
               <FormHelperText>{errors?.lenguage_id?.message}</FormHelperText>
             </FormControl>
-            
+
             <FormControl sx={{ width: '100%' }}>
               <Controller
                 name="email"

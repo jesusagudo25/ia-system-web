@@ -330,6 +330,7 @@ export const NewServicePage = () => {
         setInterpreterZipCode(interpreter.zip_code);
         setInterpreterContainer(true);
         setInterpreterSelected(true);
+        calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull);
     }
 
     const handleClearInterpreter = () => {
@@ -344,6 +345,7 @@ export const NewServicePage = () => {
         setInterpreterContainer(false);
         setInterpreterSelected(false);
         setErrors({});
+        calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull);
     }
 
     /* Autocomplete address */
@@ -377,6 +379,12 @@ export const NewServicePage = () => {
 
     const calculateInterpreterService = (arrivalTime, startTime, endTime, timeIsNull) => {
         setContainerOrderDetails(false);
+        if(interpreterLenguageId === 'none' || interpreterLenguageId === '' && interpreterId === ''){ 
+            toast.warning('Please select a lenguage');
+            setContainerOrderDetails(false);
+            return;
+        }
+
         if (timeIsNull) {
             if (arrivalTime && startTime && endTime) {
 
@@ -384,12 +392,19 @@ export const NewServicePage = () => {
                 const startTimeFloat = timeStringToFloat(format(startTime, 'HH:mm'));
                 const endTimeFloat = timeStringToFloat(format(endTime, 'HH:mm'));
 
+                // Calcular utilizando cuartos de hora
+                const arrivalTimeRounded = Math.ceil(arrivalTimeFloat * 4) / 4;
+                const startTimeRounded = Math.ceil(startTimeFloat * 4) / 4;
+                const endTimeRounded = Math.ceil(endTimeFloat * 4) / 4;
+
                 const LenguageNameSelected = lenguages.find(lenguage => lenguage.id === interpreterLenguageId);
 
-                let totalTime = Math.round((endTimeFloat - startTimeFloat) * 100) / 100;
+                let totalTime = Math.round((endTimeRounded - startTimeRounded) * 100) / 100;
+
                 if (totalTime > 0 && totalTime <= 2) {
                     totalTime = 2;
                 }
+
                 const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
 
                 if (totalCostService > 0) {
@@ -415,17 +430,28 @@ export const NewServicePage = () => {
             const LenguageNameSelected = lenguages.find(lenguage => lenguage.id === interpreterLenguageId);
             const totalTime = 2;
             const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
+            /*  40 * 2 = 80 */
 
             let totalInterpreter = 0;
 
+            /* Se calcula la cantidad para el interprete, en base al lenguaje seleccionado, el tiempo total y el precio por hora del interprete (25 o 30) */
             if (LenguageNameSelected.name === 'Spanish') {
                 totalInterpreter = 25 * totalTime;
+                /*  25 * 2 = 50 */
             }
+            /* Esto condiciona que cualquier lenguaje que no sea spanish, el interprete ganara 30 del precio por hora */
             else {
                 totalInterpreter = 30 * totalTime;
             }
 
+            /*
+            El 40 es el precio por hora del coordinador
+            El 50 es el precio por hora del interprete
+            El 2 es el tiempo total
+            Aqui se calcula el precio del coordinador restandole el precio del interprete y multiplicandolo por el tiempo total del servicio.
+            */
             const totalCoordinador = (LenguageNameSelected.price_per_hour - (totalInterpreter / totalTime)) * totalTime;
+            // 40 - (50 / 2) * 2 = 40 - 25 = 15 * 2 = 30
 
             setTotalServiceInterpreter(totalInterpreter);
             setTotalServiceCoordinator(totalCoordinador);
@@ -676,6 +702,7 @@ export const NewServicePage = () => {
                                 setInterpreterLenguageId(e.target.value);
                                 setInterpreterName('');
                                 handleClearInterpreter();
+                                calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull);
                             }}
                         >
                             <MenuItem disabled value="none">

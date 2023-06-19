@@ -613,7 +613,7 @@ export const PayrollPage = () => {
                                 </a>
 
                                 <a
-                                    href={`${config.APPBACK_URL}/api/payrolls/${payroll.id}/download/`}
+                                    href={`${config.APPBACK_URL}/api/bank-checks/${payroll.id}/download/`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     download
