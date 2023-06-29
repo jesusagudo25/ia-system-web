@@ -27,7 +27,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import InputAdornment from '@mui/material/InputAdornment';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 
 import { SearchInterpreter } from '../sections/@manage/interpreter/SearchInterpreter';
@@ -42,7 +43,10 @@ const steps = ['Agency and Interpreter data', 'Service data', 'Summary'];
 
 export const NewServicePage = () => {
 
-    /* ***** ------------------------------- Detect exit ---------------------------------- ***** */
+    /* Detect id */
+    const { id } = useParams();
+    const location = useLocation();
+    const navigate = useNavigate();
 
     /* Form */
     const [errors, setErrors] = useState({});
@@ -85,6 +89,7 @@ export const NewServicePage = () => {
     /* New service variable */
 
     const [assignmentNumber, setAssignmentNumber] = useState('');
+    const [assignmentNumberOld, setAssignmentNumberOld] = useState('');
     const [timeIsNull, setTimeIsNull] = useState(true);
 
     const [description, setDescription] = useState('');
@@ -235,17 +240,17 @@ export const NewServicePage = () => {
                 flag = true;
             }
 
-            if(timeIsNull){
+            if (timeIsNull) {
                 if (arrivalTime === '') {
                     errors.arrivalTime = 'Arrival time is required';
                     flag = true;
                 }
-    
+
                 if (startTime === '') {
                     errors.startTime = 'Start time is required';
                     flag = true;
                 }
-    
+
                 if (endTime === '') {
                     errors.endTime = 'End time is required';
                     flag = true;
@@ -295,7 +300,10 @@ export const NewServicePage = () => {
     };
 
     const handleOnBlurAssignmentNumber = () => {
-        if (assignmentNumber !== '') {
+        /* validar el assignment number, si hay un id es porque se esta editando, entonces que no se valide por el mismo id */
+
+        console.log(assignmentNumber, assignmentNumberOld);
+        if (assignmentNumber !== '' && assignmentNumber !== assignmentNumberOld) {
             axios.get(`${config.APPBACK_URL}/api/invoices/assignmentNumber/${assignmentNumber}`)
                 .then((response) => {
                 })
@@ -330,7 +338,7 @@ export const NewServicePage = () => {
         setInterpreterZipCode(interpreter.zip_code);
         setInterpreterContainer(true);
         setInterpreterSelected(true);
-        calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull);
+        calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull, interpreterLenguageId);
     }
 
     const handleClearInterpreter = () => {
@@ -339,13 +347,13 @@ export const NewServicePage = () => {
         setInterpreterSSN('');
         setInterpreterAddress('');
         setInterpreterCity('');
-        setInterpreterState('');
+        setInterpreterState('none');
         setInterpreterEmail('');
         setInterpreterZipCode('');
         setInterpreterContainer(false);
         setInterpreterSelected(false);
         setErrors({});
-        calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull);
+        calculateInterpreterService('', '', '', true, 'none');
     }
 
     /* Autocomplete address */
@@ -362,7 +370,7 @@ export const NewServicePage = () => {
     const handleClearAddress = () => {
         setServiceAddressId('');
         setServiceCity('');
-        setServiceState('');
+        setServiceState('none');
         setServiceZipCode('');
         setAddressSelected(false);
         setErrors({});
@@ -375,15 +383,16 @@ export const NewServicePage = () => {
         setDescriptionId(description.id);
     }
 
-    /* Functions for calculate service */
+    /* Functions for calculate service - Time */
 
-    const calculateInterpreterService = (arrivalTime, startTime, endTime, timeIsNull) => {
+    const timeStringToFloat = (time) => {
+        const [hours, minutes] = time.split(':');
+        return Math.round((parseFloat(hours) + parseFloat(minutes) / 60) * 100) / 100;
+    }
+
+    const calculateInterpreterService = (arrivalTime, startTime, endTime, timeIsNull, interpreterLenguageId) => {
+
         setContainerOrderDetails(false);
-        if(interpreterLenguageId === 'none' || interpreterLenguageId === '' && interpreterId === ''){ 
-            toast.warning('Please select a lenguage');
-            setContainerOrderDetails(false);
-            return;
-        }
 
         if (timeIsNull) {
             if (arrivalTime && startTime && endTime) {
@@ -425,6 +434,12 @@ export const NewServicePage = () => {
                     setContainerOrderDetails(true);
                 }
             }
+            else{
+                setTotalServiceInterpreter(0);
+                setTotalServiceCoordinator(0);
+                setTotalService(0);
+                setContainerOrderDetails(false);
+            }
         }
         else {
             const LenguageNameSelected = lenguages.find(lenguage => lenguage.id === interpreterLenguageId);
@@ -460,10 +475,8 @@ export const NewServicePage = () => {
         }
     }
 
-    const timeStringToFloat = (time) => {
-        const [hours, minutes] = time.split(':');
-        return Math.round((parseFloat(hours) + parseFloat(minutes) / 60) * 100) / 100;
-    }
+    /* Functions for calculate service - Travel */
+
 
     const calculateMileage = (travelMileage, costPerMile) => {
         setContainerTravelDetails(false);
@@ -491,7 +504,7 @@ export const NewServicePage = () => {
         }
     }
 
-    /* Handle submit new service */
+    /* Handle submit new service or update */
 
     const handleSubmitNewInvoice = () => {
         setIsLoading(true);
@@ -541,17 +554,38 @@ export const NewServicePage = () => {
             comments,
         };
 
-        axios.post(`${config.APPBACK_URL}/api/invoices`, newInvoice)
-            .then((response) => {
-                console.log(response);
-                setInvoiceId(response.data.invoice);
-                setActiveStep((prevActiveStep) => prevActiveStep + 1);
-                setIsLoading(false);
-            })
-            .catch((error) => {
-                console.log(error);
-                setIsLoading(false);
-            });
+        if (id) {
+            newInvoice.id = id;
+            axios.put(`${config.APPBACK_URL}/api/invoices/${id}`, newInvoice)
+                .then((response) => {
+                    /* Redirect service history */
+                    toast.success('Invoice updated successfully');
+                    /* Wait 2 seconds to redirect */
+                    setTimeout(() => {
+                        setIsLoading(false);
+                        navigate('/dashboard/service-history');
+                    }, 2000);
+                }
+                )
+                .catch((error) => {
+                    console.log(error);
+                    setIsLoading(false);
+                }
+                );
+                
+        }
+        else {
+            axios.post(`${config.APPBACK_URL}/api/invoices`, newInvoice)
+                .then((response) => {
+                    setInvoiceId(response.data.invoice);
+                    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+                    setIsLoading(false);
+                })
+                .catch((error) => {
+                    console.log(error);
+                    setIsLoading(false);
+                });
+        }
 
     }
 
@@ -589,10 +623,134 @@ export const NewServicePage = () => {
             );
     }
 
+    const getServiceDetails = () => {
+        setIsLoading(true);
+        axios.get(`${config.APPBACK_URL}/api/invoices/${id}`)
+            .then((response) => {
+                console.log(response.data);
+                /* Agency */
+                setAgencyId(response.data.agency.id);
+                setAgencyName(response.data.agency.name);
+
+                /* Address */
+                setServiceAddressId(response.data.address.id);
+                setServiceAddress(response.data.address.address);
+                setServiceCity(response.data.address.city);
+                setServiceState(response.data.address.state);
+                setServiceZipCode(response.data.address.zip_code);
+                setAddressSelected(true);
+
+                /* Interpreter */
+                setInterpreterId(response.data.interpreter.id);
+                setInterpreterName(response.data.interpreter.full_name);
+                setInterpreterPhoneNum(response.data.interpreter.phone_number);
+                setInterpreterSSN(response.data.interpreter.ssn);
+                setInterpreterAddress(response.data.interpreter.address);
+                setInterpreterCity(response.data.interpreter.city);
+                setInterpreterState(response.data.interpreter.state);
+                setInterpreterZipCode(response.data.interpreter.zip_code);
+                setInterpreterEmail(response.data.interpreter.email);
+                setInterpreterLenguageId(response.data.interpreter.lenguage_id);
+                setInterpreterSelected(true);
+                setInterpreterContainer(true);
+
+                /* Service variable */
+                setAssignmentNumber(response.data.details.assignment_number);
+                setAssignmentNumberOld(response.data.details.assignment_number);
+                setDescriptionId(response.data.description.id);
+                setDescription(response.data.description.title);
+                setDateServiceProvided(new Date(response.data.details.date_of_service_provided));
+
+                if (response.data.details.arrival_time === null && response.data.details.start_time === null && response.data.details.end_time === null) {
+                    setTimeIsNull(false);
+                    calculateInterpreterService(response.data.details.arrival_time, response.data.details.start_time, response.data.details.end_time, false, response.data.interpreter.lenguage_id);
+                } else {
+                    setTimeIsNull(true);
+                    setArrivalTime(parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.arrival_time}`));
+                    setStartTime(parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.start_time}`));
+                    setEndTime(parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.end_time}`));
+                    calculateInterpreterService(
+                        parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.arrival_time}`),
+                        parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.start_time}`),
+                        parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.end_time}`),
+                        true,
+                        response.data.interpreter.lenguage_id
+                    );
+                }
+
+                setTravelMileage(response.data.details.travel_mileage);
+                setCostPerMile(response.data.details.cost_per_mile);
+                calculateMileage(response.data.details.travel_mileage, response.data.details.cost_per_mile);
+
+                setTravelTimeToAssignment(response.data.details.travel_time_to_assignment);
+                setTimeBackFromAssignment(response.data.details.time_back_from_assignment);
+
+                /* Comments */
+                setComments(response.data.details.comments);
+
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                console.log(error);
+            }
+            );
+    };
+
     useEffect(() => {
         getStates();
         getLenguages();
     }, []);
+
+    useEffect(() => {
+        if (lenguages.length > 0) {
+            console.log(lenguages);
+            if (id) {
+                getServiceDetails();
+            }
+        }
+    }, [lenguages]);
+
+    useEffect(() => {
+        if(location.pathname === '/dashboard/new-service') {
+            /* Clear data */
+            setAgencyId('');
+            setAgencyName('');
+            setServiceAddressId('');
+            setServiceAddress('');
+            setServiceCity('');
+            setServiceState('none');
+            setServiceZipCode('');
+            setAddressSelected(false);
+            setInterpreterId('');
+            setInterpreterName('');
+            setInterpreterPhoneNum('');
+            setInterpreterSSN('');
+            setInterpreterAddress('');
+            setInterpreterCity('');
+            setInterpreterState('');
+            setInterpreterZipCode('');
+            setInterpreterEmail('');
+            setInterpreterLenguageId('none');
+            setInterpreterSelected(false);
+            setInterpreterContainer(false);
+            setAssignmentNumber('');
+            setDescriptionId('');
+            setDescription('');
+            setDateServiceProvided(new Date());
+            setTimeIsNull(true);
+            setArrivalTime('');
+            setStartTime('');
+            setEndTime('');
+            setTravelMileage(0);
+            setCostPerMile(0.655);
+            setTravelTimeToAssignment('');
+            setTimeBackFromAssignment('');
+            setComments('');
+            setErrors({});
+            setInvoiceId(null);   
+            setActiveStep(0);
+        }
+    }, [location]);
 
     /* Functions for New service */
 
@@ -702,7 +860,7 @@ export const NewServicePage = () => {
                                 setInterpreterLenguageId(e.target.value);
                                 setInterpreterName('');
                                 handleClearInterpreter();
-                                calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull);
+                                calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull, e.target.value);
                             }}
                         >
                             <MenuItem disabled value="none">
@@ -796,8 +954,8 @@ export const NewServicePage = () => {
                             setArrivalTime('');
                             setStartTime('');
                             setEndTime('');
-                            calculateInterpreterService('', '', '', e.target.checked);
-                        } } />
+                            calculateInterpreterService('', '', '', e.target.checked, interpreterLenguageId);
+                        }} />
                     </FormControl>
                     <FormControl sx={{ width: '15%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -806,7 +964,7 @@ export const NewServicePage = () => {
                                 value={arrivalTime}
                                 onChange={(newValue) => {
                                     setArrivalTime(newValue);
-                                    calculateInterpreterService(newValue, startTime, endTime, timeIsNull);
+                                    calculateInterpreterService(newValue, startTime, endTime, timeIsNull, interpreterLenguageId);
                                 }}
                                 slotProps={{
                                     textField: {
@@ -825,7 +983,7 @@ export const NewServicePage = () => {
                                 value={startTime}
                                 onChange={(newValue) => {
                                     setStartTime(newValue);
-                                    calculateInterpreterService(arrivalTime, newValue, endTime, timeIsNull);
+                                    calculateInterpreterService(arrivalTime, newValue, endTime, timeIsNull, interpreterLenguageId);
                                 }}
                                 slotProps={{
                                     textField: {
@@ -844,7 +1002,7 @@ export const NewServicePage = () => {
                                 value={endTime}
                                 onChange={(newValue) => {
                                     setEndTime(newValue);
-                                    calculateInterpreterService(arrivalTime, startTime, newValue, timeIsNull);
+                                    calculateInterpreterService(arrivalTime, startTime, newValue, timeIsNull, interpreterLenguageId);
                                 }}
                                 slotProps={{
                                     textField: {

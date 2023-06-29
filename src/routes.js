@@ -38,6 +38,7 @@ export default function Router() {
         { path: 'coordinator', element: <CoordinatorPage />},
         { path: 'new-service', element: <NewServicePage />},
         { path: 'service-history', element: <ServiceHistory />},
+        { path: "service-history/:id", element: <NewServicePage />},
         { path: 'payroll', element: <PayrollPage />},
         { path: 'report', element: <ReportPage /> },
 

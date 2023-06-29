@@ -5,6 +5,7 @@ import { sentenceCase } from 'change-case';
 import PropTypes from 'prop-types';
 import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 // @mui
 import {
     Card,
@@ -41,6 +42,7 @@ import Scrollbar from '../components/scrollbar';
 
 // Sections - Se debe reempazar el nombre del componente por uno mas general
 import config from '../config.json';
+
 
 
 const TABLE_HEAD = [
@@ -107,9 +109,10 @@ function applySortFilter(array, comparator, query) {
         if (order !== 0) return order;
         return a[1] - b[1];
     });
-    console.log(stabilizedThis);
     if (query) {
-        return filter(array, (_invoice) => _invoice.id.toString(2).toLowerCase().indexOf(query.toLowerCase()) !== -1);
+        return filter(array, (_invoice) => {
+            return _invoice.invoice_details[0].assignment_number.toString(2).toLowerCase().indexOf(query.toLowerCase()) !== -1;
+        });
     }
     return stabilizedThis.map((el) => el[0]);
 }
@@ -117,6 +120,8 @@ function applySortFilter(array, comparator, query) {
 export const ServiceHistory = () => {
 
     /* Datatable */
+
+    const navigate = useNavigate();
 
     const [invoices, setInvoices] = useState([]);
 
@@ -165,6 +170,19 @@ export const ServiceHistory = () => {
         const { data } = await axios.get(`${config.APPBACK_URL}/api/invoices`);
         setInvoices(data);
         setIsLoading(false);
+    };
+
+    const validatePayroll = async (id) => {
+        setIsLoading(true);
+        try {
+            await axios.get(`${config.APPBACK_URL}/api/invoices/payroll/${id}`);
+            navigate(`/dashboard/service-history/${id}`);
+        }
+        catch (error) {
+            console.log(error);
+            toast.error('You cannot edit a service you have already paid for.');
+            setIsLoading(false);
+        }
     };
 
     const handleOnChangeStatus = async () => {
@@ -233,7 +251,7 @@ export const ServiceHistory = () => {
                 </Typography>
 
                 <Card>
-                    <ListToolbar filterName={filterName} onFilterName={handleFilterByName} PlaceHolder={"Buscar factura..."} />
+                    <ListToolbar filterName={filterName} onFilterName={handleFilterByName} />
 
                     <Scrollbar>
                         <TableContainer sx={{ minWidth: 800 }}>
@@ -293,6 +311,12 @@ export const ServiceHistory = () => {
                                                             status === 'paid' ?
                                                                 (
                                                                     <>
+
+                                                                            <IconButton size="large" color="primary" onClick={() => validatePayroll(id)}>
+                                                                                <Iconify icon={'mdi:pencil-box'} />
+                                                                                {/* Ir a seguir orden */}
+                                                                            </IconButton>
+                                                                        
                                                                         <a
                                                                             style={{ textDecoration: 'none', color: 'inherit' }}
                                                                             target="_blank"
@@ -310,40 +334,39 @@ export const ServiceHistory = () => {
                                                                     </>
                                                                 )
                                                                 :
-                                                                status === 'open' ?
-                                                                    (
-                                                                        <>
-                                                                            <IconButton size="large" color="inherit">
-                                                                                <Iconify icon={'mdi:arrow-right'} />
+                                                                status === 'pending' ?
+                                                                    (<>
+                                                                        <a
+                                                                            style={{ textDecoration: 'none', color: 'inherit' }}
+                                                                            href={`./service-history/${id}`}
+                                                                        >
+                                                                            <IconButton size="large" color="primary">
+                                                                                <Iconify icon={'mdi:pencil-box'} />
                                                                                 {/* Ir a seguir orden */}
                                                                             </IconButton>
-                                                                            <IconButton size="large" color="error" onClick={() => handleClickOpen(id, 'cancelled', invoiceDetails[0].assignment_number)}>
-                                                                                <Iconify icon={'mdi:close'} />
-                                                                                {/* Anular */}
+                                                                        </a>
+                                                                        <a
+                                                                            style={{ textDecoration: 'none', color: 'inherit' }}
+                                                                            target="_blank"
+                                                                            href={`${config.APPBACK_URL}/api/invoices/${id}/download`}
+                                                                            rel="noreferrer"
+                                                                        >
+                                                                            <IconButton size="large" color="inherit">
+                                                                                <Iconify icon="bx:bxs-file-pdf" />
                                                                             </IconButton>
-                                                                        </>
+                                                                        </a>
+                                                                        <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'paid', invoiceDetails[0].assignment_number)}>
+                                                                            <Iconify icon="bx:money-withdraw" />
+                                                                            {/* Pagar */}
+                                                                        </IconButton>
+                                                                        <IconButton size="large" color="error" onClick={() => handleClickOpen(id, 'cancelled', invoiceDetails[0].assignment_number)}>
+                                                                            <Iconify icon={'mdi:close'} />
+                                                                            {/* Anular */}
+                                                                        </IconButton>
+                                                                    </>
                                                                     )
                                                                     :
-                                                                    status === 'pending' ?
-                                                                        (<>
-                                                                            <a
-                                                                                style={{ textDecoration: 'none', color: 'inherit' }}
-                                                                                target="_blank"
-                                                                                href={`${config.APPBACK_URL}/api/invoices/${id}/download`}
-                                                                                rel="noreferrer"
-                                                                            >
-                                                                                <IconButton size="large" color="inherit">
-                                                                                    <Iconify icon="bx:bxs-file-pdf" />
-                                                                                </IconButton>
-                                                                            </a>
-                                                                            <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'paid', invoiceDetails[0].assignment_number)}>
-                                                                                <Iconify icon="bx:money-withdraw" />
-                                                                                {/* Pagar */}
-                                                                            </IconButton>
-                                                                        </>
-                                                                        )
-                                                                        :
-                                                                        null
+                                                                    null
                                                         }
                                                     </TableCell>
                                                 </TableRow>
