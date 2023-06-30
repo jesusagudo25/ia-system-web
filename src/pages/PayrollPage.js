@@ -708,7 +708,7 @@ export const PayrollPage = () => {
                                                 <TableBody>
                                                     {filteredReview.slice(pageReview * rowsPerPageReview, pageReview * rowsPerPageReview + rowsPerPageReview
                                                     ).map((row) => {
-                                                        const { id, invoice_number: invoiceNumber, assignment_number: assignment, date_of_service_provided: date, agency, interpreter, total_amount: total, status } = row;
+                                                        const { id, assignment_number: assignment, date_of_service_provided: date, agency, interpreter, total_amount: total, status } = row;
 
                                                         const selectedReview = selected.indexOf(id) !== -1;
 

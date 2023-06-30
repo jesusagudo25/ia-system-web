@@ -312,11 +312,10 @@ export const ServiceHistory = () => {
                                                                 (
                                                                     <>
 
-                                                                            <IconButton size="large" color="primary" onClick={() => validatePayroll(id)}>
-                                                                                <Iconify icon={'mdi:pencil-box'} />
-                                                                                {/* Ir a seguir orden */}
-                                                                            </IconButton>
-                                                                        
+                                                                        <IconButton size="large" color="primary" onClick={() => validatePayroll(id)}>
+                                                                            <Iconify icon={'mdi:pencil-box'} />
+                                                                        </IconButton>
+
                                                                         <a
                                                                             style={{ textDecoration: 'none', color: 'inherit' }}
                                                                             target="_blank"
@@ -336,15 +335,10 @@ export const ServiceHistory = () => {
                                                                 :
                                                                 status === 'pending' ?
                                                                     (<>
-                                                                        <a
-                                                                            style={{ textDecoration: 'none', color: 'inherit' }}
-                                                                            href={`./service-history/${id}`}
-                                                                        >
-                                                                            <IconButton size="large" color="primary">
-                                                                                <Iconify icon={'mdi:pencil-box'} />
-                                                                                {/* Ir a seguir orden */}
-                                                                            </IconButton>
-                                                                        </a>
+
+                                                                        <IconButton size="large" color="primary" onClick={() => validatePayroll(id)}>
+                                                                            <Iconify icon={'mdi:pencil-box'} />
+                                                                        </IconButton>
                                                                         <a
                                                                             style={{ textDecoration: 'none', color: 'inherit' }}
                                                                             target="_blank"
@@ -366,7 +360,10 @@ export const ServiceHistory = () => {
                                                                     </>
                                                                     )
                                                                     :
-                                                                    null
+                                                                    <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'pending', invoiceDetails[0].assignment_number)}>
+                                                                        <Iconify icon={'mdi:check'} />
+                                                                        {/* Pendiente */}
+                                                                    </IconButton>
                                                         }
                                                     </TableCell>
                                                 </TableRow>

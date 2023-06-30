@@ -392,11 +392,11 @@ export const NewServicePage = () => {
 
     const calculateInterpreterService = (arrivalTime, startTime, endTime, timeIsNull, interpreterLenguageId) => {
 
+
         setContainerOrderDetails(false);
 
         if (timeIsNull) {
             if (arrivalTime && startTime && endTime) {
-
                 const arrivalTimeFloat = timeStringToFloat(format(arrivalTime, 'HH:mm'));
                 const startTimeFloat = timeStringToFloat(format(startTime, 'HH:mm'));
                 const endTimeFloat = timeStringToFloat(format(endTime, 'HH:mm'));
@@ -1261,8 +1261,12 @@ export const NewServicePage = () => {
                             style={{ textDecoration: 'none', color: 'inherit' }}
                             onClick={
                                 () => {
-                                    /* Reaload  */
-                                    window.location.reload();
+                                    if(id){
+                                        navigate('/dashboard/service-history');
+                                    }
+                                    else{
+                                        window.location.reload();
+                                    }
                                 }
                             }
                         >
