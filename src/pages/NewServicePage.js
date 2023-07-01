@@ -703,7 +703,6 @@ export const NewServicePage = () => {
 
     useEffect(() => {
         if (lenguages.length > 0) {
-            console.log(lenguages);
             if (id) {
                 getServiceDetails();
             }
@@ -748,6 +747,10 @@ export const NewServicePage = () => {
             setComments('');
             setErrors({});
             setInvoiceId(null);   
+            setActiveStep(0);
+        }
+        else if(id){
+            getServiceDetails();
             setActiveStep(0);
         }
     }, [location]);
@@ -1309,7 +1312,11 @@ export const NewServicePage = () => {
     return (
         <>
             <Helmet>
-                <title> Generate Invoice | IA System </title>
+                <title> {
+                    id ?
+                        'Edit service'
+                        : 'New service'
+                } | IA System </title>
             </Helmet>
 
             <Container>
@@ -1323,12 +1330,12 @@ export const NewServicePage = () => {
                         color="inherit"
                         href="#"
                     >
-                        New service
+                        { id ? 'Edit service' : 'New service' }
                     </Link>
                 </Breadcrumbs>
 
                 <Typography variant="h4" sx={{ mb: 5, mt: 3 }}>
-                    New service
+                    { id ? 'Edit service' : 'New service' }
                 </Typography>
 
                 <Card>
