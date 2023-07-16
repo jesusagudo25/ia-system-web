@@ -51,7 +51,7 @@ import config from '../config.json';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Name', alignRight: false },
+  { id: 'full_name', label: 'Name', alignRight: false },
   { id: 'ssn', label: 'SSN', alignRight: false },
   { id: 'email', label: 'Email', alignRight: false },
   { id: 'address', label: 'Address', alignRight: false },
@@ -170,7 +170,7 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(array, (_report) => _report.id.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_interpreter) => _interpreter.full_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }

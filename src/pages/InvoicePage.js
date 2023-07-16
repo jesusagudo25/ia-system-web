@@ -20,6 +20,8 @@ import {
   DialogTitle,
   Breadcrumbs,
   Link,
+  Backdrop,
+  CircularProgress,
 } from '@mui/material';
 import { format, parseISO } from 'date-fns';
 // components
@@ -35,8 +37,8 @@ import config from '../config.json';
 
 
 const TABLE_HEAD = [
-  { id: 'id', label: 'Invoice #', alignRight: false },
-  { id: 'assignment', label: 'Assignment', alignRight: false },
+  { id: 'invoiceNumber', label: 'Invoice #', alignRight: false },
+  { id: 'assignmentNumber', label: 'Assignment', alignRight: false },
   { id: 'date', label: 'Date', alignRight: false },
   { id: 'agency', label: 'Agency', alignRight: false },
   { id: 'interpreter', label: 'Interpreter', alignRight: false },
@@ -99,7 +101,7 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(array, (_invoice) => _invoice.id.toString(2).toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_invoice) => _invoice.invoice_details[0].assignment_number.toString(2).toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }
@@ -107,6 +109,8 @@ function applySortFilter(array, comparator, query) {
 export const InvoicePage = () => {
 
   /* Datatable */
+
+  const [isLoading, setIsLoading] = useState(true);
 
   const [invoices, setInvoices] = useState([]);
 
@@ -141,8 +145,21 @@ export const InvoicePage = () => {
   };
 
   const getInvoices = async () => {
+    setIsLoading(true);
     const { data } = await axios.get(`${config.APPBACK_URL}/api/invoices/paid`);
-    setInvoices(data);
+    setInvoices(data.map((invoice) => {
+      return {
+          ...invoice,
+          interpreter: invoice.interpreter.full_name,
+          agency: invoice.agency.name,
+          invoiceNumber: invoice.invoice_details[0].assignment_number,
+          assignmentNumber: invoice.invoice_details[0].assignment_number,
+          date: invoice.invoice_details[0].date_of_service_provided,
+          total: invoice.total_amount,
+      };
+  }));
+
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -204,15 +221,15 @@ export const InvoicePage = () => {
                 {invoices.length > 0 ? (
                   <TableBody>
                     {filteredInvoices.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                      const { id, invoice_details: invoiceDetails, agency, interpreter, total_amount: totalAmount } = row;
-
+                      const { id, invoiceNumber, date, assignmentNumber, agency, interpreter, total } = row;
+console.log(row);
                       return (
                         <TableRow hover key={id} tabIndex={-1} role="checkbox">
 
                           <TableCell component="th" scope="row" padding="normal">
                             <Stack direction="row" alignItems="center" spacing={2}>
                               <Typography variant="subtitle2" noWrap>
-                                # {invoiceDetails[0].invoice_number}
+                                # {invoiceNumber}
                               </Typography>
                             </Stack>
                           </TableCell>
@@ -220,25 +237,25 @@ export const InvoicePage = () => {
                           <TableCell component="th" scope="row" padding="normal">
                             <Stack direction="row" alignItems="center" spacing={2}>
                               <Typography variant="subtitle2" noWrap>
-                                {invoiceDetails[0].assignment_number}
+                                {assignmentNumber}
                               </Typography>
                             </Stack>
                           </TableCell>
 
                           <TableCell align="left">
-                            {format(parseISO(`${invoiceDetails[0].date_of_service_provided.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}
+                            {format(parseISO(`${date.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}
                           </TableCell>
 
                           <TableCell align="left">
-                            {agency.name}
+                            {agency}
                           </TableCell>
 
                           <TableCell align="left">
-                            {interpreter.full_name}
+                            {interpreter}
                           </TableCell>
 
                           <TableCell align="left">
-                            {totalAmount}
+                            {total}
                           </TableCell>
 
                           <TableCell align="right">
@@ -327,7 +344,15 @@ export const InvoicePage = () => {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Card>
+        
       </Container>
+
+      <Backdrop
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                open={isLoading}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
     </>
   )
 }

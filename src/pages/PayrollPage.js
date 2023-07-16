@@ -99,7 +99,10 @@ function applySortFilter(array, comparator, query) {
         return a[1] - b[1];
     });
     if (query) {
-        return filter(array, (_report) => _report.start_date.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+        /* Se debe cambiar la fecha, para que sea la que se presenta en el start date del reporte
+        Se pueden hacer una funcion que busque por el mes,mas haya de que el campo venga en fecha
+        */
+        return filter(array, (_payroll) => _payroll.start_date.toLowerCase().indexOf(query.toLowerCase()) !== -1);
     }
     return stabilizedThis.map((el) => el[0]);
 }
@@ -200,7 +203,7 @@ export const PayrollPage = () => {
     const [filterAssignmentReview, setFilterAssignmentReview] = useState('');
 
     const handleRequestSortReview = (event, property) => {
-        const isAsc = orderBy === property && order === 'asc';
+        const isAsc = orderByReview === property && orderReview === 'asc';
         setOrderReview(isAsc ? 'desc' : 'asc');
         setOrderByReview(property);
     };
@@ -250,7 +253,14 @@ export const PayrollPage = () => {
                 start_date: format(startDate, 'yyyy-MM-dd'),
                 end_date: format(endDate, 'yyyy-MM-dd'),
             });
-            setReview(response.data.review);
+            setReview(response.data.review.map((review) => ({
+                ...review,
+                assignment: review.assignment_number,
+                date: review.date_of_service_provided,
+                agency: review.agency.name,
+                interpreter: review.interpreter.full_name,
+                total: review.total_amount,
+            })));
             setOpen(true);
             setIsLoading(false);
         } catch (error) {
@@ -276,7 +286,7 @@ export const PayrollPage = () => {
         setIsLoading(true);
         setOpenDelete(false);
         try {
-            const response = await axios.delete(`${config.APPBACK_URL}/api/payrolls/${currentId}`);
+            await axios.delete(`${config.APPBACK_URL}/api/payrolls/${currentId}`);
             toast.success('Payroll deleted successfully');
             getPayrolls();
             setIsLoading(false);
@@ -708,8 +718,7 @@ export const PayrollPage = () => {
                                                 <TableBody>
                                                     {filteredReview.slice(pageReview * rowsPerPageReview, pageReview * rowsPerPageReview + rowsPerPageReview
                                                     ).map((row) => {
-                                                        const { id, assignment_number: assignment, date_of_service_provided: date, agency, interpreter, total_amount: total, status } = row;
-
+                                                        const { id, assignment, date, agency, interpreter, status, total } = row;
                                                         const selectedReview = selected.indexOf(id) !== -1;
 
                                                         return (
@@ -726,8 +735,8 @@ export const PayrollPage = () => {
                                                                 </TableCell>
 
                                                                 <TableCell align="left">{date}</TableCell>
-                                                                <TableCell align="left">{agency.name}</TableCell>
-                                                                <TableCell align="left">{interpreter.full_name}</TableCell>
+                                                                <TableCell align="left">{agency}</TableCell>
+                                                                <TableCell align="left">{interpreter}</TableCell>
                                                                 <TableCell align="left">
                                                                     <Label color={status === 'paid' ? 'success' : status === 'open' ? 'warning' : status === 'cancelled' ? 'error' : 'info'}>
                                                                         {sentenceCase(status === 'paid' ? 'Paid' : status === 'open' ? 'Open' : status === 'cancelled' ? 'Cancelled' : 'Pending')}

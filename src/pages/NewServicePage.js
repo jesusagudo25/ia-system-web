@@ -449,7 +449,9 @@ export const NewServicePage = () => {
 
             let totalInterpreter = 0;
 
-            /* Se calcula la cantidad para el interprete, en base al lenguaje seleccionado, el tiempo total y el precio por hora del interprete (25 o 30) */
+            /* Se calcula la cantidad para el interprete, en base al lenguaje seleccionado:
+                * el tiempo total
+                * el precio por hora del interprete (25 o 30) */
             if (LenguageNameSelected.name === 'Spanish') {
                 totalInterpreter = 25 * totalTime;
                 /*  25 * 2 = 50 */
@@ -460,7 +462,7 @@ export const NewServicePage = () => {
             }
 
             /*
-            El 40 es el precio por hora del coordinador
+            El 40 es el precio por hora del lenguaje seleccionado
             El 50 es el precio por hora del interprete
             El 2 es el tiempo total
             Aqui se calcula el precio del coordinador restandole el precio del interprete y multiplicandolo por el tiempo total del servicio.
@@ -536,31 +538,34 @@ export const NewServicePage = () => {
             /* Invoice details */
             'assignment_number': assignmentNumber,
             'description_id': descriptionId,
-            'description': description,
-
-            'total_amount': (totalService + totalMileage).toFixed(2),
+            'description': description,            
             'date_of_service_provided': format(dateServiceProvided, 'yyyy-MM-dd'),
             'arrival_time': timeIsNull ? format(arrivalTime, 'HH:mm') : null,
             'start_time': timeIsNull ? format(startTime, 'HH:mm') : null,
             'end_time': timeIsNull ? format(endTime, 'HH:mm') : null,
             'travel_time_to_assignment': travelTimeToAssignment,
             'time_back_from_assignment': timeBackFromAssignment,
+            
             'travel_mileage': travelMileage,
             'cost_per_mile': costPerMile,
+            
             'total_amount_miles': totalMileage,
             'total_amount_hours': totalService,
+            
             'total_interpreter': (totalServiceInterpreter + totalMileageInterpreter).toFixed(2),
             'total_coordinator': (totalServiceCoordinator + totalMileageCoordinator).toFixed(2),
+            
+            'total_amount': (totalService + totalMileage).toFixed(2),
             comments,
         };
 
-        if (id) {
+         if (id) {
             newInvoice.id = id;
             axios.put(`${config.APPBACK_URL}/api/invoices/${id}`, newInvoice)
                 .then((response) => {
-                    /* Redirect service history */
+
                     toast.success('Invoice updated successfully');
-                    /* Wait 2 seconds to redirect */
+
                     setTimeout(() => {
                         setIsLoading(false);
                         navigate('/dashboard/service-history');
@@ -930,7 +935,9 @@ export const NewServicePage = () => {
                 <Typography variant="subtitle1" gutterBottom marginBottom={2}>
                     Enter the service data
                 </Typography>
+                
                 <TextField id="outlined-basic" label="Assignment number" variant="outlined" value={assignmentNumber} onChange={(e) => setAssignmentNumber(e.target.value)} sx={{ marginBottom: '20px' }} error={errors.assignmentNumber} helperText={errors.assignmentNumber ? errors.assignmentNumber : null} onBlur={handleOnBlurAssignmentNumber} />
+
                 <SearchDescription handleOnChangeDescription={handleOnChangeDescription} setDescription={setDescription} description={description} toast={toast} setDescriptionId={setDescriptionId} errors={errors} />
                 <Stack direction="row" sx={{ marginTop: '20px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
                     <FormControl sx={{ width: '37%' }}>

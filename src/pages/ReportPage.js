@@ -84,6 +84,7 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
+    /* Se debe cambiar la fecha, para que sea la que se presenta en el start date del reporte */
     return filter(array, (_report) => _report.start_date.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
@@ -166,10 +167,8 @@ export const ReportPage = () => {
       toast.error('Error generating report');
       setIsLoading(false);
       type = null;
-    }
+    };
 
-    console.log(type);
-;
     if (type) {
       try {
         const response = await axios.post(`${config.APPBACK_URL}/api/reports`, {

@@ -46,8 +46,8 @@ import config from '../config.json';
 
 
 const TABLE_HEAD = [
-    { id: 'id', label: 'Invoice #', alignRight: false },
-    { id: 'assignment', label: 'Assignment', alignRight: false },
+    { id: 'invoiceNumber', label: 'Invoice #', alignRight: false },
+    { id: 'assignmentNumber', label: 'Assignment', alignRight: false },
     { id: 'date', label: 'Date', alignRight: false },
     { id: 'agency', label: 'Agency', alignRight: false },
     { id: 'interpreter', label: 'Interpreter', alignRight: false },
@@ -168,7 +168,16 @@ export const ServiceHistory = () => {
     const getInvoices = async () => {
         setIsLoading(true);
         const { data } = await axios.get(`${config.APPBACK_URL}/api/invoices`);
-        setInvoices(data);
+        setInvoices(data.map((invoice) => {
+            return {
+                ...invoice,
+                interpreter: invoice.interpreter.full_name,
+                agency: invoice.agency.name,
+                invoiceNumber: invoice.invoice_details[0].assignment_number,
+                assignmentNumber: invoice.invoice_details[0].assignment_number,
+                date: invoice.invoice_details[0].date_of_service_provided,
+            };
+        }));
         setIsLoading(false);
     };
 
@@ -263,11 +272,11 @@ export const ServiceHistory = () => {
                                     rowCount={invoices.length}
                                     onRequestSort={handleRequestSort}
                                 />
-                                {/* Tiene que cargar primero... */}
+
                                 {invoices.length > 0 ? (
                                     <TableBody>
                                         {filteredInvoices.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                                            const { id, invoice_details: invoiceDetails, agency, interpreter, status } = row;
+                                            const { id, invoiceNumber, assignmentNumber, date, interpreter, agency, status } = row;
 
                                             return (
                                                 <TableRow hover key={id} tabIndex={-1} role="checkbox">
@@ -275,7 +284,7 @@ export const ServiceHistory = () => {
                                                     <TableCell component="th" scope="row" padding="normal">
                                                         <Stack direction="row" alignItems="center" spacing={2}>
                                                             <Typography variant="subtitle2" noWrap>
-                                                                {invoiceDetails[0].invoice_number}
+                                                                {invoiceNumber}
                                                             </Typography>
                                                         </Stack>
                                                     </TableCell>
@@ -283,21 +292,21 @@ export const ServiceHistory = () => {
                                                     <TableCell component="th" scope="row" padding="normal">
                                                         <Stack direction="row" alignItems="center" spacing={2}>
                                                             <Typography variant="subtitle2" noWrap>
-                                                                {invoiceDetails[0].assignment_number}
+                                                                {assignmentNumber}
                                                             </Typography>
                                                         </Stack>
                                                     </TableCell>
 
                                                     <TableCell align="left">
-                                                        {invoiceDetails[0].date_of_service_provided}
+                                                        {date}
                                                     </TableCell>
 
                                                     <TableCell align="left">
-                                                        {agency.name}
+                                                        {agency}
                                                     </TableCell>
 
                                                     <TableCell align="left">
-                                                        {interpreter.full_name}
+                                                        {interpreter}
                                                     </TableCell>
 
                                                     <TableCell align="left">
@@ -326,7 +335,12 @@ export const ServiceHistory = () => {
                                                                                 <Iconify icon="bx:bxs-file-pdf" />
                                                                             </IconButton>
                                                                         </a>
-                                                                        <IconButton size="large" color="error" onClick={() => handleClickOpen(id, 'cancelled', invoiceDetails[0].assignment_number)}>
+                                                                        <IconButton size="large" color="warning" onClick={() => handleClickOpen(id, 'pending', invoiceNumber)}>
+                                                                            <Iconify icon={'mdi:timer-sand'} />
+                                                                            {/* Pendiente */}
+                                                                        </IconButton>
+
+                                                                        <IconButton size="large" color="error" onClick={() => handleClickOpen(id, 'cancelled', invoiceNumber)}>
                                                                             <Iconify icon={'mdi:close'} />
                                                                             {/* Anular */}
                                                                         </IconButton>
@@ -349,18 +363,18 @@ export const ServiceHistory = () => {
                                                                                 <Iconify icon="bx:bxs-file-pdf" />
                                                                             </IconButton>
                                                                         </a>
-                                                                        <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'paid', invoiceDetails[0].assignment_number)}>
+                                                                        <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'paid', invoiceNumber)}>
                                                                             <Iconify icon="bx:money-withdraw" />
                                                                             {/* Pagar */}
                                                                         </IconButton>
-                                                                        <IconButton size="large" color="error" onClick={() => handleClickOpen(id, 'cancelled', invoiceDetails[0].assignment_number)}>
+                                                                        <IconButton size="large" color="error" onClick={() => handleClickOpen(id, 'cancelled', invoiceNumber)}>
                                                                             <Iconify icon={'mdi:close'} />
                                                                             {/* Anular */}
                                                                         </IconButton>
                                                                     </>
                                                                     )
                                                                     :
-                                                                    <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'pending', invoiceDetails[0].assignment_number)}>
+                                                                    <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'pending', invoiceNumber)}>
                                                                         <Iconify icon={'mdi:check'} />
                                                                         {/* Pendiente */}
                                                                     </IconButton>
