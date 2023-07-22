@@ -395,7 +395,7 @@ export const NewServicePage = () => {
 
         setContainerOrderDetails(false);
 
-        if (timeIsNull) {
+        if (timeIsNull) { // Si el tiempo esta habilitado, se calcula el servicio en base a las horas ingresadas
             if (arrivalTime && startTime && endTime) {
                 const arrivalTimeFloat = timeStringToFloat(format(arrivalTime, 'HH:mm'));
                 const startTimeFloat = timeStringToFloat(format(startTime, 'HH:mm'));
@@ -406,6 +406,7 @@ export const NewServicePage = () => {
                 const startTimeRounded = Math.ceil(startTimeFloat * 4) / 4;
                 const endTimeRounded = Math.ceil(endTimeFloat * 4) / 4;
 
+                /* Se busca el lenguaje seleccionado, para obtener el precio por hora */
                 const LenguageNameSelected = lenguages.find(lenguage => lenguage.id === interpreterLenguageId);
 
                 let totalTime = Math.round((endTimeRounded - startTimeRounded) * 100) / 100;
@@ -417,15 +418,7 @@ export const NewServicePage = () => {
                 const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
 
                 if (totalCostService > 0) {
-                    let totalInterpreter = 0;
-
-                    if (LenguageNameSelected.name === 'Spanish') {
-                        totalInterpreter = 25 * totalTime;
-                    }
-                    else {
-                        totalInterpreter = 30 * totalTime;
-                    }
-
+                    const totalInterpreter = LenguageNameSelected.price_per_hour_interpreter * totalTime;
                     const totalCoordinador = (LenguageNameSelected.price_per_hour - (totalInterpreter / totalTime)) * totalTime;
 
                     setTotalServiceInterpreter(totalInterpreter);
@@ -447,19 +440,10 @@ export const NewServicePage = () => {
             const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
             /*  40 * 2 = 80 */
 
-            let totalInterpreter = 0;
-
             /* Se calcula la cantidad para el interprete, en base al lenguaje seleccionado:
                 * el tiempo total
                 * el precio por hora del interprete (25 o 30) */
-            if (LenguageNameSelected.name === 'Spanish') {
-                totalInterpreter = 25 * totalTime;
-                /*  25 * 2 = 50 */
-            }
-            /* Esto condiciona que cualquier lenguaje que no sea spanish, el interprete ganara 30 del precio por hora */
-            else {
-                totalInterpreter = 30 * totalTime;
-            }
+            const totalInterpreter = LenguageNameSelected.price_per_hour_interpreter * totalTime;
 
             /*
             El 40 es el precio por hora del lenguaje seleccionado

@@ -49,6 +49,7 @@ import config from '../config.json';
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', alignRight: false },
   { id: 'price_per_hour', label: 'Price per hour', alignRight: false },
+  { id: 'price_per_hour_interpreter', label: 'Price per hour interpreter', alignRight: false },
   { id: 'status', label: 'Status', alignRight: false },
   { id: '' },
 ];
@@ -262,13 +263,21 @@ export const LenguagePage = () => {
   const handleSubmitDialog = async (event) => {
     setIsLoading(true);
     if (id) {
-      await axios.put(`${config.APPBACK_URL}/api/lenguages/${id}`, { name: event.name, price_per_hour: event.price_per_hour }).then((response) => {
+      await axios.put(`${config.APPBACK_URL}/api/lenguages/${id}`, { 
+        name: event.name, 
+        price_per_hour: event.price_per_hour,
+        price_per_hour_interpreter: event.price_per_hour_interpreter
+       }).then((response) => {
         setIsLoading(false);
       }).catch((error) => {
         setIsLoading(false);
       });
     } else {
-      await axios.post(`${config.APPBACK_URL}/api/lenguages`, { name: event.name, price_per_hour: event.price_per_hour }).then((response) => {
+      await axios.post(`${config.APPBACK_URL}/api/lenguages`, { 
+        name: event.name, 
+        price_per_hour: event.price_per_hour,
+        price_per_hour_interpreter: event.price_per_hour_interpreter
+      }).then((response) => {
         setIsLoading(false);
       }
       ).catch((error) => {
@@ -350,7 +359,7 @@ export const LenguagePage = () => {
                 {lenguages.length > 0 ? (
                   <TableBody>
                     {filteredLenguages.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                      const { id, name, price_per_hour:pricePerHour, status } = row;
+                      const { id, name, price_per_hour:pricePerHour, price_per_hour_interpreter:pricePerHourInterpreter, status } = row;
 
                       return (
                         <TableRow hover key={id} tabIndex={-1} role="checkbox">
@@ -365,6 +374,10 @@ export const LenguagePage = () => {
 
                           <TableCell align="left">
                             $ {pricePerHour}
+                          </TableCell>
+                          
+                          <TableCell align="left">
+                            $ {pricePerHourInterpreter}
                           </TableCell>
 
                           <TableCell align="left">
@@ -395,6 +408,7 @@ export const LenguagePage = () => {
                                 setId(id);
                                 setValue('name', name);
                                 setValue('price_per_hour', pricePerHour);
+                                setValue('price_per_hour_interpreter', pricePerHourInterpreter);
                                 setOpen(true);
                               }
                             }>
@@ -505,8 +519,8 @@ export const LenguagePage = () => {
                     message: 'The name must have a minimum of 3 characters'
                   },
                   maxLength: {
-                    value: 30,
-                    message: 'The name must have a maximum of 30 characters'
+                    value: 50,
+                    message: 'The name must have a maximum of 50 characters'
                   }
                 }}
                 render={({ field: { onChange, onBlur, value, }, fieldState: { error } }) => (
@@ -540,6 +554,32 @@ export const LenguagePage = () => {
                     fullWidth
                     label="Price per hour"
                     name="price_per_hour"
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    required
+                    error={!!error}
+                    helperText={error ? error.message : null}
+                    value={value}
+                    variant="outlined"
+                    size="small"
+                  />
+                )}
+              />
+            </FormControl>
+
+            <FormControl sx={{ width: '100%' }}>
+              <Controller
+                name="price_per_hour_interpreter"
+                control={control}
+                defaultValue=""
+                rules={{
+                  required: 'This field is required',
+                }}
+                render={({ field: { onChange, onBlur, value, }, fieldState: { error } }) => (
+                  <TextField
+                    fullWidth
+                    label="Price per hour interpreter"
+                    name="price_per_hour_interpreter"
                     onChange={onChange}
                     onBlur={onBlur}
                     required
