@@ -92,6 +92,8 @@ export const NewServicePage = () => {
     const [assignmentNumberOld, setAssignmentNumberOld] = useState('');
     const [timeIsNull, setTimeIsNull] = useState(true);
 
+    const [miscellaneous, setMiscellaneous] = useState(0);
+
     const [description, setDescription] = useState('');
     const [descriptionId, setDescriptionId] = useState('');
 
@@ -302,7 +304,6 @@ export const NewServicePage = () => {
     const handleOnBlurAssignmentNumber = () => {
         /* validar el assignment number, si hay un id es porque se esta editando, entonces que no se valide por el mismo id */
 
-        console.log(assignmentNumber, assignmentNumberOld);
         if (assignmentNumber !== '' && assignmentNumber !== assignmentNumberOld) {
             axios.get(`${config.APPBACK_URL}/api/invoices/assignmentNumber/${assignmentNumber}`)
                 .then((response) => {
@@ -392,7 +393,6 @@ export const NewServicePage = () => {
 
     const calculateInterpreterService = (arrivalTime, startTime, endTime, timeIsNull, interpreterLenguageId) => {
 
-
         setContainerOrderDetails(false);
 
         if (timeIsNull) {
@@ -434,7 +434,7 @@ export const NewServicePage = () => {
                     setContainerOrderDetails(true);
                 }
             }
-            else{
+            else {
                 setTotalServiceInterpreter(0);
                 setTotalServiceCoordinator(0);
                 setTotalService(0);
@@ -538,28 +538,38 @@ export const NewServicePage = () => {
             /* Invoice details */
             'assignment_number': assignmentNumber,
             'description_id': descriptionId,
-            'description': description,            
+            'description': description,
             'date_of_service_provided': format(dateServiceProvided, 'yyyy-MM-dd'),
             'arrival_time': timeIsNull ? format(arrivalTime, 'HH:mm') : null,
             'start_time': timeIsNull ? format(startTime, 'HH:mm') : null,
             'end_time': timeIsNull ? format(endTime, 'HH:mm') : null,
             'travel_time_to_assignment': travelTimeToAssignment,
             'time_back_from_assignment': timeBackFromAssignment,
-            
+            'miscellaneous': parseFloat(miscellaneous).toFixed(2),
+
             'travel_mileage': travelMileage,
             'cost_per_mile': costPerMile,
-            
+
             'total_amount_miles': totalMileage,
             'total_amount_hours': totalService,
-            
+
             'total_interpreter': (totalServiceInterpreter + totalMileageInterpreter).toFixed(2),
             'total_coordinator': (totalServiceCoordinator + totalMileageCoordinator).toFixed(2),
-            
+
             'total_amount': (totalService + totalMileage).toFixed(2),
             comments,
         };
 
-         if (id) {
+        if (miscellaneous > 0) {
+            newInvoice.total_interpreter = (parseFloat(newInvoice.total_interpreter) + Math.abs(miscellaneous)).toFixed(2);
+            newInvoice.total_coordinator = (parseFloat(newInvoice.total_coordinator) - Math.abs(miscellaneous)).toFixed(2);
+        }
+        else {
+            newInvoice.total_interpreter = (parseFloat(newInvoice.total_interpreter) - Math.abs(miscellaneous)).toFixed(2);
+            newInvoice.total_coordinator = (parseFloat(newInvoice.total_coordinator) + Math.abs(miscellaneous)).toFixed(2);
+        }
+
+        if (id) {
             newInvoice.id = id;
             axios.put(`${config.APPBACK_URL}/api/invoices/${id}`, newInvoice)
                 .then((response) => {
@@ -577,7 +587,7 @@ export const NewServicePage = () => {
                     setIsLoading(false);
                 }
                 );
-                
+
         }
         else {
             axios.post(`${config.APPBACK_URL}/api/invoices`, newInvoice)
@@ -632,7 +642,6 @@ export const NewServicePage = () => {
         setIsLoading(true);
         axios.get(`${config.APPBACK_URL}/api/invoices/${id}`)
             .then((response) => {
-                console.log(response.data);
                 /* Agency */
                 setAgencyId(response.data.agency.id);
                 setAgencyName(response.data.agency.name);
@@ -665,6 +674,7 @@ export const NewServicePage = () => {
                 setDescriptionId(response.data.description.id);
                 setDescription(response.data.description.title);
                 setDateServiceProvided(new Date(response.data.details.date_of_service_provided));
+                setMiscellaneous(response.data.details.miscellaneous);
 
                 if (response.data.details.arrival_time === null && response.data.details.start_time === null && response.data.details.end_time === null) {
                     setTimeIsNull(false);
@@ -715,7 +725,7 @@ export const NewServicePage = () => {
     }, [lenguages]);
 
     useEffect(() => {
-        if(location.pathname === '/dashboard/new-service') {
+        if (location.pathname === '/dashboard/new-service') {
             /* Clear data */
             setAgencyId('');
             setAgencyName('');
@@ -749,12 +759,13 @@ export const NewServicePage = () => {
             setCostPerMile(0.655);
             setTravelTimeToAssignment('');
             setTimeBackFromAssignment('');
+            setMiscellaneous(0);
             setComments('');
             setErrors({});
-            setInvoiceId(null);   
+            setInvoiceId(null);
             setActiveStep(0);
         }
-        else if(id){
+        else if (id) {
             getServiceDetails();
             setActiveStep(0);
         }
@@ -935,8 +946,10 @@ export const NewServicePage = () => {
                 <Typography variant="subtitle1" gutterBottom marginBottom={2}>
                     Enter the service data
                 </Typography>
-                
+
                 <TextField id="outlined-basic" label="Assignment number" variant="outlined" value={assignmentNumber} onChange={(e) => setAssignmentNumber(e.target.value)} sx={{ marginBottom: '20px' }} error={errors.assignmentNumber} helperText={errors.assignmentNumber ? errors.assignmentNumber : null} onBlur={handleOnBlurAssignmentNumber} />
+
+                <TextField id="outlined-basic" label="Miscellaneous" variant="outlined" value={miscellaneous} onChange={(e) => setMiscellaneous(e.target.value)} sx={{ marginBottom: '20px', marginLeft: '20px' }} type='number' />
 
                 <SearchDescription handleOnChangeDescription={handleOnChangeDescription} setDescription={setDescription} description={description} toast={toast} setDescriptionId={setDescriptionId} errors={errors} />
                 <Stack direction="row" sx={{ marginTop: '20px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1271,10 +1284,10 @@ export const NewServicePage = () => {
                             style={{ textDecoration: 'none', color: 'inherit' }}
                             onClick={
                                 () => {
-                                    if(id){
+                                    if (id) {
                                         navigate('/dashboard/service-history');
                                     }
-                                    else{
+                                    else {
                                         window.location.reload();
                                     }
                                 }
@@ -1337,12 +1350,12 @@ export const NewServicePage = () => {
                         color="inherit"
                         href="#"
                     >
-                        { id ? 'Edit service' : 'New service' }
+                        {id ? 'Edit service' : 'New service'}
                     </Link>
                 </Breadcrumbs>
 
                 <Typography variant="h4" sx={{ mb: 5, mt: 3 }}>
-                    { id ? 'Edit service' : 'New service' }
+                    {id ? 'Edit service' : 'New service'}
                 </Typography>
 
                 <Card>
