@@ -553,6 +553,12 @@ export const NewServicePage = () => {
             newInvoice.total_coordinator = (parseFloat(newInvoice.total_coordinator) + Math.abs(miscellaneous)).toFixed(2);
         }
 
+        if(newInvoice.total_interpreter < 0 || newInvoice.total_coordinator < 0){
+            toast.error('The miscellaneous amount cannot be greater than the total amount');
+            setIsLoading(false);
+            return;
+        }
+
         if (id) {
             newInvoice.id = id;
             axios.put(`${config.APPBACK_URL}/api/invoices/${id}`, newInvoice)

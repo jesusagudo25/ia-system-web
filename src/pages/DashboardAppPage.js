@@ -11,6 +11,11 @@ import {
 
 // ----------------------------------------------------------------------
 
+const USDollar = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+});
+
 export default function DashboardAppPage() {
 
   const [agencyCount, setAgencyCount] = useState(0);
@@ -23,11 +28,10 @@ export default function DashboardAppPage() {
     setIsLoading(true);
     axios.get('/api/reports/dashboards')
       .then((response) => {
-        setAgencyCount(response.data.total_agencies);
-        setInterpreterCount(response.data.total_interpreters);
-        setMonthlyIncome(response.data.total_income);
-        setMonthlyExpenditure(response.data.total_expenses);
-        console.log(response.data);
+        setAgencyCount(Number(response.data.total_agencies));
+        setInterpreterCount(Number(response.data.total_interpreters));
+        setMonthlyIncome(USDollar.format(response.data.total_income));
+        setMonthlyExpenditure(USDollar.format(response.data.total_expenses));
         setIsLoading(false);
       })
       .catch((error) => {

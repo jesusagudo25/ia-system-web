@@ -66,7 +66,7 @@ const TABLE_HEAD = [
 
 const TABLE_HEAD_REVIEW = [
     { id: 'assignment', label: 'Assignment', alignRight: false },
-    { id: 'date', label: 'Date of service', alignRight: false },
+    { id: 'date', label: 'Date of service provided', alignRight: false },
     { id: 'agency', label: 'Agency', alignRight: false },
     { id: 'interpreter', label: 'Interpreter', alignRight: false },
     { id: 'status', label: 'Status', alignRight: false },
@@ -145,9 +145,9 @@ export const PayrollPage = () => {
 
     const [page, setPage] = useState(0);
 
-    const [order, setOrder] = useState('asc');
+    const [order, setOrder] = useState('desc');
 
-    const [orderBy, setOrderBy] = useState('start_date');
+    const [orderBy, setOrderBy] = useState('id');
 
     const [filterDate, setFilterDate] = useState('');
 
@@ -192,9 +192,9 @@ export const PayrollPage = () => {
 
     const [pageReview, setPageReview] = useState(0);
 
-    const [orderReview, setOrderReview] = useState('asc');
+    const [orderReview, setOrderReview] = useState('desc');
 
-    const [orderByReview, setOrderByReview] = useState('date');
+    const [orderByReview, setOrderByReview] = useState('id');
 
     const [selected, setSelected] = useState([]);
 
@@ -836,7 +836,7 @@ export const PayrollPage = () => {
                                     setDateRange();
                                     setReview(false);
                                     setPageReview(0);
-                                    setOrderByReview('date');
+                                    setOrderByReview('id');
                                     setFilterAssignmentReview('');
                                     setSelected([]);
                                 }}

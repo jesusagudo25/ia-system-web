@@ -48,7 +48,7 @@ import config from '../config.json';
 const TABLE_HEAD = [
     { id: 'invoiceNumber', label: 'Invoice #', alignRight: false },
     { id: 'assignmentNumber', label: 'Assignment', alignRight: false },
-    { id: 'date', label: 'Date', alignRight: false },
+    { id: 'date', label: 'Date of service provided', alignRight: false },
     { id: 'agency', label: 'Agency', alignRight: false },
     { id: 'interpreter', label: 'Interpreter', alignRight: false },
     { id: 'status', label: 'Status', alignRight: false },
