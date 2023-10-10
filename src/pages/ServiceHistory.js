@@ -168,17 +168,22 @@ export const ServiceHistory = () => {
     const getInvoices = async () => {
         setIsLoading(true);
         const { data } = await axios.get(`${config.APPBACK_URL}/api/invoices`);
-        setInvoices(data.map((invoice) => {
-            return {
-                ...invoice,
-                interpreter: invoice.interpreter.full_name,
-                agency: invoice.agency.name,
-                invoiceNumber: invoice.invoice_details[0].assignment_number,
-                assignmentNumber: invoice.invoice_details[0].assignment_number,
-                date: invoice.invoice_details[0].date_of_service_provided,
-            };
-        }));
-        setIsLoading(false);
+
+        try {
+            setInvoices(data.map((invoice) => {
+                return {
+                    ...invoice,
+                    interpreter: invoice.interpreter.full_name,
+                    agency: invoice.agency.name,
+                    invoiceNumber: invoice.invoice_details[0]?.assignment_number,
+                    assignmentNumber: invoice.invoice_details[0]?.assignment_number,
+                    date: invoice.invoice_details[0]?.date_of_service_provided,
+                };
+            }));
+            setIsLoading(false);
+        } catch (error) {
+            console.log(error);
+        }
     };
 
     const validatePayroll = async (id) => {
