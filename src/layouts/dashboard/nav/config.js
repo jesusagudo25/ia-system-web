@@ -22,8 +22,8 @@ const navConfig = [
     icon: icon('ic_checkin'),
   },
   {
-    title: 'Employee payroll',
-    path: '/dashboard/payroll',
+    title: 'Payroll',
+    path: '/dashboard/payroll-panel',
     icon: icon('ic_payments'),
   },
   {

@@ -27,7 +27,8 @@ export default function AppShortCuts({ list, ...other }) {
             style={{ textDecoration: 'none', color: 'inherit' }}
             key={index}
             >
-              <Paper key={site.name} variant="outlined" sx={{ py: 2.5, textAlign: 'center' }}>
+              
+              <Paper key={site.name} variant="outlined" sx={{ py: 2.5, textAlign: 'center', ":hover": { backgroundColor: '#F9FAFB', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.05)', borderColor: '#4a77bd' } }}>
                 <Box sx={{ mb: 0.5 }}>{site.icon}</Box>
 
                 <Typography variant="body1" sx={{ color: 'text.secondary', textDecoration: 'none' }}>

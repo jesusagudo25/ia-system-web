@@ -21,7 +21,7 @@ export const ManagePage = () => {
     return (
         <>
             <Helmet>
-                <title> Management board | IA System </title>
+                <title> Management panel | IA System </title>
             </Helmet>
 
             <Container>
@@ -40,7 +40,7 @@ export const ManagePage = () => {
                 </Breadcrumbs>
 
                 <Typography variant="h4" sx={{ mb: 5, mt: 3 }}>
-                    Management board
+                    Management panel
                 </Typography>
 
                 <Grid item xs={12} md={6} lg={4}>
@@ -61,25 +61,25 @@ export const ManagePage = () => {
                             {
                                 name: 'Lenguages',
                                 path: '/dashboard/manage/lenguages',
-                                icon: <Iconify icon={'mdi:file-document-edit'} color="#2065D1" width={32} />,
+                                icon: <Iconify icon={'mdi:translate'} color="#2065D1" width={32} />,
                                 role: [1, 2, 3]
                             },
                             {
                                 name: 'Invoices',
                                 path: '/dashboard/manage/invoices',
-                                icon: <Iconify icon={'mdi:cash'} color="#2065D1" width={32} />,
+                                icon: <Iconify icon={'mdi:invoice'} color="#2065D1" width={32} />,
                                 role: [1, 2, 3]
                             },
                             {
                                 name: 'Agencies',
                                 path: '/dashboard/manage/agencies',
-                                icon: <Iconify icon={'mdi:ticket-account'} color="#2065D1" width={32} />,
+                                icon: <Iconify icon={'mdi:company'} color="#2065D1" width={32} />,
                                 role: [1, 2, 3]
                             },
                             {
                                 name: 'Descriptions',
                                 path: '/dashboard/manage/descriptions',
-                                icon: <Iconify icon={'mdi:settings'} color="#2065D1" width={32} />,
+                                icon: <Iconify icon={'mdi:text-box-multiple'} color="#2065D1" width={32} />,
                                 role: [1, 2, 3]
                             },
                         ]}

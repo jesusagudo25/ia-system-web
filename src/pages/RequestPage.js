@@ -124,8 +124,7 @@ function applySortFilterReview(array, comparator, query) {
 
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 
-/* PaymentsPage */
-export const PayrollPage = () => {
+export const RequestPage = () => {
 
     /* Generate */
 
@@ -176,7 +175,7 @@ export const PayrollPage = () => {
         setFilterDate(event.target.value);
     };
 
-    const getPayrolls = async () => {
+    const getRequests = async () => {
         setIsLoading(true);
         try {
             const response = await axios.get(`${config.APPBACK_URL}/api/payrolls`);
@@ -247,6 +246,29 @@ export const PayrollPage = () => {
         setSelected(newSelected);
     };
 
+    const handleReviewPayroll = async () => {
+        try {
+            setIsLoading(true);
+            const response = await axios.post(`${config.APPBACK_URL}/api/payrolls/review`, {
+                start_date: format(startDate, 'yyyy-MM-dd'),
+                end_date: format(endDate, 'yyyy-MM-dd'),
+            });
+            setReview(response.data.review.map((review) => ({
+                ...review,
+                assignment: review.assignment_number,
+                date: review.date_of_service_provided,
+                agency: review.agency.name,
+                interpreter: review.interpreter.full_name,
+                total: review.total_amount,
+            })));
+            setOpen(true);
+            setIsLoading(false);
+        } catch (error) {
+            console.log(error);
+            toast.error('Error generating review');
+            setIsLoading(false);
+        }
+    };
     const setDateRange = () => {
         const currentDate = new Date();
         // validate currentDay
@@ -266,7 +288,7 @@ export const PayrollPage = () => {
         try {
             await axios.delete(`${config.APPBACK_URL}/api/payrolls/${currentId}`);
             toast.success('Payroll deleted successfully');
-            getPayrolls();
+            getRequests();
             setIsLoading(false);
         } catch (error) {
             console.log(error);
@@ -276,7 +298,7 @@ export const PayrollPage = () => {
     };
 
     useEffect(() => {
-        getPayrolls();
+        getRequests();
         setDateRange();
     }, []);
 
@@ -308,7 +330,7 @@ export const PayrollPage = () => {
     return (
         <>
             <Helmet>
-                <title> Payments | IA System </title>
+                <title> Requests | IA System </title>
             </Helmet>
 
             <Container>
@@ -328,12 +350,62 @@ export const PayrollPage = () => {
                         color="inherit"
                         href="#"
                     >
-                        Payments
+                        Requests
                     </Link>
                 </Breadcrumbs>
 
+                <Typography variant="h4" sx={{ mb: 5, mt: 3 }}>
+                    Generate
+                </Typography>
+
+                <Card>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingLeft: 3, paddingTop: 3, paddingBottom: 2 }}>
+                        <Typography variant="subtitle1">
+                            Date range
+                        </Typography>
+                    </Stack>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingX: 3, paddingBottom: 3 }}>
+                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                            <DatePicker
+                                label="Start date"
+                                value={startDate}
+                                onChange={(newValue) => {
+                                    setStartDate(newValue);
+                                }}
+                                format='MM/dd/yyyy'
+                            />
+                        </LocalizationProvider>
+                        <Avatar
+                            sx={{
+                                bgcolor: 'primary.main',
+                                color: 'primary.contrastText',
+                            }}
+                        >
+                            <Iconify icon="bx:bxs-calendar" />
+                        </Avatar>
+
+                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                            <DatePicker
+                                label="End date"
+                                value={endDate}
+                                onChange={(newValue) => {
+                                    setEndDate(newValue);
+                                }}
+                                format='MM/dd/yyyy'
+                            />
+                        </LocalizationProvider>
+                        <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} sx={{ ml: 1, width: '15%' }} onClick={
+                            () => {
+                                handleReviewPayroll();
+                            }
+                        }>
+                            Generate
+                        </LoadingButton>
+                    </Stack>
+                </Card>
+
                 <Typography variant="h4" sx={{ my: 5 }}>
-                    Payments
+                    Requests
                 </Typography>
 
                 <Card>
@@ -396,6 +468,10 @@ export const PayrollPage = () => {
                                                             </IconButton>
                                                         </a>
 
+
+                                                        <IconButton size="large" color="error" onClick={() => handleClickDelete(id)}>
+                                                            <Iconify icon="bx:bxs-trash" />
+                                                        </IconButton>
                                                     </TableCell>
                                                 </TableRow>
                                             );
@@ -620,7 +696,7 @@ export const PayrollPage = () => {
 
                                     setOpen={setOpen}
                                     selected={selected}
-                                    getPayrolls={getPayrolls}
+                                    getPayrolls={getRequests}
                                     startDate={startDate}
                                     endDate={endDate}
                                     setDateRange={setDateRange}

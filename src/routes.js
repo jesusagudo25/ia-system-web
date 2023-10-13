@@ -8,6 +8,9 @@ import DashboardAppPage from './pages/DashboardAppPage';
 import { NewServicePage } from './pages/NewServicePage';
 import { MyAccountPage } from './pages/MyAccountPage';
 import { PayrollPage } from './pages/PayrollPage';
+import { RequestPage } from './pages/RequestPage';
+import { PayrollPanel } from './pages/PayrollPanel';
+import { CAndRWizardPage } from './pages/CAndRWizardPage';
 import { ManagePage } from './pages/ManagePage';
 import { ReportPage } from './pages/ReportPage';
 import { ServiceHistory } from './pages/ServiceHistory';
@@ -24,6 +27,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import { PrivateRoute } from './components/auth/PrivateRoute';
 import { PublicRoute } from './components/auth/PublicRoute';
 
+
 // ----------------------------------------------------------------------
 
 export default function Router() {
@@ -39,7 +43,13 @@ export default function Router() {
         { path: 'new-service', element: <NewServicePage />},
         { path: 'service-history', element: <ServiceHistory />},
         { path: "service-history/:id", element: <NewServicePage />},
-        { path: 'payroll', element: <PayrollPage />},
+
+        { path: 'payroll-panel', element: <PayrollPanel />},
+        
+        { path: 'payroll-panel/requests', element: <RequestPage />},
+        { path: 'payroll-panel/payments', element: <PayrollPage />},
+        { path: 'payroll-panel/cr-wizard', element: <CAndRWizardPage />},
+
         { path: 'report', element: <ReportPage /> },
 
         { path: 'manage', element: <ManagePage />},
