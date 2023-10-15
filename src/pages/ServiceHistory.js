@@ -111,7 +111,7 @@ function applySortFilter(array, comparator, query) {
     });
     if (query) {
         return filter(array, (_invoice) => {
-            return _invoice.invoice_details[0].assignment_number.toString(2).toLowerCase().indexOf(query.toLowerCase()) !== -1;
+            return _invoice?.invoice_details[0]?.assignment_number.toString(2).toLowerCase().indexOf(query.toLowerCase()) !== -1;
         });
     }
     return stabilizedThis.map((el) => el[0]);
@@ -186,6 +186,8 @@ export const ServiceHistory = () => {
         }
     };
 
+    /* Dialog */
+
     const validatePayroll = async (id) => {
         setIsLoading(true);
         try {
@@ -193,8 +195,7 @@ export const ServiceHistory = () => {
             navigate(`/dashboard/service-history/${id}`);
         }
         catch (error) {
-            console.log(error);
-            toast.error('You cannot edit a service you have already paid for.');
+            toast.error(error?.response?.data?.message);
             setIsLoading(false);
         }
     };
@@ -209,8 +210,7 @@ export const ServiceHistory = () => {
             getInvoices();
         }
         catch (error) {
-            console.log(error);
-            toast.error('You cannot cancel a service you have already paid for.');
+            toast.error(error?.response?.data?.message);
             setIsLoading(false);
         }
     };

@@ -21,6 +21,9 @@ import {
     Backdrop,
     FormControlLabel,
     Checkbox,
+    FormLabel,
+    RadioGroup,
+    Radio,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -40,7 +43,7 @@ import config from '../config.json';
 import Iconify from '../components/iconify';
 
 /* Cancel and regenerate wizard payrol */
-const steps = ['Select Payroll', 'Cancel Payroll', 'Regenerate Payroll'];
+const steps = ['Set up', 'Review Payroll', 'Summary'];
 
 export const CAndRWizardPage = () => {
 
@@ -483,7 +486,7 @@ export const CAndRWizardPage = () => {
             newInvoice.total_coordinator = (parseFloat(newInvoice.total_coordinator) + Math.abs(miscellaneous)).toFixed(2);
         }
 
-        if(newInvoice.total_interpreter < 0 || newInvoice.total_coordinator < 0){
+        if (newInvoice.total_interpreter < 0 || newInvoice.total_coordinator < 0) {
             toast.error('The miscellaneous amount cannot be greater than the total amount');
             setIsLoading(false);
             return;
@@ -699,82 +702,45 @@ export const CAndRWizardPage = () => {
                 }
             }>
                 <Typography variant="subtitle1" gutterBottom marginBottom={2}>
-                    Enter the data of the agency
+                    Enter the data of the payroll
                 </Typography>
-                <SearchAgency handleOnChangeAgency={handleOnChangeAgency} setAgencyName={setAgencyName} agencyName={agencyName} errors={errors} toast={toast} setAgencyId={setAgencyId} />
+                <FormControl sx={{ width: '100%' }} error={errors.serviceState}>
+                    <InputLabel id="customer-select-label"
+                        sx={{ width: 400 }}
+                    >Payroll</InputLabel>
+                    <Select
+                        labelId="customer-select-label"
+                        id="customer-select"
+                        label="State"
+                        value={serviceState}
+                        onChange={(e) => setServiceState(e.target.value)}
+                        disabled={addressSelected}
+                    >
+                        <MenuItem disabled value="none">
+                            <em style={{ color: 'gray' }}>Choose</em>
+                        </MenuItem>
+                        {states.map((state) => (
+                            <MenuItem key={state.iso2} value={state.name}>{state.name}</MenuItem>
+                        ))}
+                    </Select>
+                    <FormHelperText error={errors.serviceState}>{errors.serviceState ? errors.serviceState : null}</FormHelperText>
+                </FormControl>
                 <Typography variant="subtitle1" gutterBottom marginBottom={2} marginTop={2} sx={{ width: '100%' }}>
-                    Enter the address of the service
+                    Enter the data of the request
                 </Typography>
                 <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <FormControl sx={{ width: '37%' }}>
-                        <SearchAddress
-                            handleOnChangeAddress={handleOnChangeAddress}
-                            setAddress={setServiceAddress}
-                            address={serviceAddress}
-                            serviceCity={serviceCity}
-                            setServiceCity={setServiceCity}
-                            serviceState={serviceState}
-                            setServiceState={setServiceState}
-                            serviceZipCode={serviceZipCode}
-                            setServiceZipCode={setServiceZipCode}
-                            toast={toast}
-                            handleClearAddress={handleClearAddress}
-                            errors={errors}
-                        />
-                    </FormControl>
-                    <FormControl sx={{ width: '20%' }}>
-                        <TextField
-                            id="city"
-                            label="City"
-                            variant="outlined"
-                            placeholder="Enter the city"
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                            value={serviceCity}
-                            onChange={(e) => setServiceCity(e.target.value)}
-                            error={errors.serviceCity}
-                            helperText={errors.serviceCity ? errors.serviceCity : null}
-                            disabled={addressSelected}
-                        />
-                    </FormControl>
-                    <FormControl sx={{ width: '25%' }} error={errors.serviceState}>
-                        <InputLabel id="customer-select-label"
-                            sx={{ width: 400 }}
-                        >State</InputLabel>
-                        <Select
-                            labelId="customer-select-label"
-                            id="customer-select"
-                            label="State"
-                            value={serviceState}
-                            onChange={(e) => setServiceState(e.target.value)}
-                            disabled={addressSelected}
+                    <FormControl sx={{ width: '100%' }}>
+                        <FormLabel id="demo-radio-buttons-group-label">Action</FormLabel>
+                        <RadioGroup
+                            aria-labelledby="demo-radio-buttons-group-label"
+                            defaultValue="Regenerate"
+                            name="radio-buttons-group"
                         >
-                            <MenuItem disabled value="none">
-                                <em style={{ color: 'gray' }}>Choose</em>
-                            </MenuItem>
-                            {states.map((state) => (
-                                <MenuItem key={state.iso2} value={state.name}>{state.name}</MenuItem>
-                            ))}
-                        </Select>
-                        <FormHelperText error={errors.serviceState}>{errors.serviceState ? errors.serviceState : null}</FormHelperText>
+                            <FormControlLabel value="Cancel" control={<Radio />} label="Cancel" />
+                            <FormControlLabel value="Regenerate" control={<Radio />} label="Regenerate" />
+                        </RadioGroup>
                     </FormControl>
-                    <FormControl sx={{ width: '12%' }}>
-                        <TextField
-                            id="zip"
-                            label="Zip"
-                            variant="outlined"
-                            placeholder="Enter the zip"
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                            value={serviceZipCode}
-                            onChange={(e) => setServiceZipCode(e.target.value)}
-                            disabled={addressSelected}
-                            error={errors.serviceZipCode}
-                            helperText={errors.serviceZipCode ? errors.serviceZipCode : null}
-                        />
-                    </FormControl>
+
 
                 </Stack>
 

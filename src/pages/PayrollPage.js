@@ -63,7 +63,7 @@ const TABLE_HEAD = [
     { id: 'end_date', label: 'End date', alignRight: false },
     { id: 'user', label: 'User', alignRight: false },
     { id: 'total', label: 'Total', alignRight: false },
-    { id: 'status', label: 'Status', alignRight: false},
+    { id: 'status', label: 'Status', alignRight: false },
     { id: '' },
 ];
 
@@ -356,7 +356,7 @@ export const PayrollPage = () => {
                                 {payrolls.length > 0 ? (
                                     <TableBody>
                                         {filteredPayrolls.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                                            const { id, suffix_id:suffixId, user, month, start_date: startDate, end_date: endDate, total_amount: totalAmount, request, status} = row;
+                                            const { id, suffix_id: suffixId, user, month, start_date: startDate, end_date: endDate, total_amount: totalAmount, request, status } = row;
 
                                             return (
                                                 <TableRow hover key={id} tabIndex={-1} role="checkbox">
@@ -382,32 +382,38 @@ export const PayrollPage = () => {
                                                     <TableCell align="left">{totalAmount}</TableCell>
 
                                                     <TableCell align="left">
-                                                        <Label color={status === 'created' ? 'success' : 'error' }>
+                                                        <Label color={status === 'created' ? 'success' : 'error'}>
                                                             {sentenceCase(status)}
                                                         </Label>
                                                     </TableCell>
 
                                                     <TableCell align="right">
-                                                        <a
-                                                            style={{ textDecoration: 'none', color: 'inherit' }}
-                                                            target="_blank"
-                                                            href={`${config.APPBACK_URL}/api/payrolls/${id}/download`}
-                                                            rel="noreferrer"
-                                                        >
-                                                            <IconButton size="large" color="inherit">
-                                                                <Iconify icon="bx:bxs-file-pdf" />
-                                                            </IconButton>
-                                                        </a>
-                                                        <a
-                                                            style={{ textDecoration: 'none', color: '#54D62C' }}
-                                                            target="_blank"
-                                                            href={`${config.APPBACK_URL}/api/bank-checks/${id}/download`}
-                                                            rel="noreferrer"
-                                                        >
-                                                            <IconButton size="large" color="inherit">
-                                                                <Iconify icon="bx:money-withdraw" />
-                                                            </IconButton>
-                                                        </a>
+                                                        {
+                                                            status === 'created' ? (
+                                                                <>
+                                                                    <a
+                                                                        style={{ textDecoration: 'none', color: 'inherit' }}
+                                                                        target="_blank"
+                                                                        href={`${config.APPBACK_URL}/api/payrolls/${id}/download`}
+                                                                        rel="noreferrer"
+                                                                    >
+                                                                        <IconButton size="large" color="inherit">
+                                                                            <Iconify icon="bx:bxs-file-pdf" />
+                                                                        </IconButton>
+                                                                    </a>
+                                                                    <a
+                                                                        style={{ textDecoration: 'none', color: '#54D62C' }}
+                                                                        target="_blank"
+                                                                        href={`${config.APPBACK_URL}/api/bank-checks/${id}/download`}
+                                                                        rel="noreferrer"
+                                                                    >
+                                                                        <IconButton size="large" color="inherit">
+                                                                            <Iconify icon="bx:money-withdraw" />
+                                                                        </IconButton>
+                                                                    </a>
+                                                                </>
+                                                            ) : null
+                                                        }
 
                                                     </TableCell>
                                                 </TableRow>
@@ -546,43 +552,43 @@ export const PayrollPage = () => {
                                 }}>You can download the payroll in PDF format</Typography>
 
                                 <Stack direction="row" spacing={2}>
-                                <a
-                                    href={`${config.APPBACK_URL}/api/payrolls/${payroll.id}/download/`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    download
-                                    style={{ textDecoration: 'none' }}
-                                >
-                                    <Button variant="contained"
-                                        size='large'
-                                        sx={{
-                                            width: '100%',
-                                        }}
-                                        color="error"
-                                        startIcon={<Iconify icon="mdi:file-pdf" />}
+                                    <a
+                                        href={`${config.APPBACK_URL}/api/payrolls/${payroll.id}/download/`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download
+                                        style={{ textDecoration: 'none' }}
                                     >
-                                        Download payroll
-                                    </Button>
-                                </a>
+                                        <Button variant="contained"
+                                            size='large'
+                                            sx={{
+                                                width: '100%',
+                                            }}
+                                            color="error"
+                                            startIcon={<Iconify icon="mdi:file-pdf" />}
+                                        >
+                                            Download payroll
+                                        </Button>
+                                    </a>
 
-                                <a
-                                    href={`${config.APPBACK_URL}/api/bank-checks/${payroll.id}/download/`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    download
-                                    style={{ textDecoration: 'none' }}
-                                >
-                                    <Button variant="contained"
-                                        size='large'
-                                        sx={{
-                                            width: '100%',
-                                        }}
-                                        color="success"
-                                        startIcon={<Iconify icon="mdi:file-pdf" />}
+                                    <a
+                                        href={`${config.APPBACK_URL}/api/bank-checks/${payroll.id}/download/`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download
+                                        style={{ textDecoration: 'none' }}
                                     >
-                                        Download bank checks
-                                    </Button>
-                                </a>
+                                        <Button variant="contained"
+                                            size='large'
+                                            sx={{
+                                                width: '100%',
+                                            }}
+                                            color="success"
+                                            startIcon={<Iconify icon="mdi:file-pdf" />}
+                                        >
+                                            Download bank checks
+                                        </Button>
+                                    </a>
                                 </Stack>
 
                             </Stack>
