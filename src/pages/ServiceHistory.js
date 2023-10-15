@@ -316,7 +316,7 @@ export const ServiceHistory = () => {
 
                                                     <TableCell align="left">
                                                         <Label color={status === 'paid' ? 'success' : status === 'open' ? 'warning' : status === 'cancelled' ? 'error' : 'info'}>
-                                                            {sentenceCase(status === 'paid' ? 'Paid' : status === 'open' ? 'Open' : status === 'cancelled' ? 'Cancelled' : 'Pending')}
+                                                            {sentenceCase(status)}
                                                         </Label>
                                                     </TableCell>
 

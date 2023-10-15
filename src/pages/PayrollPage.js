@@ -56,11 +56,14 @@ import config from '../config.json';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
+    { id: 'suffix_id', label: 'ID', alignRight: false },
+    { id: 'request_id', label: 'Request', alignRight: false },
     { id: 'month', label: 'Month', alignRight: false },
     { id: 'start_date', label: 'Start date', alignRight: false },
     { id: 'end_date', label: 'End date', alignRight: false },
     { id: 'user', label: 'User', alignRight: false },
     { id: 'total', label: 'Total', alignRight: false },
+    { id: 'status', label: 'Status', alignRight: false},
     { id: '' },
 ];
 
@@ -353,7 +356,7 @@ export const PayrollPage = () => {
                                 {payrolls.length > 0 ? (
                                     <TableBody>
                                         {filteredPayrolls.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                                            const { id, user, month, start_date: startDate, end_date: endDate, total_amount: totalAmount } = row;
+                                            const { id, suffix_id:suffixId, user, month, start_date: startDate, end_date: endDate, total_amount: totalAmount, request, status} = row;
 
                                             return (
                                                 <TableRow hover key={id} tabIndex={-1} role="checkbox">
@@ -361,10 +364,14 @@ export const PayrollPage = () => {
                                                     <TableCell component="th" scope="row" padding="normal">
                                                         <Stack direction="row" alignItems="center" spacing={2}>
                                                             <Typography variant="subtitle2" noWrap>
-                                                                {month}
+                                                                {suffixId || 'N/A'}
                                                             </Typography>
                                                         </Stack>
                                                     </TableCell>
+
+                                                    <TableCell align="left">{request?.suffix_id || 'N/A'}</TableCell>
+
+                                                    <TableCell align="left">{month}</TableCell>
 
                                                     <TableCell align="left">{format(parseISO(`${startDate.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}</TableCell>
 
@@ -373,6 +380,12 @@ export const PayrollPage = () => {
                                                     <TableCell align="left">{user.full_name}</TableCell>
 
                                                     <TableCell align="left">{totalAmount}</TableCell>
+
+                                                    <TableCell align="left">
+                                                        <Label color={status === 'created' ? 'success' : 'error' }>
+                                                            {sentenceCase(status)}
+                                                        </Label>
+                                                    </TableCell>
 
                                                     <TableCell align="right">
                                                         <a
@@ -386,7 +399,7 @@ export const PayrollPage = () => {
                                                             </IconButton>
                                                         </a>
                                                         <a
-                                                            style={{ textDecoration: 'none', color: 'green' }}
+                                                            style={{ textDecoration: 'none', color: '#54D62C' }}
                                                             target="_blank"
                                                             href={`${config.APPBACK_URL}/api/bank-checks/${id}/download`}
                                                             rel="noreferrer"
@@ -411,7 +424,7 @@ export const PayrollPage = () => {
                                     (
                                         <TableBody>
                                             <TableRow>
-                                                <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                                                <TableCell align="center" colSpan={7} sx={{ py: 3 }}>
                                                     <Paper
                                                         sx={{
                                                             textAlign: 'center',
@@ -435,7 +448,7 @@ export const PayrollPage = () => {
                                 {isNotFound && (
                                     <TableBody>
                                         <TableRow>
-                                            <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                                            <TableCell align="center" colSpan={7} sx={{ py: 3 }}>
                                                 <Paper
                                                     sx={{
                                                         textAlign: 'center',

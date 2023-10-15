@@ -49,7 +49,7 @@ export default function ReviewListToolbar({
     onFilterAssignment,
     setOpen,
     selected,
-    getPayrolls,
+    getRequests,
     startDate,
     endDate,
     setDateRange,
@@ -58,8 +58,8 @@ export default function ReviewListToolbar({
     setSelected,
     setPageReview,
     setIsLoading,
-    setPayroll,
-    setOpenPayroll,
+    setRequest,
+    setOpenRequest,
 }) {
     return (
         <StyledRoot
@@ -88,30 +88,32 @@ export default function ReviewListToolbar({
             )}
 
             {numSelected > 0 ? (
-                <Tooltip title="Select all" onClick={() => {
-                    setIsLoading(true);
-                    setOpen(false);
-                    axios.post(`${config.APPBACK_URL}/api/payrolls`, {
-                        services: selected,
-                        start_date: format(startDate, 'yyyy-MM-dd'),
-                        end_date: format(endDate, 'yyyy-MM-dd'),
-                        user_id: localStorage.getItem('id'),
-                    }).then(({ data }) => {
-                        setPayroll(data.payroll);
-                        setOpenPayroll(true);
-                        setIsLoading(false);
-                        getPayrolls();
-                        setDateRange();
-                        toast.success('Payroll generated successfully');
-                        setSelected([]);
-                        setPageReview(0);
-                    }).catch((error) => {
-                        setIsLoading(false);
-                        toast.error(error.response.data.message);
-                    }
-                    );
-                }
-                }>
+                <Tooltip
+                    title="Select all"
+                    onClick={() => {
+                        setIsLoading(true);
+                        setOpen(false);
+                        axios.post(`${config.APPBACK_URL}/api/requests`, {
+                            services: selected,
+                            start_date: format(startDate, 'yyyy-MM-dd'),
+                            end_date: format(endDate, 'yyyy-MM-dd'),
+                            user_id: localStorage.getItem('id'),
+                        }).then(({ data }) => {
+                            setRequest(data.request);
+                            setOpenRequest(true);
+                            setIsLoading(false);
+                            getRequests();
+                            setDateRange();
+                            toast.success('Request generated successfully');
+                            setSelected([]);
+                            setPageReview(0);
+                        }).catch((error) => {
+                            setIsLoading(false);
+                            toast.error(error.response.data.message);
+                        }
+                        );
+                    }}
+                >
                     <IconButton>
                         <Iconify icon="eva:checkmark-square-2-fill" />
                     </IconButton>

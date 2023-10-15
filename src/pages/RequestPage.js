@@ -56,11 +56,13 @@ import config from '../config.json';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
+    { id: 'suffix_id', label: 'ID', alignRight: false },
     { id: 'month', label: 'Month', alignRight: false },
     { id: 'start_date', label: 'Start date', alignRight: false },
     { id: 'end_date', label: 'End date', alignRight: false },
     { id: 'user', label: 'User', alignRight: false },
     { id: 'total', label: 'Total', alignRight: false },
+    { id: 'status', label: 'Status', alignRight: false },
     { id: '' },
 ];
 
@@ -133,15 +135,19 @@ export const RequestPage = () => {
 
     /* Modal */
 
-    const [payroll, setPayroll] = useState(null);
+    const [request, setRequest] = useState(null);
     const [open, setOpen] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
-    const [openPayroll, setOpenPayroll] = useState(false);
+    const [openRequest, setOpenRequest] = useState(false);
     const [currentId, setCurrentId] = useState(null);
+
+    const [currentRequest, setCurrentRequest] = useState(null);
+
+    const [currentStatus, setCurrentStatus] = useState(null);
 
     /* -------------------------------  Payrolls -------------------------------  */
 
-    const [payrolls, setPayrolls] = useState([]);
+    const [requests, setRequests] = useState([]);
 
     const [page, setPage] = useState(0);
 
@@ -178,8 +184,8 @@ export const RequestPage = () => {
     const getRequests = async () => {
         setIsLoading(true);
         try {
-            const response = await axios.get(`${config.APPBACK_URL}/api/payrolls`);
-            setPayrolls(response.data);
+            const response = await axios.get(`${config.APPBACK_URL}/api/requests`);
+            setRequests(response.data);
             setIsLoading(false);
         } catch (error) {
             console.log(error);
@@ -246,13 +252,14 @@ export const RequestPage = () => {
         setSelected(newSelected);
     };
 
-    const handleReviewPayroll = async () => {
+    const handleReviewRequest = async () => {
         try {
             setIsLoading(true);
-            const response = await axios.post(`${config.APPBACK_URL}/api/payrolls/review`, {
-                start_date: format(startDate, 'yyyy-MM-dd'),
-                end_date: format(endDate, 'yyyy-MM-dd'),
-            });
+
+            const sDate = format(startDate, 'yyyy-MM-dd');
+            const eDate = format(endDate, 'yyyy-MM-dd');
+
+            const response = await axios.get(`${config.APPBACK_URL}/api/requests/review/${sDate}/${eDate}`);
             setReview(response.data.review.map((review) => ({
                 ...review,
                 assignment: review.assignment_number,
@@ -263,6 +270,7 @@ export const RequestPage = () => {
             })));
             setOpen(true);
             setIsLoading(false);
+
         } catch (error) {
             console.log(error);
             toast.error('Error generating review');
@@ -282,31 +290,16 @@ export const RequestPage = () => {
         }
     }
 
-    const handleDeletePayroll = async () => {
-        setIsLoading(true);
-        setOpenDelete(false);
-        try {
-            await axios.delete(`${config.APPBACK_URL}/api/payrolls/${currentId}`);
-            toast.success('Payroll deleted successfully');
-            getRequests();
-            setIsLoading(false);
-        } catch (error) {
-            console.log(error);
-            setIsLoading(false);
-            toast.error('Error deleting payroll');
-        }
-    };
-
     useEffect(() => {
         getRequests();
         setDateRange();
     }, []);
 
-    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - payrolls.length) : 0;
+    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - requests.length) : 0;
 
-    const filteredPayrolls = applySortFilter(payrolls, getComparator(order, orderBy), filterDate);
+    const filteredRequests = applySortFilter(requests, getComparator(order, orderBy), filterDate);
 
-    const isNotFound = !filteredPayrolls.length && !!filterDate;
+    const isNotFound = !filteredRequests.length && !!filterDate;
 
     /* ------------- REVIEW ----------------------------- */
 
@@ -316,15 +309,35 @@ export const RequestPage = () => {
 
     const isNotFoundReview = review ? !filteredReview.length && !!filterAssignmentReview : false;
 
-    /* Dialog delete */
-    const handleClickDelete = (id) => {
+    /* ------------- Dialog Change status ----------------------------- */
+
+    const handleClickDelete = (id, suffixId, status) => {
         setOpenDelete(true);
         setCurrentId(id);
+        setCurrentRequest(suffixId);
+        setCurrentStatus(status);
     };
 
     const handleClose = () => {
         setOpenDelete(false);
         setCurrentId(null);
+        setCurrentStatus(null);
+    };
+
+
+    const handleDeleteRequest = async () => {
+        setIsLoading(true);
+        setOpenDelete(false);
+        try {
+            const { data } = await axios.put(`${config.APPBACK_URL}/api/requests/new-status/${currentId}`, { status: currentStatus });
+            toast.success('Status updated successfully');
+            setIsLoading(false);
+            getRequests();
+        }
+        catch (error) {
+            console.log(error);
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -396,7 +409,7 @@ export const RequestPage = () => {
                         </LocalizationProvider>
                         <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} sx={{ ml: 1, width: '15%' }} onClick={
                             () => {
-                                handleReviewPayroll();
+                                handleReviewRequest();
                             }
                         }>
                             Generate
@@ -418,14 +431,14 @@ export const RequestPage = () => {
                                     order={order}
                                     orderBy={orderBy}
                                     headLabel={TABLE_HEAD}
-                                    rowCount={payrolls.length}
+                                    rowCount={requests.length}
                                     onRequestSort={handleRequestSort}
                                 />
                                 {/* Tiene que cargar primero... */}
-                                {payrolls.length > 0 ? (
+                                {requests.length > 0 ? (
                                     <TableBody>
-                                        {filteredPayrolls.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                                            const { id, user, month, start_date: startDate, end_date: endDate, total_amount: totalAmount } = row;
+                                        {filteredRequests.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+                                            const { id, suffix_id: suffixId, user, month, start_date: startDate, end_date: endDate, total_amount: totalAmount, status, request_id:requestId } = row;
 
                                             return (
                                                 <TableRow hover key={id} tabIndex={-1} role="checkbox">
@@ -433,10 +446,12 @@ export const RequestPage = () => {
                                                     <TableCell component="th" scope="row" padding="normal">
                                                         <Stack direction="row" alignItems="center" spacing={2}>
                                                             <Typography variant="subtitle2" noWrap>
-                                                                {month}
+                                                                {suffixId}
                                                             </Typography>
                                                         </Stack>
                                                     </TableCell>
+
+                                                    <TableCell align="left">{month}</TableCell>
 
                                                     <TableCell align="left">{format(parseISO(`${startDate.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}</TableCell>
 
@@ -446,32 +461,89 @@ export const RequestPage = () => {
 
                                                     <TableCell align="left">{totalAmount}</TableCell>
 
+                                                    <TableCell align="left">
+                                                        <Label color={status === 'completed' ? 'success' : status === 'pending' ? 'warning' : 'error'}>
+                                                            {sentenceCase(status)}
+                                                        </Label>
+                                                    </TableCell>
+
                                                     <TableCell align="right">
-                                                        <a
-                                                            style={{ textDecoration: 'none', color: 'inherit' }}
-                                                            target="_blank"
-                                                            href={`${config.APPBACK_URL}/api/payrolls/${id}/download`}
-                                                            rel="noreferrer"
-                                                        >
-                                                            <IconButton size="large" color="inherit">
-                                                                <Iconify icon="bx:bxs-file-pdf" />
-                                                            </IconButton>
-                                                        </a>
-                                                        <a
-                                                            style={{ textDecoration: 'none', color: 'green' }}
-                                                            target="_blank"
-                                                            href={`${config.APPBACK_URL}/api/bank-checks/${id}/download`}
-                                                            rel="noreferrer"
-                                                        >
-                                                            <IconButton size="large" color="inherit">
-                                                                <Iconify icon="bx:money-withdraw" />
-                                                            </IconButton>
-                                                        </a>
+                                                        {
+                                                            status === 'pending' ? (
+                                                                <>
+                                                                    <a
+                                                                        style={{ textDecoration: 'none', color: 'inherit' }}
+                                                                        target="_blank"
+                                                                        href={`${config.APPBACK_URL}/api/requests/${id}/download`}
+                                                                        rel="noreferrer"
+                                                                    >
+                                                                        <IconButton size="large" color="inherit">
+                                                                            <Iconify icon="bx:bxs-file-pdf" />
+                                                                        </IconButton>
+                                                                    </a>
+                                                                    <a
+                                                                        style={{ textDecoration: 'none', color: '#2065D1' }}
+                                                                        target="_blank"
+                                                                        href={`${config.APPBACK_URL}/api/bank-checks-preview/${id}/download`}
+                                                                        rel="noreferrer"
+                                                                    >
+                                                                        <IconButton size="large" color="inherit">
+                                                                            <Iconify icon="bx:money-withdraw" />
+                                                                        </IconButton>
+                                                                    </a>
 
+                                                                    <IconButton size="large" color="success" onClick={() => handleClickDelete(id, suffixId, 'completed')} >
+                                                                        <Iconify icon={'mdi:check'} />
+                                                                        {/* Complete */}
+                                                                    </IconButton>
 
-                                                        <IconButton size="large" color="error" onClick={() => handleClickDelete(id)}>
-                                                            <Iconify icon="bx:bxs-trash" />
-                                                        </IconButton>
+                                                                    <IconButton size="large" color="error" onClick={() => handleClickDelete(id, suffixId, 'cancelled')}>
+                                                                        <Iconify icon="bx:bxs-trash" />
+                                                                    </IconButton>
+                                                                </>
+                                                            )
+                                                                :
+                                                                status === 'completed' ? (
+                                                                    <>
+                                                                        <a
+                                                                            style={{ textDecoration: 'none', color: 'inherit' }}
+                                                                            target="_blank"
+                                                                            href={`${config.APPBACK_URL}/api/requests/${id}/download`}
+                                                                            rel="noreferrer"
+                                                                        >
+                                                                            <IconButton size="large" color="inherit">
+                                                                                <Iconify icon="bx:bxs-file-pdf" />
+                                                                            </IconButton>
+                                                                        </a>
+                                                                        <a
+                                                                            style={{ textDecoration: 'none', color: '#2065D1' }}
+                                                                            target="_blank"
+                                                                            href={`${config.APPBACK_URL}/api/bank-checks-preview/${id}/download`}
+                                                                            rel="noreferrer"
+                                                                        >
+                                                                            <IconButton size="large" color="inherit">
+                                                                                <Iconify icon="bx:money-withdraw" />
+                                                                            </IconButton>
+                                                                        </a>
+
+                                                                        
+                                                                        <a
+                                                                            style={{ textDecoration: 'none', color: '#54D62C' }}
+                                                                            href={`/dashboard/payroll-panel/payments/`}
+                                                                        >
+                                                                            <IconButton size="large" color="inherit">
+                                                                                <Iconify icon="bx:show" />
+                                                                            </IconButton>
+                                                                        </a>
+                                                                    </>
+                                                                )
+                                                                    :
+                                                                    (
+                                                                        <>
+                                                                        </>
+                                                                    )
+                                                        }
+
                                                     </TableCell>
                                                 </TableRow>
                                             );
@@ -487,7 +559,7 @@ export const RequestPage = () => {
                                     (
                                         <TableBody>
                                             <TableRow>
-                                                <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                                                <TableCell align="center" colSpan={8} sx={{ py: 3 }}>
                                                     <Paper
                                                         sx={{
                                                             textAlign: 'center',
@@ -511,7 +583,7 @@ export const RequestPage = () => {
                                 {isNotFound && (
                                     <TableBody>
                                         <TableRow>
-                                            <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                                            <TableCell align="center" colSpan={8} sx={{ py: 3 }}>
                                                 <Paper
                                                     sx={{
                                                         textAlign: 'center',
@@ -538,7 +610,7 @@ export const RequestPage = () => {
                     <TablePagination
                         rowsPerPageOptions={[5, 10, 25]}
                         component="div"
-                        count={payrolls.length}
+                        count={requests.length}
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={handleChangePage}
@@ -553,9 +625,9 @@ export const RequestPage = () => {
 
             {/* Dialog - Payroll result */}
             {
-                payroll ? (
+                request ? (
                     <Dialog
-                        open={openPayroll}
+                        open={openRequest}
                         TransitionComponent={Transition}
                         keepMounted
                         aria-describedby="alert-dialog-slide-description"
@@ -594,58 +666,58 @@ export const RequestPage = () => {
                                     {/* Details */}
                                     <Typography variant="subtitle1" sx={{ fontWeight: '600' }}>Selected month:</Typography>
 
-                                    <Typography variant="subtitle1" sx={{ fontWeight: '600' }}>{payroll.month}</Typography>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: '600' }}>{request.month}</Typography>
 
                                 </Stack>
 
                                 <Typography variant="h4" sx={{
                                     fontWeight: '600',
                                     marginTop: 2,
-                                }}>Payroll generated successfully</Typography>
+                                }}>Request generated successfully</Typography>
 
                                 <Typography variant="h6" sx={{
                                     marginY: 2,
                                     fontWeight: '400'
-                                }}>You can download the payroll in PDF format</Typography>
+                                }}>You can download the request in PDF format</Typography>
 
                                 <Stack direction="row" spacing={2}>
-                                <a
-                                    href={`${config.APPBACK_URL}/api/payrolls/${payroll.id}/download/`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    download
-                                    style={{ textDecoration: 'none' }}
-                                >
-                                    <Button variant="contained"
-                                        size='large'
-                                        sx={{
-                                            width: '100%',
-                                        }}
-                                        color="error"
-                                        startIcon={<Iconify icon="mdi:file-pdf" />}
+                                    <a
+                                        href={`${config.APPBACK_URL}/api/requests/${request.id}/download/`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download
+                                        style={{ textDecoration: 'none' }}
                                     >
-                                        Download payroll
-                                    </Button>
-                                </a>
+                                        <Button variant="contained"
+                                            size='large'
+                                            sx={{
+                                                width: '100%',
+                                            }}
+                                            color="error"
+                                            startIcon={<Iconify icon="mdi:file-pdf" />}
+                                        >
+                                            Download request
+                                        </Button>
+                                    </a>
 
-                                <a
-                                    href={`${config.APPBACK_URL}/api/bank-checks/${payroll.id}/download/`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    download
-                                    style={{ textDecoration: 'none' }}
-                                >
-                                    <Button variant="contained"
-                                        size='large'
-                                        sx={{
-                                            width: '100%',
-                                        }}
-                                        color="success"
-                                        startIcon={<Iconify icon="mdi:file-pdf" />}
+                                    <a
+                                        href={`${config.APPBACK_URL}/api/bank-checks-preview/${request.id}/download/`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download
+                                        style={{ textDecoration: 'none' }}
                                     >
-                                        Download bank checks
-                                    </Button>
-                                </a>
+                                        <Button variant="contained"
+                                            size='large'
+                                            sx={{
+                                                width: '100%',
+                                            }}
+                                            color="success"
+                                            startIcon={<Iconify icon="mdi:file-pdf" />}
+                                        >
+                                            Download bank checks preview
+                                        </Button>
+                                    </a>
                                 </Stack>
 
                             </Stack>
@@ -664,7 +736,7 @@ export const RequestPage = () => {
                                     margin: 2,
                                 }}
                                 onClick={() => {
-                                    setOpenPayroll(false);
+                                    setOpenRequest(false);
                                 }}
                             >Close</Button>
                         </DialogActions>
@@ -696,7 +768,7 @@ export const RequestPage = () => {
 
                                     setOpen={setOpen}
                                     selected={selected}
-                                    getPayrolls={getRequests}
+                                    getRequests={getRequests}
                                     startDate={startDate}
                                     endDate={endDate}
                                     setDateRange={setDateRange}
@@ -705,8 +777,8 @@ export const RequestPage = () => {
                                     setSelected={setSelected}
                                     setPageReview={setPageReview}
                                     setIsLoading={setIsLoading}
-                                    setPayroll={setPayroll}
-                                    setOpenPayroll={setOpenPayroll} />
+                                    setRequest={setRequest}
+                                    setOpenRequest={setOpenRequest} />
 
                                 <Scrollbar>
                                     <TableContainer sx={{ minWidth: 800 }}>
@@ -862,16 +934,16 @@ export const RequestPage = () => {
                 aria-describedby="alert-dialog-description"
             >
                 <DialogTitle id="alert-dialog-title">
-                    {"Confirm action"}
+                    {"Change of status"}
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">
-                        Are you sure you want to delete?
+                        Are you sure you want to change the <b>status</b> of request <b>#{currentRequest}</b> to <b>{currentStatus}?</b>
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleClose}>Disagree</Button>
-                    <Button onClick={handleDeletePayroll} autoFocus>
+                    <Button onClick={handleDeleteRequest} autoFocus>
                         Agree
                     </Button>
                 </DialogActions>
