@@ -597,8 +597,10 @@ export const NewServicePage = () => {
     /* Get axios */
 
     const getLenguages = () => {
+        setIsLoading(true);
         axios.get(`${config.APPBACK_URL}/api/lenguages/status`)
             .then((response) => {
+                setIsLoading(false);
                 setLenguages(response.data);
             })
             .catch((error) => {
@@ -608,6 +610,7 @@ export const NewServicePage = () => {
     }
 
     const getStates = () => {
+        setIsLoading(true);
         axios.get('https://api.countrystatecity.in/v1/countries/US/states', {
             headers: {
                 'X-CSCAPI-KEY': 'N3NXRVN4V1Y1YVJmSTd6ZHR3b1NlMDlMRkRRVFQ2c0JWWmcxbmNUWg=='
@@ -621,6 +624,7 @@ export const NewServicePage = () => {
                     }
                 }).sort((a, b) => a.name.localeCompare(b.name));
                 setStates(states);
+                setIsLoading(false);
             })
             .catch((error) => {
                 console.log(error);

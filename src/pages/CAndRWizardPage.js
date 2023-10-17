@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Helmet } from 'react-helmet-async';
+import { filter } from 'lodash';
+import { sentenceCase } from 'change-case';
 import {
     Box,
     Button,
@@ -24,6 +26,14 @@ import {
     FormLabel,
     RadioGroup,
     Radio,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TablePagination,
+    TableRow,
+    IconButton,
+    Toolbar,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -31,109 +41,149 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import InputAdornment from '@mui/material/InputAdornment';
 import { format, parseISO } from 'date-fns';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 
-import { SearchInterpreter } from '../sections/@manage/interpreter/SearchInterpreter';
-import { SearchAgency } from '../sections/@manage/agency/SearchAgency';
-import { InterpreterData } from '../sections/@manage/interpreter/InterpreterData';
-import { SearchDescription } from '../sections/@manage/description/SearchDescription';
-import { SearchAddress } from '../sections/@manage/interpreter/SearchAddress';
 import config from '../config.json';
+import Label from '../components/label';
 import Iconify from '../components/iconify';
+import Scrollbar from '../components/scrollbar';
+
+/* Review table */
+import { ReviewListHead, ReviewListToolbar } from '../sections/@payroll/table';
+
+const TABLE_HEAD_REVIEW = [
+    { id: 'assignment', label: 'Assignment', alignRight: false },
+    { id: 'date', label: 'Date of service provided', alignRight: false },
+    { id: 'agency', label: 'Agency', alignRight: false },
+    { id: 'interpreter', label: 'Interpreter', alignRight: false },
+    { id: 'status', label: 'Status', alignRight: false },
+    { id: 'total', label: 'Total', alignRight: false },
+];
+
+function descendingComparator(a, b, orderBy) {
+    if (b[orderBy] < a[orderBy]) {
+        return -1;
+    }
+    if (b[orderBy] > a[orderBy]) {
+        return 1;
+    }
+    return 0;
+}
+
+function getComparator(order, orderBy) {
+    return order === 'desc'
+        ? (a, b) => descendingComparator(a, b, orderBy)
+        : (a, b) => -descendingComparator(a, b, orderBy);
+}
+
+
+function applySortFilterReview(array, comparator, query) {
+    const stabilizedThis = array.map((el, index) => [el, index]);
+    stabilizedThis.sort((a, b) => {
+        const order = comparator(a[0], b[0]);
+        if (order !== 0) return order;
+        return a[1] - b[1];
+    });
+    if (query) {
+        return filter(array, (_review) => _review.assignment_number.indexOf(query.toLowerCase()) !== -1);
+    }
+    return stabilizedThis.map((el) => el[0]);
+}
+
 
 /* Cancel and regenerate wizard payrol */
 const steps = ['Set up', 'Review Payroll', 'Summary'];
 
 export const CAndRWizardPage = () => {
 
-    /* Detect id */
-    const { id } = useParams();
-    const location = useLocation();
-    const navigate = useNavigate();
-
     /* Form */
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
 
-    /* get data external */
-    const [states, setStates] = useState([]);
-    const [lenguages, setLenguages] = useState([]);
+    const [newPayrollId, setNewPayrollId] = useState('');
 
-    /* Agency */
-    const [agencyName, setAgencyName] = useState('');
-    const [agencyId, setAgencyId] = useState('');
+    const navigate = useNavigate();
 
-    /* Interprete */
+    /* Set Up */
 
-    const [interpreterName, setInterpreterName] = useState('');
-    const [interpreterId, setInterpreterId] = useState('');
-    const [interpreterPhoneNum, setInterpreterPhoneNum] = useState('');
-    const [interpreterSSN, setInterpreterSSN] = useState('');
+    const [payrolls, setPayrolls] = useState([]);
+    const [payrollSelected, setPayrollSelected] = useState('none');
+    const [payrollData, setPayrollData] = useState({});
 
-    const [interpreterAddress, setInterpreterAddress] = useState('');
-    const [interpreterCity, setInterpreterCity] = useState('');
-    const [interpreterState, setInterpreterState] = useState('');
-    const [interpreterZipCode, setInterpreterZipCode] = useState('');
-    const [interpreterEmail, setInterpreterEmail] = useState('');
-    const [interpreterLenguageId, setInterpreterLenguageId] = useState('none');
-    const [interpreterSelected, setInterpreterSelected] = useState(false);
+    const [actionRequest, setActionRequest] = useState('Cancel');
 
-    const [interpreterContainer, setInterpreterContainer] = useState(false);
+    /* Reviews */
 
-    /* Service address */
+    const [review, setReview] = useState(null);
 
-    const [serviceAddressId, setServiceAddressId] = useState(''); // [1]
-    const [serviceAddress, setServiceAddress] = useState('');
-    const [serviceCity, setServiceCity] = useState('');
-    const [serviceState, setServiceState] = useState('none');
-    const [serviceZipCode, setServiceZipCode] = useState('');
-    const [addressSelected, setAddressSelected] = useState(false); // [1
+    const [pageReview, setPageReview] = useState(0);
 
-    /* New service variable */
+    const [orderReview, setOrderReview] = useState('desc');
 
-    const [assignmentNumber, setAssignmentNumber] = useState('');
-    const [assignmentNumberOld, setAssignmentNumberOld] = useState('');
-    const [timeIsNull, setTimeIsNull] = useState(true);
+    const [orderByReview, setOrderByReview] = useState('id');
 
-    const [miscellaneous, setMiscellaneous] = useState(0);
+    const [selected, setSelected] = useState([]);
 
-    const [description, setDescription] = useState('');
-    const [descriptionId, setDescriptionId] = useState('');
+    const [rowsPerPageReview, setRowsPerPageReview] = useState(5);
 
-    const [dateServiceProvided, setDateServiceProvided] = useState(new Date());
-    const [arrivalTime, setArrivalTime] = useState('');
-    const [startTime, setStartTime] = useState('');
-    const [endTime, setEndTime] = useState('');
+    const [filterAssignmentReview, setFilterAssignmentReview] = useState('');
 
-    const [travelTimeToAssignment, setTravelTimeToAssignment] = useState('');
-    const [timeBackFromAssignment, setTimeBackFromAssignment] = useState('');
+    const handleRequestSortReview = (event, property) => {
+        const isAsc = orderByReview === property && orderReview === 'asc';
+        setOrderReview(isAsc ? 'desc' : 'asc');
+        setOrderByReview(property);
+    };
 
-    const [travelMileage, setTravelMileage] = useState(0);
-    const [costPerMile, setCostPerMile] = useState(0.655);
+    const handleChangePageReview = (event, newPage) => {
+        setPageReview(newPage);
+    };
 
-    const [containerOrderDetails, setContainerOrderDetails] = useState(false);
-    const [containerTravelDetails, setContainerTravelDetails] = useState(false);
+    const handleChangeRowsPerPageReview = (event) => {
+        setPageReview(0);
+        setRowsPerPageReview(parseInt(event.target.value, 10));
+    };
 
-    /* Service calculation */
+    const handleFilterByAssignment = (event) => {
+        setPageReview(0);
+        setFilterAssignmentReview(event.target.value);
+    };
 
-    const [totalServiceInterpreter, setTotalServiceInterpreter] = useState(0);
-    const [totalServiceCoordinator, setTotalServiceCoordinator] = useState(0);
-    const [totalService, setTotalService] = useState(0);
+    const handleSelectAllClick = (event) => {
+        if (event.target.checked) {
+            const newSelecteds = review.map((n) => n.id);
+            setSelected(newSelecteds);
+            return;
+        }
+        setSelected([]);
+    };
 
-    /* Mileage calculation */
+    const handleClick = (event, id) => {
+        const selectedIndex = selected.indexOf(id);
+        let newSelected = [];
+        if (selectedIndex === -1) {
+            newSelected = newSelected.concat(selected, id);
+        } else if (selectedIndex === 0) {
+            newSelected = newSelected.concat(selected.slice(1));
+        } else if (selectedIndex === selected.length - 1) {
+            newSelected = newSelected.concat(selected.slice(0, -1));
+        } else if (selectedIndex > 0) {
+            newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
+        }
+        setSelected(newSelected);
+    };
 
-    const [totalMileageInterpreter, setTotalMileageInterpreter] = useState(0);
-    const [totalMileageCoordinator, setTotalMileageCoordinator] = useState(0);
-    const [totalMileage, setTotalMileage] = useState(0);
+    /* ------------- REVIEW ----------------------------- */
+
+    const emptyRowsReview = review ? pageReview > 0 ? Math.max(0, (1 + pageReview) * rowsPerPageReview - review.length) : 0 : 0;
+
+    const filteredReview = review ? applySortFilterReview(review, getComparator(orderReview, orderByReview), filterAssignmentReview) : [];
+
+    const isNotFoundReview = review ? !filteredReview.length && !!filterAssignmentReview : false;
 
     /* Summary */
 
     const [comments, setComments] = useState('');
-
-    /* Result */
-
-    const [invoiceId, setInvoiceId] = useState(null);
 
     /*  Active step variable */
 
@@ -143,150 +193,18 @@ export const CAndRWizardPage = () => {
         const errors = {};
         let flag;
         if (activeStep === 0) {
-            if (agencyId === '') {
-                errors.agency = 'Agency is required';
+            if (payrollSelected === 'none') {
+                errors.payroll = 'Please select a payroll';
                 flag = true;
             }
 
-            if (interpreterId === '' && interpreterContainer === false) {
-                errors.interpreter = 'Interpreter is required';
-                flag = true;
-            }
-
-            if (interpreterContainer === true) {
-                if (interpreterName === '') {
-                    errors.interpreterName = 'Name is required';
-                    flag = true;
-                }
-
-                if (interpreterEmail === '') {
-                    errors.interpreterEmail = 'Email is required';
-                    flag = true;
-                }
-
-                if (interpreterPhoneNum === '') {
-                    errors.interpreterPhoneNum = 'Phone number is required';
-                    flag = true;
-                }
-
-                if (interpreterSSN === '') {
-                    errors.interpreterSSN = 'SSN is required';
-                    flag = true;
-                }
-
-                if (interpreterAddress === '') {
-                    errors.interpreterAddress = 'Address is required';
-                    flag = true;
-                }
-
-                if (interpreterCity === '') {
-                    errors.interpreterCity = 'City is required';
-                    flag = true;
-                }
-
-                if (interpreterState === '') {
-                    errors.interpreterState = 'State is required';
-                    flag = true;
-                }
-
-                if (interpreterZipCode === '') {
-                    errors.interpreterZipCode = 'Zip code is required';
-                    flag = true;
-                }
-
-                if (interpreterLenguageId === 'none') {
-                    errors.lenguage = 'Lenguage is required';
-                    flag = true;
-                }
-            }
-
-            if (serviceAddressId === '') {
-
-                if (serviceAddress === '') {
-                    errors.serviceAddress = 'Address is required';
-                    flag = true;
-                }
-
-                if (serviceCity === '') {
-                    errors.serviceCity = 'City is required';
-                    flag = true;
-                }
-
-                if (serviceState === '' || serviceState === 'none') {
-                    errors.serviceState = 'State is required';
-                    flag = true;
-                }
-
-                if (serviceZipCode === '') {
-                    errors.serviceZipCode = 'Zip is required';
-                    flag = true;
-                }
-
-            }
-
-            if (interpreterLenguageId === 'none') {
-                errors.lenguage = 'Lenguage is required';
+            if (actionRequest === '') {
+                errors.actionRequest = 'Please select an action';
                 flag = true;
             }
         }
         if (activeStep === 1) {
-
-            if (assignmentNumber === '') {
-                errors.assignmentNumber = 'Assignment number is required';
-                flag = true;
-            }
-
-            if (description === '') {
-                errors.description = 'Description is required';
-                flag = true;
-            }
-
-            if (dateServiceProvided === '' || JSON.stringify(dateServiceProvided) === 'null') {
-                errors.dateServiceProvided = 'Date of service provided is required';
-                flag = true;
-            }
-
-            if (timeIsNull) {
-                if (arrivalTime === '') {
-                    errors.arrivalTime = 'Arrival time is required';
-                    flag = true;
-                }
-
-                if (startTime === '') {
-                    errors.startTime = 'Start time is required';
-                    flag = true;
-                }
-
-                if (endTime === '') {
-                    errors.endTime = 'End time is required';
-                    flag = true;
-                }
-            }
-
-            if (travelTimeToAssignment === '') {
-                errors.travelTimeToAssignment = 'Travel time to assignment is required';
-                flag = true;
-            }
-
-            if (timeBackFromAssignment === '') {
-                errors.timeBackFromAssignment = 'Time back from assignment is required';
-                flag = true;
-            }
-
-            if (travelMileage === '') {
-                errors.travelMileage = 'Travel mileage is required';
-                flag = true;
-            }
-
-            if (costPerMile === '') {
-                errors.costPerMile = 'Cost per mile is required';
-                flag = true;
-            }
-
-            if (containerOrderDetails === false) {
-                toast.warning('Please calculate the service, the date is not correct');
-                flag = true;
-            }
+            console.log('activeStep 1');
         }
 
         if (flag) {
@@ -296,401 +214,85 @@ export const CAndRWizardPage = () => {
         }
 
         setErrors({});
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
 
-        switch (activeStep) {
-            case 0:
-                break;
-            default:
-        }
-    };
-
-    const handleOnBlurAssignmentNumber = () => {
-        /* validar el assignment number, si hay un id es porque se esta editando, entonces que no se valide por el mismo id */
-
-        if (assignmentNumber !== '' && assignmentNumber !== assignmentNumberOld) {
-            axios.get(`${config.APPBACK_URL}/api/invoices/assignmentNumber/${assignmentNumber}`)
-                .then((response) => {
-                })
-                .catch((error) => {
-                    console.log(error);
-                    toast.error('Assignment number already exists');
-                    setAssignmentNumber('');
-                });
-        }
-    }
-
-    const handleBack = () => {
-        setActiveStep((prevActiveStep) => prevActiveStep - 1);
-    };
-
-    /* Autocomplete agency */
-
-    const handleOnChangeAgency = (agency) => {
-        setAgencyId(agency.id);
-    }
-
-    /* Autocomplete interpreter */
-
-    const handleOnChangeInterpreter = (interpreter) => {
-        setInterpreterId(interpreter.id);
-        setInterpreterPhoneNum(interpreter.phone_number);
-        setInterpreterSSN(interpreter.ssn);
-        setInterpreterAddress(interpreter.address);
-        setInterpreterCity(interpreter.city);
-        setInterpreterState(interpreter.state);
-        setInterpreterEmail(interpreter.email);
-        setInterpreterZipCode(interpreter.zip_code);
-        setInterpreterContainer(true);
-        setInterpreterSelected(true);
-    }
-
-    const handleClearInterpreter = () => {
-        setInterpreterId('');
-        setInterpreterPhoneNum('');
-        setInterpreterSSN('');
-        setInterpreterAddress('');
-        setInterpreterCity('');
-        setInterpreterState('none');
-        setInterpreterEmail('');
-        setInterpreterZipCode('');
-        setInterpreterContainer(false);
-        setInterpreterSelected(false);
-        setErrors({});
-
-    }
-
-    /* Autocomplete address */
-
-    const handleOnChangeAddress = (address) => {
-        setServiceAddressId(address.id);
-        setServiceAddress(address.address);
-        setServiceCity(address.city);
-        setServiceState(address.state);
-        setServiceZipCode(address.zipCode);
-        setAddressSelected(true);
-    }
-
-    const handleClearAddress = () => {
-        setServiceAddressId('');
-        setServiceCity('');
-        setServiceState('none');
-        setServiceZipCode('');
-        setAddressSelected(false);
-        setErrors({});
-    }
-
-    /* Autocomplete description */
-
-    const handleOnChangeDescription = (description) => {
-        setDescription(description.title);
-        setDescriptionId(description.id);
-    }
-
-    /* Functions for calculate service - Time */
-
-    const timeStringToFloat = (time) => {
-        const [hours, minutes] = time.split(':');
-        return Math.round((parseFloat(hours) + parseFloat(minutes) / 60) * 100) / 100;
-    }
-
-    /* Functions for calculate service - Travel */
-
-
-    const calculateMileage = (travelMileage, costPerMile) => {
-        setContainerTravelDetails(false);
-        if (travelMileage > 0 && costPerMile > 0) {
-            const totalCostMileage = travelMileage * costPerMile;
-            let totalInterpreter = 0;
-            let totalCoordinator = 0;
-
-            if (travelMileage > 0 && travelMileage < 50) {
-                totalCoordinator = totalCostMileage;
-            }
-            else if (travelMileage >= 50) {
-                totalInterpreter = totalCostMileage;
-            }
-
-            setTotalMileageInterpreter(totalInterpreter);
-            setTotalMileageCoordinator(totalCoordinator);
-            setTotalMileage(totalCostMileage);
-            setContainerTravelDetails(true);
-
-        } else {
-            setTotalMileageInterpreter(0);
-            setTotalMileageCoordinator(0);
-            setTotalMileage(0);
-        }
-    }
-
-    /* Handle submit new service or update */
-
-    const handleSubmitNewInvoice = () => {
-        setIsLoading(true);
-
-        const newInvoice = {
-            /* Interpreters and coordinators */
-            'coordinator_id': 1,
-            'user_id': localStorage.getItem('id'),
-            'agency_id': agencyId,
-            'interpreter_id': interpreterId,
-            'interpreterName': interpreterName,
-            'interpreterPhoneNum': interpreterPhoneNum,
-            'interpreterSSN': interpreterSSN,
-            'interpreterAddress': interpreterAddress,
-            'interpreterCity': interpreterCity,
-            'interpreterState': interpreterState,
-            'interpreterZipCode': interpreterZipCode,
-            'interpreterEmail': interpreterEmail,
-            'interpreterLenguageId': interpreterLenguageId,
-
-            /* Address service */
-            'address_id': serviceAddressId,
-            'address': serviceAddress,
-            'city': serviceCity,
-            'state': serviceState,
-            'state_abbr': states.find((item) => item.name === serviceState).iso2,
-            'zip_code': serviceZipCode,
-
-            /* Invoice details */
-            'assignment_number': assignmentNumber,
-            'description_id': descriptionId,
-            'description': description,
-            'date_of_service_provided': format(dateServiceProvided, 'yyyy-MM-dd'),
-            'arrival_time': timeIsNull ? format(arrivalTime, 'HH:mm') : null,
-            'start_time': timeIsNull ? format(startTime, 'HH:mm') : null,
-            'end_time': timeIsNull ? format(endTime, 'HH:mm') : null,
-            'travel_time_to_assignment': travelTimeToAssignment,
-            'time_back_from_assignment': timeBackFromAssignment,
-            'miscellaneous': parseFloat(miscellaneous).toFixed(2),
-
-            'travel_mileage': travelMileage,
-            'cost_per_mile': costPerMile,
-
-            'total_amount_miles': totalMileage,
-            'total_amount_hours': totalService,
-
-            'total_interpreter': (totalServiceInterpreter + totalMileageInterpreter).toFixed(2),
-            'total_coordinator': (totalServiceCoordinator + totalMileageCoordinator).toFixed(2),
-
-            'total_amount': (totalService + totalMileage).toFixed(2),
-            comments,
-        };
-
-        if (miscellaneous > 0) {
-            newInvoice.total_interpreter = (parseFloat(newInvoice.total_interpreter) + Math.abs(miscellaneous)).toFixed(2);
-            newInvoice.total_coordinator = (parseFloat(newInvoice.total_coordinator) - Math.abs(miscellaneous)).toFixed(2);
-        }
-        else {
-            newInvoice.total_interpreter = (parseFloat(newInvoice.total_interpreter) - Math.abs(miscellaneous)).toFixed(2);
-            newInvoice.total_coordinator = (parseFloat(newInvoice.total_coordinator) + Math.abs(miscellaneous)).toFixed(2);
-        }
-
-        if (newInvoice.total_interpreter < 0 || newInvoice.total_coordinator < 0) {
-            toast.error('The miscellaneous amount cannot be greater than the total amount');
-            setIsLoading(false);
+        if (activeStep === 0 && actionRequest === 'Cancel') {
+            setActiveStep((prevActiveStep) => prevActiveStep + 2);
             return;
         }
 
-        if (id) {
-            newInvoice.id = id;
-            axios.put(`${config.APPBACK_URL}/api/invoices/${id}`, newInvoice)
-                .then((response) => {
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
 
-                    toast.success('Invoice updated successfully');
+    };
 
-                    setTimeout(() => {
-                        setIsLoading(false);
-                        navigate('/dashboard/service-history');
-                    }, 2000);
-                }
-                )
-                .catch((error) => {
-                    console.log(error);
-                    setIsLoading(false);
-                }
-                );
+    const handleBack = () => {
 
+        if (activeStep === 2 && actionRequest === 'Cancel') {
+            setActiveStep((prevActiveStep) => prevActiveStep - 2);
+            return;
         }
-        else {
-            axios.post(`${config.APPBACK_URL}/api/invoices`, newInvoice)
-                .then((response) => {
-                    setInvoiceId(response.data.invoice);
-                    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-                    setIsLoading(false);
-                })
-                .catch((error) => {
-                    console.log(error);
-                    setIsLoading(false);
-                });
-        }
+
+        setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    };
+
+    /* Handle submit new service or update */
+
+    const handleSubmitForm = () => {
+        setIsLoading(true);
+
+        const newRequest = {
+
+            comments,
+        };
+
+
+        axios.post(`${config.APPBACK_URL}/api/invoices`, newRequest)
+            .then((response) => {
+
+                setActiveStep((prevActiveStep) => prevActiveStep + 1);
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                console.log(error);
+                setIsLoading(false);
+            });
 
     }
 
     /* Get axios */
 
-    const getLenguages = () => {
-        axios.get(`${config.APPBACK_URL}/api/lenguages/status`)
-            .then((response) => {
-                setLenguages(response.data);
-            })
-            .catch((error) => {
-                console.log(error);
-            }
-            );
-    }
-
-    const getStates = () => {
-        axios.get('https://api.countrystatecity.in/v1/countries/US/states', {
-            headers: {
-                'X-CSCAPI-KEY': 'N3NXRVN4V1Y1YVJmSTd6ZHR3b1NlMDlMRkRRVFQ2c0JWWmcxbmNUWg=='
-            }
-        })
-            .then((response) => {
-                const states = response.data.map((item) => {
-                    return {
-                        name: item.name,
-                        iso2: item.iso2,
-                    }
-                }).sort((a, b) => a.name.localeCompare(b.name));
-                setStates(states);
-            })
-            .catch((error) => {
-                console.log(error);
-            }
-            );
-    }
-
-    const getServiceDetails = () => {
+    const getLastPayroll = () => {
         setIsLoading(true);
-        axios.get(`${config.APPBACK_URL}/api/invoices/${id}`)
+        axios.get(`${config.APPBACK_URL}/api/last-payroll`)
             .then((response) => {
-                /* Agency */
-                setAgencyId(response.data.agency.id);
-                setAgencyName(response.data.agency.name);
-
-                /* Address */
-                setServiceAddressId(response.data.address.id);
-                setServiceAddress(response.data.address.address);
-                setServiceCity(response.data.address.city);
-                setServiceState(response.data.address.state);
-                setServiceZipCode(response.data.address.zip_code);
-                setAddressSelected(true);
-
-                /* Interpreter */
-                setInterpreterId(response.data.interpreter.id);
-                setInterpreterName(response.data.interpreter.full_name);
-                setInterpreterPhoneNum(response.data.interpreter.phone_number);
-                setInterpreterSSN(response.data.interpreter.ssn);
-                setInterpreterAddress(response.data.interpreter.address);
-                setInterpreterCity(response.data.interpreter.city);
-                setInterpreterState(response.data.interpreter.state);
-                setInterpreterZipCode(response.data.interpreter.zip_code);
-                setInterpreterEmail(response.data.interpreter.email);
-                setInterpreterLenguageId(response.data.interpreter.lenguage_id);
-                setInterpreterSelected(true);
-                setInterpreterContainer(true);
-
-                /* Service variable */
-                setAssignmentNumber(response.data.details.assignment_number);
-                setAssignmentNumberOld(response.data.details.assignment_number);
-                setDescriptionId(response.data.description.id);
-                setDescription(response.data.description.title);
-                setDateServiceProvided(new Date(response.data.details.date_of_service_provided));
-                setMiscellaneous(response.data.details.miscellaneous);
-
-                if (response.data.details.arrival_time === null && response.data.details.start_time === null && response.data.details.end_time === null) {
-                    setTimeIsNull(false);
-
-                } else {
-                    setTimeIsNull(true);
-                    setArrivalTime(parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.arrival_time}`));
-                    setStartTime(parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.start_time}`));
-                    setEndTime(parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.end_time}`));
-
-                }
-
-                setTravelMileage(response.data.details.travel_mileage);
-                setCostPerMile(response.data.details.cost_per_mile);
-                calculateMileage(response.data.details.travel_mileage, response.data.details.cost_per_mile);
-
-                setTravelTimeToAssignment(response.data.details.travel_time_to_assignment);
-                setTimeBackFromAssignment(response.data.details.time_back_from_assignment);
-
-                /* Comments */
-                setComments(response.data.details.comments);
-
+                const data = [];
+                data.push(response.data);
+                setPayrolls(data);
                 setIsLoading(false);
             })
             .catch((error) => {
                 console.log(error);
-            }
-            );
-    };
+            });
+    }
+
+    const getPayrollData = (id) => {
+        setIsLoading(true);
+        axios.get(`${config.APPBACK_URL}/api/payrolls/${id}`)
+            .then((response) => {
+                setPayrollData(response.data);
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    }
 
     useEffect(() => {
-        getStates();
-        getLenguages();
+        getLastPayroll();
     }, []);
-
-    useEffect(() => {
-        if (lenguages.length > 0) {
-            if (id) {
-                getServiceDetails();
-            }
-        }
-    }, [lenguages]);
-
-    useEffect(() => {
-        if (location.pathname === '/dashboard/new-service') {
-            /* Clear data */
-            setAgencyId('');
-            setAgencyName('');
-            setServiceAddressId('');
-            setServiceAddress('');
-            setServiceCity('');
-            setServiceState('none');
-            setServiceZipCode('');
-            setAddressSelected(false);
-            setInterpreterId('');
-            setInterpreterName('');
-            setInterpreterPhoneNum('');
-            setInterpreterSSN('');
-            setInterpreterAddress('');
-            setInterpreterCity('');
-            setInterpreterState('');
-            setInterpreterZipCode('');
-            setInterpreterEmail('');
-            setInterpreterLenguageId('none');
-            setInterpreterSelected(false);
-            setInterpreterContainer(false);
-            setAssignmentNumber('');
-            setDescriptionId('');
-            setDescription('');
-            setDateServiceProvided(new Date());
-            setTimeIsNull(true);
-            setArrivalTime('');
-            setStartTime('');
-            setEndTime('');
-            setTravelMileage(0);
-            setCostPerMile(0.655);
-            setTravelTimeToAssignment('');
-            setTimeBackFromAssignment('');
-            setMiscellaneous(0);
-            setComments('');
-            setErrors({});
-            setInvoiceId(null);
-            setActiveStep(0);
-        }
-        else if (id) {
-            getServiceDetails();
-            setActiveStep(0);
-        }
-    }, [location]);
 
     /* Functions for New service */
 
-    function AgencyInterpreterDetails() {
+    function setUp() {
         return (
             <Container sx={
                 {
@@ -704,51 +306,51 @@ export const CAndRWizardPage = () => {
                 <Typography variant="subtitle1" gutterBottom marginBottom={2}>
                     Enter the data of the payroll
                 </Typography>
-                <FormControl sx={{ width: '100%' }} error={errors.serviceState}>
-                    <InputLabel id="customer-select-label"
-                        sx={{ width: 400 }}
+
+                <FormControl error={errors.payroll} fullWidth >
+                    <InputLabel id="payroll-select-label"
                     >Payroll</InputLabel>
                     <Select
-                        labelId="customer-select-label"
-                        id="customer-select"
-                        label="State"
-                        value={serviceState}
-                        onChange={(e) => setServiceState(e.target.value)}
-                        disabled={addressSelected}
+                        labelId="payroll-select-label"
+                        id="payroll-select"
+                        label="Payroll"
+                        value={payrollSelected}
+                        onChange={(e) => {
+                            setPayrollSelected(e.target.value);
+                            getPayrollData(e.target.value);
+                        }}
                     >
                         <MenuItem disabled value="none">
                             <em style={{ color: 'gray' }}>Choose</em>
                         </MenuItem>
-                        {states.map((state) => (
-                            <MenuItem key={state.iso2} value={state.name}>{state.name}</MenuItem>
+                        {payrolls.map((payroll) => (
+                            <MenuItem key={payroll.id} value={payroll.id}> {payroll.suffix_id} - {format(parseISO(`${payroll.end_date.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')} </MenuItem>
                         ))}
                     </Select>
-                    <FormHelperText error={errors.serviceState}>{errors.serviceState ? errors.serviceState : null}</FormHelperText>
+                    <FormHelperText>{errors.payroll}</FormHelperText>
                 </FormControl>
+
                 <Typography variant="subtitle1" gutterBottom marginBottom={2} marginTop={2} sx={{ width: '100%' }}>
                     Enter the data of the request
                 </Typography>
-                <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <FormControl sx={{ width: '100%' }}>
-                        <FormLabel id="demo-radio-buttons-group-label">Action</FormLabel>
-                        <RadioGroup
-                            aria-labelledby="demo-radio-buttons-group-label"
-                            defaultValue="Regenerate"
-                            name="radio-buttons-group"
-                        >
-                            <FormControlLabel value="Cancel" control={<Radio />} label="Cancel" />
-                            <FormControlLabel value="Regenerate" control={<Radio />} label="Regenerate" />
-                        </RadioGroup>
-                    </FormControl>
 
-
-                </Stack>
+                <FormControl>
+                    <FormLabel id="action-request-label">Action</FormLabel>
+                    <RadioGroup
+                        aria-labelledby="action-request-label"
+                        defaultValue="Cancel"
+                        name="radio-buttons-group"
+                    >
+                        <FormControlLabel value="Cancel" checked={actionRequest === 'Cancel'} onChange={(e) => setActionRequest(e.target.value)} control={<Radio />} label="Cancel" />
+                        <FormControlLabel value="Regenerate" checked={actionRequest === 'Regenerate'} onChange={(e) => setActionRequest(e.target.value)} control={<Radio />} label="Regenerate" />
+                    </RadioGroup>
+                </FormControl>
 
             </Container>
         );
     }
 
-    function serviceDetails() {
+    function reviewPayroll() {
         return (
             <Container sx={
                 {
@@ -760,20 +362,144 @@ export const CAndRWizardPage = () => {
                 }
             }>
                 <Typography variant="subtitle1" gutterBottom marginBottom={2}>
-                    Enter the service data
+                    Select the services to regenerate
                 </Typography>
 
-                <TextField id="outlined-basic" label="Assignment number" variant="outlined" value={assignmentNumber} onChange={(e) => setAssignmentNumber(e.target.value)} sx={{ marginBottom: '20px' }} error={errors.assignmentNumber} helperText={errors.assignmentNumber ? errors.assignmentNumber : null} onBlur={handleOnBlurAssignmentNumber} />
+                <Card>
+{/*                     <ReviewListToolbar
+                        numSelected={selected.length}
+                        filterAssignment={filterAssignmentReview}
+                        onFilterAssignment={handleFilterByAssignment}
 
-                <TextField id="outlined-basic" label="Miscellaneous" variant="outlined" value={miscellaneous} onChange={(e) => setMiscellaneous(e.target.value)} sx={{ marginBottom: '20px', marginLeft: '20px' }} type='number' />
+                        selected={selected}
+                        toast={toast}
+                        setSelected={setSelected}
+                        setPageReview={setPageReview}
+                    /> */}
 
+                    <Scrollbar>
+                        <TableContainer sx={{ minWidth: 800 }}>
+                            <Table>
+                                <ReviewListHead
+                                    order={orderReview}
+                                    orderBy={orderByReview}
+                                    headLabel={TABLE_HEAD_REVIEW}
+                                    rowCount={review.length}
+                                    numSelected={selected.length}
+                                    onRequestSort={handleRequestSortReview}
+                                    onSelectAllClick={handleSelectAllClick}
+                                />
+                                {/* Tiene que cargar primero... */}
+                                {review.length > 0 ? (
+                                    <TableBody>
+                                        {filteredReview.slice(pageReview * rowsPerPageReview, pageReview * rowsPerPageReview + rowsPerPageReview
+                                        ).map((row) => {
+                                            const { id, assignment, date, agency, interpreter, status, total } = row;
+                                            const selectedReview = selected.indexOf(id) !== -1;
+
+                                            return (
+                                                <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedReview}>
+                                                    <TableCell padding="checkbox">
+                                                        <Checkbox checked={selectedReview} onChange={(event) => handleClick(event, id)} />
+                                                    </TableCell>
+                                                    <TableCell component="th" scope="row" padding="normal">
+                                                        <Stack direction="row" alignItems="center" spacing={2}>
+                                                            <Typography variant="subtitle2" noWrap>
+                                                                {assignment}
+                                                            </Typography>
+                                                        </Stack>
+                                                    </TableCell>
+
+                                                    <TableCell align="left">{date}</TableCell>
+                                                    <TableCell align="left">{agency}</TableCell>
+                                                    <TableCell align="left">{interpreter}</TableCell>
+                                                    <TableCell align="left">
+                                                        <Label color={status === 'paid' ? 'success' : status === 'open' ? 'warning' : status === 'cancelled' ? 'error' : 'info'}>
+                                                            {sentenceCase(status === 'paid' ? 'Paid' : status === 'open' ? 'Open' : status === 'cancelled' ? 'Cancelled' : 'Pending')}
+                                                        </Label>
+                                                    </TableCell>
+                                                    <TableCell align="left">{total}</TableCell>
+
+                                                </TableRow>
+                                            );
+                                        })}
+                                        {emptyRowsReview > 0 && (
+                                            <TableRow style={{ height: 53 * emptyRowsReview }}>
+                                                <TableCell colSpan={6} />
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                )
+                                    :
+                                    (
+                                        <TableBody>
+                                            <TableRow>
+                                                <TableCell align="center" colSpan={8} sx={{ py: 3 }}>
+                                                    <Paper
+                                                        sx={{
+                                                            textAlign: 'center',
+                                                        }}
+                                                    >
+                                                        <Typography variant="h6" paragraph>
+                                                            No results found
+                                                        </Typography>
+
+                                                        <Typography variant="body2">
+                                                            Please <strong>reload</strong> the page.
+                                                        </Typography>
+                                                    </Paper>
+                                                </TableCell>
+                                            </TableRow>
+                                        </TableBody>
+                                    )
+                                }
+
+
+                                {isNotFoundReview && (
+                                    <TableBody>
+                                        <TableRow>
+                                            <TableCell align="center" colSpan={8} sx={{ py: 3 }}>
+                                                <Paper
+                                                    sx={{
+                                                        textAlign: 'center',
+                                                    }}
+                                                >
+                                                    <Typography variant="h6" paragraph>
+                                                        Not found
+                                                    </Typography>
+
+                                                    <Typography variant="body2">
+                                                        No results found for &nbsp;
+                                                        <strong>&quot;{filterAssignmentReview}&quot;</strong>.
+                                                        <br /> Try to check for errors or use complete words.
+                                                    </Typography>
+                                                </Paper>
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                )}
+                            </Table>
+                        </TableContainer>
+                    </Scrollbar>
+
+                    <TablePagination
+                        rowsPerPageOptions={[5, 10, 25]}
+                        component="div"
+                        count={review.length}
+                        rowsPerPage={rowsPerPageReview}
+                        page={pageReview}
+                        onPageChange={handleChangePageReview}
+                        onRowsPerPageChange={handleChangeRowsPerPageReview}
+                    />
+
+                </Card>
 
 
             </Container>
         );
     }
 
-    function summaryDetails() {
+    function summary() {
         return (
             <Container sx={
                 {
@@ -785,68 +511,47 @@ export const CAndRWizardPage = () => {
                 }
             }>
                 <Typography variant="h6" sx={{ mb: 3 }}>
-                    Service Request Details
+                    Details of the payroll to be canceled
                 </Typography>
-                <Grid container spacing={3} sx={{
+
+                <Grid container spacing={4} sx={{
                     mb: 3,
                 }}>
-                    <Grid item xs={12} md={6} lg={4}>
+                    <Grid item xs={12} md={6} lg={3}>
                         <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                            Name agency
+                            ID
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {agencyName}
+                            {payrollData?.suffix_id}
                         </Typography>
                     </Grid>
-                    <Grid item xs={12} md={6} lg={4}>
+                    <Grid item xs={12} md={6} lg={3}>
                         <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                            Address of service
+                            Request
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {serviceAddress}
+                            {payrollData?.request?.suffix_id}
                         </Typography>
                     </Grid>
-                    <Grid item xs={12} md={6} lg={4}>
+                    <Grid item xs={12} md={6} lg={3}>
                         <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                            Description
+                            Start - End Date
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {description}
+                            {format(parseISO(`${payrollData?.start_date.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')} - {format(parseISO(`${payrollData?.end_date.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}
+                        </Typography>
+                    </Grid>
+
+                    <Grid item xs={12} md={6} lg={3}>
+                        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                            Total
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            {payrollData?.total_amount}
                         </Typography>
                     </Grid>
                 </Grid>
 
-                <Typography variant="h6" sx={{ mb: 3 }}>
-                    Interpreter Details
-                </Typography>
-                <Grid container spacing={3} sx={{
-                    mb: 3,
-                }}>
-                    <Grid item xs={12} md={6} lg={4}>
-                        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                            Full Name
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {interpreterName}
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={4}>
-                        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                            SSN
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {interpreterSSN}
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={4}>
-                        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                            Phone Number
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {interpreterPhoneNum}
-                        </Typography>
-                    </Grid>
-                </Grid>
 
                 <Typography variant="h6" sx={{ marginY: 2 }}>
                     Additional Comments
@@ -867,6 +572,19 @@ export const CAndRWizardPage = () => {
                     />
                 </FormControl>
 
+                {
+                    actionRequest === 'Regenerate' ? (
+                        <>
+                            <Typography variant="subtitle1" sx={{ marginY: 2, textAlign: 'center', color: 'text.secondary' }}>
+                                Total services selected: {payrollData?.services?.length}
+                            </Typography>
+                            <Typography variant="subtitle1" sx={{ marginY: 2, textAlign: 'center' }}>
+                                New payroll total: {payrollData?.total_amount}
+                            </Typography>
+                        </>
+
+                    ) : null
+                }
 
 
                 <Typography variant="h6" sx={{ marginY: 2 }}>
@@ -885,12 +603,7 @@ export const CAndRWizardPage = () => {
                             style={{ textDecoration: 'none', color: 'inherit' }}
                             onClick={
                                 () => {
-                                    if (id) {
-                                        navigate('/dashboard/service-history');
-                                    }
-                                    else {
-                                        window.location.reload();
-                                    }
+                                    navigate('/dashboard/service-history');
                                 }
                             }
                         >
@@ -909,7 +622,7 @@ export const CAndRWizardPage = () => {
 
                         <Button
                             style={{ textDecoration: 'none', color: 'inherit' }}
-                            onClick={handleSubmitNewInvoice}
+                            onClick={handleSubmitForm}
                             disabled={isLoading}
                         >
                             <Paper variant="outlined" sx={{
@@ -987,7 +700,7 @@ export const CAndRWizardPage = () => {
                                     }
                                 }>
                                     {
-                                        invoiceId ? (
+                                        newPayrollId ? (
                                             <Stack spacing={3} sx={{ mb: 4 }}>
                                                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                                     <Iconify icon="material-symbols:check-circle" color="#00BB2D" width={50} height={50} />
@@ -997,19 +710,19 @@ export const CAndRWizardPage = () => {
                                                         textAlign: 'center'
                                                     }
                                                 }>
-                                                    The service has been generated successfully
+                                                    The payroll has been successfully created
                                                 </Typography>
                                                 <Typography variant="body1" sx={
                                                     {
                                                         textAlign: 'center'
                                                     }
                                                 }>
-                                                    You can download the invoice in PDF format
+                                                    You can download the PDF file or create another payroll
                                                 </Typography>
 
                                                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
                                                     <a
-                                                        href={`${config.APPBACK_URL}/api/invoices/${invoiceId}/download/`}
+                                                        href={`${config.APPBACK_URL}/api/invoices/${newPayrollId}/download/`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         download
@@ -1046,9 +759,9 @@ export const CAndRWizardPage = () => {
                             ) : (
                                 <>
                                     {
-                                        activeStep === 0 ? AgencyInterpreterDetails() :
-                                            activeStep === 1 ? serviceDetails() :
-                                                activeStep === 2 ? summaryDetails() : null
+                                        activeStep === 0 ? setUp() :
+                                            activeStep === 1 ? reviewPayroll() :
+                                                activeStep === 2 ? summary() : null
                                     }
 
                                     <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
