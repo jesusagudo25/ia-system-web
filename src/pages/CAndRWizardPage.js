@@ -50,7 +50,7 @@ import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 
 /* Review table */
-import { ReviewListHead, ReviewListToolbar } from '../sections/@payroll/table';
+import { ReviewListHead, WizardListToolbar } from '../sections/@payroll/table';
 
 const TABLE_HEAD_REVIEW = [
     { id: 'assignment', label: 'Assignment', alignRight: false },
@@ -101,7 +101,7 @@ export const CAndRWizardPage = () => {
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
 
-    const [newPayrollId, setNewPayrollId] = useState('');
+    const [responseCARWizard, setResponseCARWizard] = useState('');
 
     const navigate = useNavigate();
 
@@ -121,7 +121,7 @@ export const CAndRWizardPage = () => {
 
     const [orderReview, setOrderReview] = useState('desc');
 
-    const [orderByReview, setOrderByReview] = useState('id');
+    const [orderByReview, setOrderByReview] = useState('payroll_id');
 
     const [selected, setSelected] = useState([]);
 
@@ -173,7 +173,27 @@ export const CAndRWizardPage = () => {
         setSelected(newSelected);
     };
 
-    /* ------------- REVIEW ----------------------------- */
+    const handleReviewRequest = async () => {
+        try {
+            setIsLoading(true);
+            const response = await axios.get(`${config.APPBACK_URL}/api/payrolls/wizard/${payrollSelected}`);
+            setReview(response.data.review.map((review) => ({
+                ...review,
+                assignment: review.assignment_number,
+                date: review.date_of_service_provided,
+                agency: review.agency.name,
+                interpreter: review.interpreter.full_name,
+                total: review.total_amount,
+            })));
+
+            setIsLoading(false);
+
+        } catch (error) {
+            console.log(error);
+            toast.error('Error generating review');
+            setIsLoading(false);
+        }
+    };
 
     const emptyRowsReview = review ? pageReview > 0 ? Math.max(0, (1 + pageReview) * rowsPerPageReview - review.length) : 0 : 0;
 
@@ -204,16 +224,28 @@ export const CAndRWizardPage = () => {
             }
         }
         if (activeStep === 1) {
-            console.log('activeStep 1');
+            if (selected.length === 0) {
+                toast.error('Please select at least one service');
+                flag = true;
+            }
         }
 
-        if (flag) {
+        if (flag && activeStep === 0) {
             toast.error('Please fill in the required fields');
             setErrors(errors);
             return;
         }
 
+        if (flag && activeStep === 1) {
+            return;
+        }
+
         setErrors({});
+
+        if (activeStep === 0 && actionRequest === 'Regenerate') {
+            handleReviewRequest();
+        }
+
 
         if (activeStep === 0 && actionRequest === 'Cancel') {
             setActiveStep((prevActiveStep) => prevActiveStep + 2);
@@ -240,14 +272,19 @@ export const CAndRWizardPage = () => {
         setIsLoading(true);
 
         const newRequest = {
-
             comments,
+            actionRequest,
+            payroll: payrollSelected,
+            invoices: selected,
+            user_id: localStorage.getItem('id')
         };
 
+        console.log(newRequest);
 
-        axios.post(`${config.APPBACK_URL}/api/invoices`, newRequest)
+        axios.post(`${config.APPBACK_URL}/api/car-wizard`, newRequest)
             .then((response) => {
-
+                console.log(response.data);
+                setResponseCARWizard(response.data.carWizard.id);
                 setActiveStep((prevActiveStep) => prevActiveStep + 1);
                 setIsLoading(false);
             })
@@ -290,6 +327,21 @@ export const CAndRWizardPage = () => {
         getLastPayroll();
     }, []);
 
+
+    useEffect(() => {
+        if (selected.length === 0) {
+
+            payrollData?.invoices?.forEach((invoice) => {
+                review?.forEach((review) => {
+
+                    if (invoice.id === review.id) {
+                        setSelected((prevSelected) => [...prevSelected, review.id]);
+                    }
+                });
+            });
+        }
+    }, [review]);
+
     /* Functions for New service */
 
     function setUp() {
@@ -323,8 +375,10 @@ export const CAndRWizardPage = () => {
                         <MenuItem disabled value="none">
                             <em style={{ color: 'gray' }}>Choose</em>
                         </MenuItem>
-                        {payrolls.map((payroll) => (
-                            <MenuItem key={payroll.id} value={payroll.id}> {payroll.suffix_id} - {format(parseISO(`${payroll.end_date.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')} </MenuItem>
+                        {payrolls?.map((payroll) => (
+                            payroll?.id ? (
+                                <MenuItem key={payroll.id} value={payroll.id}> {payroll.suffix_id} - {format(parseISO(`${payroll.end_date.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')} </MenuItem>
+                            ) : null
                         ))}
                     </Select>
                     <FormHelperText>{errors.payroll}</FormHelperText>
@@ -365,73 +419,98 @@ export const CAndRWizardPage = () => {
                     Select the services to regenerate
                 </Typography>
 
-                <Card>
-{/*                     <ReviewListToolbar
-                        numSelected={selected.length}
-                        filterAssignment={filterAssignmentReview}
-                        onFilterAssignment={handleFilterByAssignment}
+                {review ? (
+                    <Card>
+                        <WizardListToolbar
+                            numSelected={selected.length}
+                            filterAssignment={filterAssignmentReview}
+                            onFilterAssignment={handleFilterByAssignment}
 
-                        selected={selected}
-                        toast={toast}
-                        setSelected={setSelected}
-                        setPageReview={setPageReview}
-                    /> */}
+                            selected={selected}
+                            toast={toast}
+                            setSelected={setSelected}
+                            setPageReview={setPageReview}
+                        />
 
-                    <Scrollbar>
-                        <TableContainer sx={{ minWidth: 800 }}>
-                            <Table>
-                                <ReviewListHead
-                                    order={orderReview}
-                                    orderBy={orderByReview}
-                                    headLabel={TABLE_HEAD_REVIEW}
-                                    rowCount={review.length}
-                                    numSelected={selected.length}
-                                    onRequestSort={handleRequestSortReview}
-                                    onSelectAllClick={handleSelectAllClick}
-                                />
-                                {/* Tiene que cargar primero... */}
-                                {review.length > 0 ? (
-                                    <TableBody>
-                                        {filteredReview.slice(pageReview * rowsPerPageReview, pageReview * rowsPerPageReview + rowsPerPageReview
-                                        ).map((row) => {
-                                            const { id, assignment, date, agency, interpreter, status, total } = row;
-                                            const selectedReview = selected.indexOf(id) !== -1;
+                        <Scrollbar>
+                            <TableContainer sx={{ minWidth: 800 }}>
+                                <Table>
+                                    <ReviewListHead
+                                        order={orderReview}
+                                        orderBy={orderByReview}
+                                        headLabel={TABLE_HEAD_REVIEW}
+                                        rowCount={review.length}
+                                        numSelected={selected.length}
+                                        onRequestSort={handleRequestSortReview}
+                                        onSelectAllClick={handleSelectAllClick}
+                                    />
+                                    {/* Tiene que cargar primero... */}
+                                    {review.length > 0 ? (
+                                        <TableBody>
+                                            {filteredReview.slice(pageReview * rowsPerPageReview, pageReview * rowsPerPageReview + rowsPerPageReview
+                                            ).map((row) => {
+                                                const { id, assignment, date, agency, interpreter, status, total } = row;
+                                                const selectedReview = selected.indexOf(id) !== -1;
 
-                                            return (
-                                                <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedReview}>
-                                                    <TableCell padding="checkbox">
-                                                        <Checkbox checked={selectedReview} onChange={(event) => handleClick(event, id)} />
-                                                    </TableCell>
-                                                    <TableCell component="th" scope="row" padding="normal">
-                                                        <Stack direction="row" alignItems="center" spacing={2}>
-                                                            <Typography variant="subtitle2" noWrap>
-                                                                {assignment}
-                                                            </Typography>
-                                                        </Stack>
-                                                    </TableCell>
+                                                return (
+                                                    <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedReview}>
+                                                        <TableCell padding="checkbox">
+                                                            <Checkbox checked={selectedReview} onChange={(event) => handleClick(event, id)} />
+                                                        </TableCell>
+                                                        <TableCell component="th" scope="row" padding="normal">
+                                                            <Stack direction="row" alignItems="center" spacing={2}>
+                                                                <Typography variant="subtitle2" noWrap>
+                                                                    {assignment}
+                                                                </Typography>
+                                                            </Stack>
+                                                        </TableCell>
 
-                                                    <TableCell align="left">{date}</TableCell>
-                                                    <TableCell align="left">{agency}</TableCell>
-                                                    <TableCell align="left">{interpreter}</TableCell>
-                                                    <TableCell align="left">
-                                                        <Label color={status === 'paid' ? 'success' : status === 'open' ? 'warning' : status === 'cancelled' ? 'error' : 'info'}>
-                                                            {sentenceCase(status === 'paid' ? 'Paid' : status === 'open' ? 'Open' : status === 'cancelled' ? 'Cancelled' : 'Pending')}
-                                                        </Label>
-                                                    </TableCell>
-                                                    <TableCell align="left">{total}</TableCell>
+                                                        <TableCell align="left">{date}</TableCell>
+                                                        <TableCell align="left">{agency}</TableCell>
+                                                        <TableCell align="left">{interpreter}</TableCell>
+                                                        <TableCell align="left">
+                                                            <Label color={status === 'paid' ? 'success' : status === 'open' ? 'warning' : status === 'cancelled' ? 'error' : 'info'}>
+                                                                {sentenceCase(status === 'paid' ? 'Paid' : status === 'open' ? 'Open' : status === 'cancelled' ? 'Cancelled' : 'Pending')}
+                                                            </Label>
+                                                        </TableCell>
+                                                        <TableCell align="left">{total}</TableCell>
 
+                                                    </TableRow>
+                                                );
+                                            })}
+                                            {emptyRowsReview > 0 && (
+                                                <TableRow style={{ height: 53 * emptyRowsReview }}>
+                                                    <TableCell colSpan={6} />
                                                 </TableRow>
-                                            );
-                                        })}
-                                        {emptyRowsReview > 0 && (
-                                            <TableRow style={{ height: 53 * emptyRowsReview }}>
-                                                <TableCell colSpan={6} />
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                )
-                                    :
-                                    (
+                                            )}
+                                        </TableBody>
+                                    )
+                                        :
+                                        (
+                                            <TableBody>
+                                                <TableRow>
+                                                    <TableCell align="center" colSpan={8} sx={{ py: 3 }}>
+                                                        <Paper
+                                                            sx={{
+                                                                textAlign: 'center',
+                                                            }}
+                                                        >
+                                                            <Typography variant="h6" paragraph>
+                                                                No results found
+                                                            </Typography>
+
+                                                            <Typography variant="body2">
+                                                                Please <strong>reload</strong> the page.
+                                                            </Typography>
+                                                        </Paper>
+                                                    </TableCell>
+                                                </TableRow>
+                                            </TableBody>
+                                        )
+                                    }
+
+
+                                    {isNotFoundReview && (
                                         <TableBody>
                                             <TableRow>
                                                 <TableCell align="center" colSpan={8} sx={{ py: 3 }}>
@@ -441,59 +520,35 @@ export const CAndRWizardPage = () => {
                                                         }}
                                                     >
                                                         <Typography variant="h6" paragraph>
-                                                            No results found
+                                                            Not found
                                                         </Typography>
 
                                                         <Typography variant="body2">
-                                                            Please <strong>reload</strong> the page.
+                                                            No results found for &nbsp;
+                                                            <strong>&quot;{filterAssignmentReview}&quot;</strong>.
+                                                            <br /> Try to check for errors or use complete words.
                                                         </Typography>
                                                     </Paper>
                                                 </TableCell>
                                             </TableRow>
                                         </TableBody>
-                                    )
-                                }
+                                    )}
+                                </Table>
+                            </TableContainer>
+                        </Scrollbar>
 
+                        <TablePagination
+                            rowsPerPageOptions={[5, 10, 25]}
+                            component="div"
+                            count={review.length}
+                            rowsPerPage={rowsPerPageReview}
+                            page={pageReview}
+                            onPageChange={handleChangePageReview}
+                            onRowsPerPageChange={handleChangeRowsPerPageReview}
+                        />
 
-                                {isNotFoundReview && (
-                                    <TableBody>
-                                        <TableRow>
-                                            <TableCell align="center" colSpan={8} sx={{ py: 3 }}>
-                                                <Paper
-                                                    sx={{
-                                                        textAlign: 'center',
-                                                    }}
-                                                >
-                                                    <Typography variant="h6" paragraph>
-                                                        Not found
-                                                    </Typography>
-
-                                                    <Typography variant="body2">
-                                                        No results found for &nbsp;
-                                                        <strong>&quot;{filterAssignmentReview}&quot;</strong>.
-                                                        <br /> Try to check for errors or use complete words.
-                                                    </Typography>
-                                                </Paper>
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                )}
-                            </Table>
-                        </TableContainer>
-                    </Scrollbar>
-
-                    <TablePagination
-                        rowsPerPageOptions={[5, 10, 25]}
-                        component="div"
-                        count={review.length}
-                        rowsPerPage={rowsPerPageReview}
-                        page={pageReview}
-                        onPageChange={handleChangePageReview}
-                        onRowsPerPageChange={handleChangeRowsPerPageReview}
-                    />
-
-                </Card>
-
+                    </Card>
+                ) : null}
 
             </Container>
         );
@@ -522,7 +577,7 @@ export const CAndRWizardPage = () => {
                             ID
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {payrollData?.suffix_id}
+                            {payrollData?.suffix_id ? payrollData?.suffix_id : 'N/A'}
                         </Typography>
                     </Grid>
                     <Grid item xs={12} md={6} lg={3}>
@@ -530,7 +585,7 @@ export const CAndRWizardPage = () => {
                             Request
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {payrollData?.request?.suffix_id}
+                            {payrollData?.request?.suffix_id ? payrollData?.request?.suffix_id : 'N/A'}
                         </Typography>
                     </Grid>
                     <Grid item xs={12} md={6} lg={3}>
@@ -571,20 +626,20 @@ export const CAndRWizardPage = () => {
                         onChange={(e) => setComments(e.target.value)}
                     />
                 </FormControl>
-
+{/* 
                 {
                     actionRequest === 'Regenerate' ? (
                         <>
                             <Typography variant="subtitle1" sx={{ marginY: 2, textAlign: 'center', color: 'text.secondary' }}>
-                                Total services selected: {payrollData?.services?.length}
+                                View list of services to regenerate
                             </Typography>
-                            <Typography variant="subtitle1" sx={{ marginY: 2, textAlign: 'center' }}>
-                                New payroll total: {payrollData?.total_amount}
+                            <Typography variant="body2" sx={{ marginY: 2, textAlign: 'center', color: 'text.secondary' }}>
+                                <a href="api/payrolls/1" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#000', fontWeight: 'bold' }}>Click here</a>
                             </Typography>
                         </>
 
                     ) : null
-                }
+                } */}
 
 
                 <Typography variant="h6" sx={{ marginY: 2 }}>
@@ -603,7 +658,7 @@ export const CAndRWizardPage = () => {
                             style={{ textDecoration: 'none', color: 'inherit' }}
                             onClick={
                                 () => {
-                                    navigate('/dashboard/service-history');
+                                    navigate('/dashboard/payroll-panel');
                                 }
                             }
                         >
@@ -700,7 +755,7 @@ export const CAndRWizardPage = () => {
                                     }
                                 }>
                                     {
-                                        newPayrollId ? (
+                                        responseCARWizard ? (
                                             <Stack spacing={3} sx={{ mb: 4 }}>
                                                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                                     <Iconify icon="material-symbols:check-circle" color="#00BB2D" width={50} height={50} />
@@ -710,23 +765,20 @@ export const CAndRWizardPage = () => {
                                                         textAlign: 'center'
                                                     }
                                                 }>
-                                                    The payroll has been successfully created
+                                                    The process has been completed
                                                 </Typography>
                                                 <Typography variant="body1" sx={
                                                     {
                                                         textAlign: 'center'
                                                     }
                                                 }>
-                                                    You can download the PDF file or create another payroll
+                                                    You can check the log of the process in the following link
                                                 </Typography>
 
                                                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
                                                     <a
-                                                        href={`${config.APPBACK_URL}/api/invoices/${newPayrollId}/download/`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        download
                                                         style={{ textDecoration: 'none' }}
+                                                        href={`/dashboard/manage/cr-wizard-log`}
                                                     >
                                                         <Button variant="contained"
                                                             size='large'
@@ -736,7 +788,7 @@ export const CAndRWizardPage = () => {
                                                             color="error"
                                                             startIcon={<Iconify icon="mdi:file-pdf" />}
                                                         >
-                                                            Download PDF
+                                                            View log
                                                         </Button>
                                                     </a>
 
@@ -749,7 +801,7 @@ export const CAndRWizardPage = () => {
                                                             }
                                                         }
                                                     >
-                                                        Create another service
+                                                        New
                                                     </Button>
                                                 </Box>
                                             </Stack>

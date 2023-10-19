@@ -82,6 +82,12 @@ export const ManagePage = () => {
                                 icon: <Iconify icon={'mdi:text-box-multiple'} color="#2065D1" width={32} />,
                                 role: [1, 2, 3]
                             },
+                            {
+                                name: 'C&R Wizard Log',
+                                path: '/dashboard/manage/cr-wizard-log',
+                                icon: <Iconify icon={'mdi:wizard-hat'} color="#2065D1" width={32} />,
+                                role: [1, 2, 3]
+                            }
                         ]}
                     />
                 </Grid>

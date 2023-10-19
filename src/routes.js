@@ -26,6 +26,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import { PrivateRoute } from './components/auth/PrivateRoute';
 import { PublicRoute } from './components/auth/PublicRoute';
+import { CAndRWizardLogPage } from './pages/CAndRWizardLogPage';
 
 
 // ----------------------------------------------------------------------
@@ -58,7 +59,8 @@ export default function Router() {
         { path: 'manage/interpreters', element: <InterpreterPage />},
         { path: 'manage/users', element: <UserPage />},
         { path: 'manage/lenguages', element: <LenguagePage />},
-        { path: 'manage/agencies', element: <AgencyPage />}
+        { path: 'manage/agencies', element: <AgencyPage />},
+        { path: 'manage/cr-wizard-log', element: <CAndRWizardLogPage />},
       ],
     },
     {

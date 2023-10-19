@@ -277,6 +277,7 @@ export const RequestPage = () => {
             setIsLoading(false);
         }
     };
+    
     const setDateRange = () => {
         const currentDate = new Date();
         // validate currentDay
