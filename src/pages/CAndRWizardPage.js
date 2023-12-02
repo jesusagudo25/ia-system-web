@@ -31,15 +31,8 @@ import {
     TableCell,
     TableContainer,
     TablePagination,
-    TableRow,
-    IconButton,
-    Toolbar,
+    TableRow
 } from '@mui/material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import InputAdornment from '@mui/material/InputAdornment';
 import { format, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -626,7 +619,8 @@ export const CAndRWizardPage = () => {
                         onChange={(e) => setComments(e.target.value)}
                     />
                 </FormControl>
-{/* 
+                
+                {/* 
                 {
                     actionRequest === 'Regenerate' ? (
                         <>
@@ -786,7 +780,7 @@ export const CAndRWizardPage = () => {
                                                                 width: '100%',
                                                             }}
                                                             color="error"
-                                                            startIcon={<Iconify icon="mdi:file-pdf" />}
+                                                            startIcon={<Iconify icon="mdi:table-large" color="#fff"  />}
                                                         >
                                                             View log
                                                         </Button>

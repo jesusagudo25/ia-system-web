@@ -52,24 +52,24 @@ export default function DashboardAppPage() {
 
       <Container maxWidth="xl">
         <Typography variant="h4" sx={{ mb: 5 }}>
-          Hi, Welcome back
+          Hi, Welcome back 👋
         </Typography>
 
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Agencies" total={agencyCount} icon={'ant-design:android-filled'} />
+            <AppWidgetSummary title="Agencies" total={agencyCount} icon={'mdi:company'} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Interpreters" total={interpreterCount} color="info" icon={'ant-design:apple-filled'} />
+            <AppWidgetSummary title="Interpreters" total={interpreterCount} color="info" icon={'mdi:folder-account'} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Monthly income" total={monthlyIncome} color="warning" icon={'ant-design:windows-filled'} />
+            <AppWidgetSummary title="Monthly income" total={monthlyIncome} color="warning" icon={'mdi:cash-plus'} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Monthly expenditure" total={monthlyExpenditure} color="error" icon={'ant-design:bug-filled'} />
+            <AppWidgetSummary title="Monthly expenditure" total={monthlyExpenditure} color="error" icon={'mdi:cash-minus'} />
           </Grid>
 
         </Grid>

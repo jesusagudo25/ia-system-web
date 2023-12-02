@@ -667,7 +667,7 @@ export const NewServicePage = () => {
                 setAssignmentNumberOld(response.data.details.assignment_number);
                 setDescriptionId(response.data.description.id);
                 setDescription(response.data.description.title);
-                setDateServiceProvided(new Date(response.data.details.date_of_service_provided));
+                setDateServiceProvided(new Date(`${format(parseISO(response.data.details.date_of_service_provided), 'yyyy-MM-dd')}T00:00:00`));
                 setMiscellaneous(response.data.details.miscellaneous);
 
                 if (response.data.details.arrival_time === null && response.data.details.start_time === null && response.data.details.end_time === null) {
