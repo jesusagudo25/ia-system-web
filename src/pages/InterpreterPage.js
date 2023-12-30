@@ -54,6 +54,7 @@ const TABLE_HEAD = [
   { id: 'full_name', label: 'Name', alignRight: false },
   { id: 'ssn', label: 'SSN', alignRight: false },
   { id: 'email', label: 'Email', alignRight: false },
+  { id: 'lenguage', label: 'Language', alignRight: false },
   { id: 'address', label: 'Address', alignRight: false },
   { id: 'city', label: 'City', alignRight: false },
   { id: 'state', label: 'State', alignRight: false },
@@ -169,9 +170,17 @@ function applySortFilter(array, comparator, query) {
     if (order !== 0) return order;
     return a[1] - b[1];
   });
+  
   if (query) {
-    return filter(array, (_interpreter) => _interpreter.full_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    const filterFullName = filter(array, (_interpreter) => _interpreter.full_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    const filterSsn = filter(array, (_interpreter) => _interpreter.ssn.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    const filterLanguage = filter(array, (_interpreter) => _interpreter.lenguage.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+
+    if(filterFullName.length > 0) return filterFullName;
+    if(filterSsn.length > 0) return filterSsn;
+    if(filterLanguage.length > 0) return filterLanguage;
   }
+
   return stabilizedThis.map((el) => el[0]);
 }
 
@@ -254,7 +263,10 @@ export const InterpreterPage = () => {
     setIsLoading(true);
     try {
       const response = await axios.get(`${config.APPBACK_URL}/api/interpreters`);
-      setInterpreters(response.data);
+      setInterpreters(response.data.map((interpreter) => ({ 
+        ...interpreter,
+        lenguage: interpreter.lenguage.name,
+      })));
       setIsLoading(false);
     } catch (error) {
       console.log(error);
@@ -400,7 +412,8 @@ export const InterpreterPage = () => {
                 {interpreters.length > 0 ? (
                   <TableBody>
                     {filteredInterpreters.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                      const { id, full_name: fullName, ssn, email, phone_number: phoneNumber, lenguage_id: lenguageId, address, city, state, zip_code: zipCode, status } = row;
+                      const { id, full_name: fullName, ssn, email, phone_number: phoneNumber, lenguage_id: lenguageId, address, city, state, zip_code: zipCode, lenguage, status } = row;
+
 
                       return (
                         <TableRow hover key={id} tabIndex={-1} role="checkbox">
@@ -419,6 +432,10 @@ export const InterpreterPage = () => {
 
                           <TableCell align="left">
                             {email}
+                          </TableCell>
+
+                          <TableCell align="left">
+                            {lenguage}
                           </TableCell>
 
                           <TableCell align="left">
@@ -626,7 +643,7 @@ export const InterpreterPage = () => {
             </FormControl>
 
             <FormControl size="small" error={!!errors?.lenguage_id}>
-              <InputLabel id="lenguage-select-label">Lenguage</InputLabel>
+              <InputLabel id="lenguage-select-label">Language</InputLabel>
               <Controller
                 name="lenguage_id"
                 control={control}
@@ -639,7 +656,7 @@ export const InterpreterPage = () => {
                     labelId="lenguage-select-label"
                     id="lenguage-select"
                     value={value}
-                    label="Lenguage"
+                    label="Language"
                     onChange={onChange}
                     onBlur={onBlur}
                     required
