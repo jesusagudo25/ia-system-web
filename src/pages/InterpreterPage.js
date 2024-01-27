@@ -174,11 +174,21 @@ function applySortFilter(array, comparator, query) {
   if (query) {
     const filterFullName = filter(array, (_interpreter) => _interpreter.full_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
     const filterSsn = filter(array, (_interpreter) => _interpreter.ssn.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    const filterEmail = filter(array, (_interpreter) => _interpreter.email.toLowerCase().indexOf(query.toLowerCase()) !== -1);
     const filterLanguage = filter(array, (_interpreter) => _interpreter.lenguage.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    const filterAddress = filter(array, (_interpreter) => _interpreter.address.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    const filterCity = filter(array, (_interpreter) => _interpreter.city.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    const filterState = filter(array, (_interpreter) => _interpreter.state.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    const filterZipCode = filter(array, (_interpreter) => _interpreter.zip_code.toLowerCase().indexOf(query.toLowerCase()) !== -1);
 
     if(filterFullName.length > 0) return filterFullName;
     if(filterSsn.length > 0) return filterSsn;
+    if(filterEmail.length > 0) return filterEmail;
     if(filterLanguage.length > 0) return filterLanguage;
+    if(filterAddress.length > 0) return filterAddress;
+    if(filterCity.length > 0) return filterCity;
+    if(filterState.length > 0) return filterState;
+    if(filterZipCode.length > 0) return filterZipCode;
   }
 
   return stabilizedThis.map((el) => el[0]);
@@ -322,7 +332,7 @@ export const InterpreterPage = () => {
       })
       .catch((error) => {
         console.log(error);
-        toast.error('Error to get states', {
+        toast.error('Error to get states, contact with support', {
           position: toast.POSITION.TOP_RIGHT
         });
       }
