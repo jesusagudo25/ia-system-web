@@ -2,6 +2,8 @@
 import PropTypes from 'prop-types';
 import { Box, Card, Paper, Typography, CardContent } from '@mui/material';
 import { Link } from 'react-router-dom';
+import useResponsive from '../../../hooks/useResponsive';
+
 // ----------------------------------------------------------------------
 
 AppShortCuts.propTypes = {
@@ -9,6 +11,8 @@ AppShortCuts.propTypes = {
 };
 
 export default function AppShortCuts({ list, ...other }) {
+
+  const lgDown = useResponsive('down', 'lg');
 
   return (
     <Card {...other}>
@@ -18,7 +22,7 @@ export default function AppShortCuts({ list, ...other }) {
           sx={{
             display: 'grid',
             gap: 3,
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: lgDown ? '1fr' : 'repeat(3, 1fr)',
           }}
         >
           {list.map((site, index) => (

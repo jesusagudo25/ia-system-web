@@ -8,6 +8,7 @@ import { LoadingButton } from '@mui/lab';
 
 import PropTypes from 'prop-types';
 import config from '../config.json';
+import useResponsive from '../hooks/useResponsive';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -56,6 +57,8 @@ export const CoordinatorPage = () => {
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
+
+    const lgDown = useResponsive('down', 'lg');
 
     /* Coordinator settings */
 
@@ -228,29 +231,31 @@ export const CoordinatorPage = () => {
                                 flexWrap: 'wrap',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
-                                minWidth: 550,
                                 gap: 3
                             }}
                             >
-                                <FormControl sx={{ width: '48%' }}>
+                                <FormControl sx={{ width: lgDown ? '100%' : '48%' }}>
                                     <TextField id="outlined-basic" label="Name" variant="outlined" value={coordinatorName} onChange={(e) => { setCoordinatorName(e.target.value) }} error={errors.nameCoordinator} helperText={errors.nameCoordinator} />
                                 </FormControl>
-                                <FormControl sx={{ width: '48%' }}>
+                                <FormControl sx={{ width: lgDown ? '100%' : '48%' }}>
                                     <TextField id="outlined-basic" label="SSN" variant="outlined" value={coordinatorSSN} onChange={(e) => { setCoordinatorSSN(e.target.value) }} error={errors.ssn} helperText={errors.ssn} />
                                 </FormControl>
-                                <FormControl sx={{ width: '48%' }}>
+                                <FormControl sx={{ width: lgDown ? '100%' : '48%' }}>
                                     <TextField id="outlined-basic" label="Email" variant="outlined" value={coordinatorEmail} onChange={(e) => { setCoordinatorEmail(e.target.value) }} error={errors.emailCoordinator} helperText={errors.emailCoordinator} />
                                 </FormControl>
-                                <FormControl sx={{ width: '48%' }}>
+                                <FormControl sx={{ width: lgDown ? '100%' : '48%' }}>
                                     <TextField id="outlined-basic" label="Phone number" variant="outlined" value={coordinatorPhone} onChange={(e) => { setCoordinatorPhone(e.target.value) }} error={errors.phone} helperText={errors.phone} />
                                 </FormControl>
-                                <FormControl sx={{ width: '48%' }}>
+                                <FormControl sx={{ width: lgDown ? '100%' : '48%' }}>
                                     <TextField id="outlined-basic" label="Address" variant="outlined" value={coordinatorAddress} onChange={(e) => { setCoordinatorAddress(e.target.value) }} error={errors.address} helperText={errors.address} />
                                 </FormControl>
-                                <FormControl sx={{ width: '48%' }}>
+                                <FormControl sx={{ width: lgDown ? '100%' : '48%' }}>
                                     <TextField id="outlined-basic" label="City" variant="outlined" value={coordinatorCity} onChange={(e) => { setCoordinatorCity(e.target.value) }} error={errors.city} helperText={errors.city} />
                                 </FormControl>
-                                <FormControl sx={{ width: '48%' }} error={errors.state}>
+                                <FormControl 
+                                    sx={{ width: lgDown ? '100%' : '48%' }} 
+                                    error={errors.state}
+                                    >
                                     <InputLabel id="state-select-label"
                                         sx={{ width: 400 }}
                                     >State</InputLabel>
@@ -272,7 +277,7 @@ export const CoordinatorPage = () => {
                                     </Select>
                                     <FormHelperText>{errors.state ? errors.state : null}</FormHelperText>
                                 </FormControl>
-                                <FormControl sx={{ width: '48%' }}>
+                                <FormControl sx={{ width: lgDown ? '100%' : '48%' }}>
                                     <TextField id="outlined-basic" label="Zip code" variant="outlined" value={coordinatorZipCode} onChange={(e) => { setCoordinatorZipCode(e.target.value) }} error={errors.zip_code} helperText={errors.zip_code} />
                                 </FormControl>
                             </Stack>

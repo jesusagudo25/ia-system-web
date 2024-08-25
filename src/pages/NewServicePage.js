@@ -38,6 +38,7 @@ import { SearchDescription } from '../sections/@manage/description/SearchDescrip
 import { SearchAddress } from '../sections/@manage/interpreter/SearchAddress';
 import config from '../config.json';
 import Iconify from '../components/iconify';
+import useResponsive from '../hooks/useResponsive';
 
 const steps = ['Agency and Interpreter data', 'Service data', 'Summary'];
 
@@ -48,6 +49,8 @@ export const NewServicePage = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const lgDown = useResponsive('down', 'lg');
+    
     /* Form */
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -785,8 +788,8 @@ export const NewServicePage = () => {
                 <Typography variant="subtitle1" gutterBottom marginBottom={2} marginTop={2} sx={{ width: '100%' }}>
                     Enter the address of the service
                 </Typography>
-                <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <FormControl sx={{ width: '37%' }}>
+                <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
                         <SearchAddress
                             handleOnChangeAddress={handleOnChangeAddress}
                             setAddress={setServiceAddress}
@@ -802,7 +805,7 @@ export const NewServicePage = () => {
                             errors={errors}
                         />
                     </FormControl>
-                    <FormControl sx={{ width: '20%' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '20%' }}>
                         <TextField
                             id="city"
                             label="City"
@@ -818,7 +821,8 @@ export const NewServicePage = () => {
                             disabled={addressSelected}
                         />
                     </FormControl>
-                    <FormControl sx={{ width: '25%' }} error={errors.serviceState}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '25%' }} 
+                        error={errors.serviceState}>
                         <InputLabel id="customer-select-label"
                             sx={{ width: 400 }}
                         >State</InputLabel>
@@ -839,7 +843,7 @@ export const NewServicePage = () => {
                         </Select>
                         <FormHelperText error={errors.serviceState}>{errors.serviceState ? errors.serviceState : null}</FormHelperText>
                     </FormControl>
-                    <FormControl sx={{ width: '12%' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '12%' }}>
                         <TextField
                             id="zip"
                             label="Zip"
@@ -860,7 +864,8 @@ export const NewServicePage = () => {
                         Enter the data of the interpreter
                     </Typography>
 
-                    <FormControl sx={{ width: '37%' }} error={errors.lenguage}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '37%' }}
+                        error={errors.lenguage}>
                         <InputLabel id="lenguage-select-label"
                             sx={{ width: 400 }}
                         >Language</InputLabel>
@@ -885,7 +890,7 @@ export const NewServicePage = () => {
                         </Select>
                         <FormHelperText>{errors.lenguage ? errors.lenguage : null}</FormHelperText>
                     </FormControl>
-                    <FormControl sx={{ width: '61%' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '61%' }}>
                         <SearchInterpreter
                             handleOnChangeInterpreter={handleOnChangeInterpreter}
                             serviceState={serviceState}
@@ -941,13 +946,20 @@ export const NewServicePage = () => {
                     Enter the service data
                 </Typography>
 
-                <TextField id="outlined-basic" label="Assignment number" variant="outlined" value={assignmentNumber} onChange={(e) => setAssignmentNumber(e.target.value)} sx={{ marginBottom: '20px' }} error={errors.assignmentNumber} helperText={errors.assignmentNumber ? errors.assignmentNumber : null} onBlur={handleOnBlurAssignmentNumber} />
+                <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 2 , marginBottom: '20px'}}>
+                    <TextField id="outlined-basic" label="Assignment number" variant="outlined" value={assignmentNumber} onChange={(e) => setAssignmentNumber(e.target.value)} 
+                    sx={{  width: lgDown ? '100%' : '37%' }}
+                    error={errors.assignmentNumber} helperText={errors.assignmentNumber ? errors.assignmentNumber : null} onBlur={handleOnBlurAssignmentNumber} />
 
-                <TextField id="outlined-basic" label="Miscellaneous" variant="outlined" value={miscellaneous} onChange={(e) => setMiscellaneous(e.target.value)} sx={{ marginBottom: '20px', marginLeft: '20px' }} type='number' />
+                    <TextField id="outlined-basic" label="Miscellaneous" variant="outlined" value={miscellaneous} onChange={(e) => setMiscellaneous(e.target.value)} sx={{ 
+                        width: lgDown ? '100%' : '61%' 
+                    }}
+                    type='number' />
+                </Stack>
 
                 <SearchDescription handleOnChangeDescription={handleOnChangeDescription} setDescription={setDescription} description={description} toast={toast} setDescriptionId={setDescriptionId} errors={errors} />
-                <Stack direction="row" sx={{ marginTop: '20px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <FormControl sx={{ width: '37%' }}>
+                <Stack direction="row" sx={{ marginTop: '20px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <DatePicker
                                 label="Date of service Provided"
@@ -965,7 +977,7 @@ export const NewServicePage = () => {
                             />
                         </LocalizationProvider>
                     </FormControl>
-                    <FormControl sx={{ width: '10%' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '7%' }}>
                         <FormControlLabel required control={<Checkbox />} label="Time:" checked={timeIsNull} onChange={(e) => {
                             setTimeIsNull(e.target.checked);
                             setArrivalTime('');
@@ -974,7 +986,7 @@ export const NewServicePage = () => {
                             calculateInterpreterService('', '', '', e.target.checked, interpreterLenguageId);
                         }} />
                     </FormControl>
-                    <FormControl sx={{ width: '15%' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '15%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <TimePicker
                                 label="Arrival time"
@@ -993,7 +1005,7 @@ export const NewServicePage = () => {
                             />
                         </LocalizationProvider>
                     </FormControl>
-                    <FormControl sx={{ width: '15%' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '15%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <TimePicker
                                 label="Start time"
@@ -1012,7 +1024,7 @@ export const NewServicePage = () => {
                             />
                         </LocalizationProvider>
                     </FormControl>
-                    <FormControl sx={{ width: '15%' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '15%' }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <TimePicker
                                 label="End time"
@@ -1031,7 +1043,7 @@ export const NewServicePage = () => {
                             />
                         </LocalizationProvider>
                     </FormControl>
-                    <FormControl sx={{ width: '37%', marginTop: '20px' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' :  '37%' }}>
                         <TextField
                             id="outlined-multiline-static"
                             label="Travel time to assignment"
@@ -1044,7 +1056,7 @@ export const NewServicePage = () => {
                             helperText={errors.travelTimeToAssignment ? errors.travelTimeToAssignment : null}
                         />
                     </FormControl>
-                    <FormControl sx={{ width: '61%', marginTop: '20px' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '61%' }}>
                         <TextField
                             id="outlined-multiline-static"
                             label="Time back from assignment"
@@ -1057,7 +1069,7 @@ export const NewServicePage = () => {
                             helperText={errors.timeBackFromAssignment ? errors.timeBackFromAssignment : null}
                         />
                     </FormControl>
-                    <FormControl sx={{ width: '37%', marginTop: '20px' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
                         <TextField
                             id="outlined-multiline-static"
                             label="Travel mileage (round trip)"
@@ -1073,7 +1085,7 @@ export const NewServicePage = () => {
                             helperText={errors.travelMileage ? errors.travelMileage : null}
                         />
                     </FormControl>
-                    <FormControl sx={{ width: '61%', marginTop: '20px' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '61%' }}>
                         <TextField
                             id="outlined-multiline-static"
                             label="Cost per mile"
@@ -1099,7 +1111,7 @@ export const NewServicePage = () => {
                             <>
                                 <hr style={{ marginTop: '20px', marginBottom: '20px', border: '1px solid #e0e0e0' }} />
                                 <Stack direction="row" sx={{ marginTop: '20px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <Grid container spacing={3} justifyContent="space-around">
+                                    <Grid container spacing={2} justifyContent="space-around">
                                         {
                                             containerTravelDetails ?
                                                 (
@@ -1109,8 +1121,8 @@ export const NewServicePage = () => {
                                                                 Mileage: {travelMileage} miles @ ${costPerMile}/mile
                                                             </Typography>
                                                         </Grid>
-                                                        <Grid item xs={1}>
-                                                            <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                                                        <Grid item xs={10} md={1}>
+                                                            <Typography variant="subtitle2" sx={{ color: 'text.secondary', textDecoration: 'underline' }}>
                                                                 ${totalMileage.toFixed(2)}
                                                             </Typography>
                                                         </Grid>
@@ -1125,8 +1137,8 @@ export const NewServicePage = () => {
                                                 } per hour for two (2) hours minium
                                             </Typography>
                                         </Grid>
-                                        <Grid item xs={1}>
-                                            <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                                        <Grid item xs={10} md={1}>
+                                            <Typography variant="subtitle2" sx={{ color: 'text.secondary', textDecoration: 'underline' }}>
                                                 ${totalService.toFixed(2)}
                                             </Typography>
                                         </Grid>
@@ -1135,8 +1147,8 @@ export const NewServicePage = () => {
                                                 Total Amount Due:
                                             </Typography>
                                         </Grid>
-                                        <Grid item xs={1}>
-                                            <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
+                                        <Grid item xs={10} md={1}>
+                                            <Typography variant="subtitle2" sx={{ color: 'text.primary', textDecoration: 'underline' }}>
                                                 ${(totalService + totalMileage).toFixed(2)}
                                             </Typography>
                                         </Grid>
@@ -1248,7 +1260,12 @@ export const NewServicePage = () => {
                     containerTravelDetails ?
                         (
                             <Typography variant="subtitle1" sx={{ marginY: 2, textAlign: 'center', color: 'text.secondary' }}>
-                                Mileage: {travelMileage} miles @ ${costPerMile}/mile: ${totalMileage.toFixed(2)}
+                                Mileage: {travelMileage} miles @ ${costPerMile}/mile:
+                                { 
+                                    lgDown ? <br /> : null
+                                }
+                                
+                                <u>${totalMileage.toFixed(2)}</u>
                             </Typography>
                         )
                         : null
@@ -1256,10 +1273,18 @@ export const NewServicePage = () => {
                 <Typography variant="subtitle1" sx={{ marginY: 2, textAlign: 'center', color: 'text.secondary' }}>
                     Interpreter services rate: ${
                         lenguages.find((item) => item.id === interpreterLenguageId).price_per_hour
-                    } per hour for two (2) hours minium: ${(totalService.toFixed(2))}
+                    } per hour for two (2) hours minium: 
+                    {
+                        lgDown ? <br /> : null
+                    }
+                    <u>${(totalService.toFixed(2))}</u>
                 </Typography>
                 <Typography variant="subtitle1" sx={{ marginY: 2, textAlign: 'center' }}>
-                    Total Amount Due: ${(totalService + totalMileage).toFixed(2)}
+                    Total Amount Due: 
+                    {
+                        lgDown ? <br /> : null
+                    }
+                    <u>${(totalService + totalMileage).toFixed(2)}</u>
                 </Typography>
 
                 <Typography variant="h6" sx={{ marginY: 2 }}>
@@ -1270,8 +1295,8 @@ export const NewServicePage = () => {
                     <Box
                         sx={{
                             display: 'grid',
-                            gap: 3,
-                            gridTemplateColumns: 'repeat(2, 1fr)',
+                            gap: 2,
+                            gridTemplateColumns: lgDown ? '1fr' : 'repeat(2, 1fr)'
                         }}
                     >
                         <Button

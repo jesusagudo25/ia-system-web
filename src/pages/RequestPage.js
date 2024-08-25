@@ -32,6 +32,7 @@ import {
     Backdrop,
     CircularProgress,
     DialogContentText,
+    FormControl
 } from '@mui/material';
 
 // components
@@ -41,12 +42,11 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 // date-fns
 import { format, lastDayOfMonth, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
-// date-fns
 
+import useResponsive from '../hooks/useResponsive';
 
 // sections
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
@@ -127,6 +127,8 @@ function applySortFilterReview(array, comparator, query) {
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 
 export const RequestPage = () => {
+
+    const lgDown = useResponsive('down', 'lg');
 
     /* Generate */
 
@@ -277,7 +279,7 @@ export const RequestPage = () => {
             setIsLoading(false);
         }
     };
-    
+
     const setDateRange = () => {
         const currentDate = new Date();
         // validate currentDay
@@ -355,7 +357,7 @@ export const RequestPage = () => {
                     <Link
                         underline="hover"
                         color="inherit"
-                        href="#"
+                        href="/dashboard/payroll-panel"
                     >
                         Payroll
                     </Link>
@@ -378,17 +380,19 @@ export const RequestPage = () => {
                             Date range
                         </Typography>
                     </Stack>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingX: 3, paddingBottom: 3 }}>
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
-                            <DatePicker
-                                label="Start date"
-                                value={startDate}
-                                onChange={(newValue) => {
-                                    setStartDate(newValue);
-                                }}
-                                format='MM/dd/yyyy'
-                            />
-                        </LocalizationProvider>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingX: 3, paddingBottom: 3, flexWrap: 'wrap', gap: 2, flexDirection: lgDown ? 'column' : 'row' }}>
+                        <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
+                            <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                <DatePicker
+                                    label="Start date"
+                                    value={startDate}
+                                    onChange={(newValue) => {
+                                        setStartDate(newValue);
+                                    }}
+                                    format='MM/dd/yyyy'
+                                />
+                            </LocalizationProvider>
+                        </FormControl>
                         <Avatar
                             sx={{
                                 bgcolor: 'primary.main',
@@ -398,21 +402,25 @@ export const RequestPage = () => {
                             <Iconify icon="bx:bxs-calendar" />
                         </Avatar>
 
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
-                            <DatePicker
-                                label="End date"
-                                value={endDate}
-                                onChange={(newValue) => {
-                                    setEndDate(newValue);
-                                }}
-                                format='MM/dd/yyyy'
-                            />
-                        </LocalizationProvider>
-                        <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} sx={{ ml: 1, width: '15%' }} onClick={
-                            () => {
-                                handleReviewRequest();
-                            }
-                        }>
+                        <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
+                            <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                <DatePicker
+                                    label="End date"
+                                    value={endDate}
+                                    onChange={(newValue) => {
+                                        setEndDate(newValue);
+                                    }}
+                                    format='MM/dd/yyyy'
+                                />
+                            </LocalizationProvider>
+                        </FormControl>
+                        <LoadingButton variant="contained" color="primary" size="large" loading={isLoading}
+                            sx={{ ml: 1, width: lgDown ? '100%' : '15%' }}
+                            onClick={
+                                () => {
+                                    handleReviewRequest();
+                                }
+                            }>
                             Generate
                         </LoadingButton>
                     </Stack>
@@ -439,7 +447,7 @@ export const RequestPage = () => {
                                 {requests.length > 0 ? (
                                     <TableBody>
                                         {filteredRequests.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                                            const { id, suffix_id: suffixId, user, month, start_date: startDate, end_date: endDate, total_amount: totalAmount, status, request_id:requestId } = row;
+                                            const { id, suffix_id: suffixId, user, month, start_date: startDate, end_date: endDate, total_amount: totalAmount, status, request_id: requestId } = row;
 
                                             return (
                                                 <TableRow hover key={id} tabIndex={-1} role="checkbox">
@@ -471,7 +479,7 @@ export const RequestPage = () => {
                                                     <TableCell align="right">
                                                         {
                                                             status === 'pending' ? (
-                                                                <>
+                                                                <Stack direction="row" spacing={1}>
                                                                     <a
                                                                         style={{ textDecoration: 'none', color: 'inherit' }}
                                                                         target="_blank"
@@ -479,8 +487,7 @@ export const RequestPage = () => {
                                                                         rel="noreferrer"
                                                                     >
                                                                         <IconButton size="large" color="inherit">
-                                                                            <Iconify icon="bx:bxs-file-pdf" />
-                                                                        </IconButton>
+                                                                            <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>                                                                        </IconButton>
                                                                     </a>
                                                                     <a
                                                                         style={{ textDecoration: 'none', color: '#2065D1' }}
@@ -489,23 +496,23 @@ export const RequestPage = () => {
                                                                         rel="noreferrer"
                                                                     >
                                                                         <IconButton size="large" color="inherit">
-                                                                            <Iconify icon="bx:money-withdraw" />
+                                                                            <Iconify icon="bx:money-withdraw" /> <Typography variant="caption">Checks</Typography>
                                                                         </IconButton>
                                                                     </a>
 
                                                                     <IconButton size="large" color="success" onClick={() => handleClickDelete(id, suffixId, 'completed')} >
-                                                                        <Iconify icon={'mdi:check'} />
+                                                                        <Iconify icon={'mdi:check'} />  <Typography variant="caption">Complete</Typography>
                                                                         {/* Complete */}
                                                                     </IconButton>
 
                                                                     <IconButton size="large" color="error" onClick={() => handleClickDelete(id, suffixId, 'cancelled')}>
-                                                                        <Iconify icon="bx:bxs-trash" />
+                                                                        <Iconify icon="bx:bxs-trash" /> <Typography variant="caption">Cancel</Typography>
                                                                     </IconButton>
-                                                                </>
+                                                                </Stack>
                                                             )
                                                                 :
                                                                 status === 'completed' ? (
-                                                                    <>
+                                                                    <Stack direction="row" spacing={1}>
                                                                         <a
                                                                             style={{ textDecoration: 'none', color: 'inherit' }}
                                                                             target="_blank"
@@ -513,7 +520,7 @@ export const RequestPage = () => {
                                                                             rel="noreferrer"
                                                                         >
                                                                             <IconButton size="large" color="inherit">
-                                                                                <Iconify icon="bx:bxs-file-pdf" />
+                                                                                <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>
                                                                             </IconButton>
                                                                         </a>
                                                                         <a
@@ -523,26 +530,23 @@ export const RequestPage = () => {
                                                                             rel="noreferrer"
                                                                         >
                                                                             <IconButton size="large" color="inherit">
-                                                                                <Iconify icon="bx:money-withdraw" />
+                                                                                <Iconify icon="bx:money-withdraw" /> <Typography variant="caption">Checks</Typography>
                                                                             </IconButton>
                                                                         </a>
 
-                                                                        
+
                                                                         <a
                                                                             style={{ textDecoration: 'none', color: '#54D62C' }}
                                                                             href={`/dashboard/payroll-panel/payments/`}
                                                                         >
                                                                             <IconButton size="large" color="inherit">
-                                                                                <Iconify icon="bx:show" />
+                                                                                <Iconify icon="bx:show" /> <Typography variant="caption">Payments</Typography>
                                                                             </IconButton>
                                                                         </a>
-                                                                    </>
+                                                                    </Stack>
                                                                 )
                                                                     :
-                                                                    (
-                                                                        <>
-                                                                        </>
-                                                                    )
+                                                                    null
                                                         }
 
                                                     </TableCell>
@@ -681,7 +685,7 @@ export const RequestPage = () => {
                                     fontWeight: '400'
                                 }}>You can download the request in PDF format</Typography>
 
-                                <Stack direction="row" spacing={2}>
+                                <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', width: '100%', justifyContent: 'center', gap: 2 }}>
                                     <a
                                         href={`${config.APPBACK_URL}/api/requests/${request.id}/download/`}
                                         target="_blank"

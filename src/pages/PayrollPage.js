@@ -41,12 +41,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 // date-fns
 import { format, lastDayOfMonth, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
-// date-fns
-
 
 // sections
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
@@ -322,7 +319,7 @@ export const PayrollPage = () => {
                     <Link
                         underline="hover"
                         color="inherit"
-                        href="#"
+                        href="/dashboard/payroll-panel"
                     >
                         Payroll
                     </Link>
@@ -390,7 +387,7 @@ export const PayrollPage = () => {
                                                     <TableCell align="right">
                                                         {
                                                             status === 'created' ? (
-                                                                <>
+                                                                <Stack direction="row" spacing={2}>
                                                                     <a
                                                                         style={{ textDecoration: 'none', color: 'inherit' }}
                                                                         target="_blank"
@@ -398,20 +395,20 @@ export const PayrollPage = () => {
                                                                         rel="noreferrer"
                                                                     >
                                                                         <IconButton size="large" color="inherit">
-                                                                            <Iconify icon="bx:bxs-file-pdf" />
+                                                                            <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>
                                                                         </IconButton>
                                                                     </a>
                                                                     <a
-                                                                        style={{ textDecoration: 'none', color: '#54D62C' }}
+                                                                        style={{ textDecoration: 'none', color: '#2065D1' }}
                                                                         target="_blank"
                                                                         href={`${config.APPBACK_URL}/api/bank-checks/${id}/download`}
                                                                         rel="noreferrer"
                                                                     >
                                                                         <IconButton size="large" color="inherit">
-                                                                            <Iconify icon="bx:money-withdraw" />
+                                                                            <Iconify icon="bx:money-withdraw" /> <Typography variant="caption">Checks</Typography>
                                                                         </IconButton>
                                                                     </a>
-                                                                </>
+                                                                </Stack>
                                                             ) : null
                                                         }
 

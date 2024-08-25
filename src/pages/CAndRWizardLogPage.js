@@ -16,43 +16,20 @@ import {
   TableCell,
   Container,
   Typography,
-  IconButton,
   TableContainer,
   TablePagination,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  DialogTitle,
-  styled,
-  Switch,
-  FormControl,
   Breadcrumbs,
   Link,
   Backdrop, 
   CircularProgress,
 } from '@mui/material';
 
-// components
-import CloseIcon from '@mui/icons-material/Close';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import Slide from '@mui/material/Slide';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-// date-fns
-import { format, lastDayOfMonth } from 'date-fns';
-import { es } from 'date-fns/locale';
-import Label from '../components/label';
-import Iconify from '../components/iconify';
-import Scrollbar from '../components/scrollbar';
-// date-fns
 
+import Scrollbar from '../components/scrollbar';
 
 // sections
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import config from '../config.json';
-
 
 // ----------------------------------------------------------------------
 
@@ -65,9 +42,6 @@ const TABLE_HEAD = [
   { id: 'created_at', label: 'Date', alignRight: false },
 
 ];
-
-/* --------------------> */
-
 
 // ----------------------------------------------------------------------
 
@@ -102,12 +76,7 @@ function applySortFilter(array, comparator, query) {
 
 export const CAndRWizardLogPage = () => {
 
-
-
-
-
   /* Description */
-
 
   const [descriptions, setDescriptions] = useState([]);
 

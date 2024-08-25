@@ -324,10 +324,11 @@ export const ServiceHistory = () => {
                                                         {
                                                             status === 'paid' ?
                                                                 (
-                                                                    <>
+                                                                    <Stack direction="row" spacing={2}>
 
-                                                                        <IconButton size="large" color="primary" onClick={() => validatePayroll(id)}>
-                                                                            <Iconify icon={'mdi:pencil-box'} />
+                                                                        <IconButton size="large" color="primary" onClick={() => validatePayroll(id)}
+                                                                            >
+                                                                            <Iconify icon={'mdi:pencil-box'} /> <Typography variant="caption">Edit</Typography>
                                                                         </IconButton>
 
                                                                         <a
@@ -337,26 +338,26 @@ export const ServiceHistory = () => {
                                                                             rel="noreferrer"
                                                                         >
                                                                             <IconButton size="large" color="inherit">
-                                                                                <Iconify icon="bx:bxs-file-pdf" />
+                                                                                <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>
                                                                             </IconButton>
                                                                         </a>
                                                                         <IconButton size="large" color="warning" onClick={() => handleClickOpen(id, 'pending', invoiceNumber)}>
-                                                                            <Iconify icon={'mdi:timer-sand'} />
+                                                                            <Iconify icon={'mdi:timer-sand'} /> <Typography variant="caption">Pending</Typography>
                                                                             {/* Pendiente */}
                                                                         </IconButton>
 
                                                                         <IconButton size="large" color="error" onClick={() => handleClickOpen(id, 'cancelled', invoiceNumber)}>
-                                                                            <Iconify icon={'mdi:close'} />
+                                                                            <Iconify icon={'mdi:close'} /> <Typography variant="caption">Cancel</Typography>
                                                                             {/* Anular */}
                                                                         </IconButton>
-                                                                    </>
+                                                                    </Stack>
                                                                 )
                                                                 :
                                                                 status === 'pending' ?
-                                                                    (<>
+                                                                    (<Stack direction="row" spacing={2}>
 
                                                                         <IconButton size="large" color="primary" onClick={() => validatePayroll(id)}>
-                                                                            <Iconify icon={'mdi:pencil-box'} />
+                                                                            <Iconify icon={'mdi:pencil-box'} /> <Typography variant="caption">Edit</Typography>
                                                                         </IconButton>
                                                                         <a
                                                                             style={{ textDecoration: 'none', color: 'inherit' }}
@@ -365,23 +366,23 @@ export const ServiceHistory = () => {
                                                                             rel="noreferrer"
                                                                         >
                                                                             <IconButton size="large" color="inherit">
-                                                                                <Iconify icon="bx:bxs-file-pdf" />
+                                                                                <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>
                                                                             </IconButton>
                                                                         </a>
                                                                         <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'paid', invoiceNumber)}>
-                                                                            <Iconify icon="bx:money-withdraw" />
+                                                                            <Iconify icon="bx:money-withdraw" /> <Typography variant="caption">Pay</Typography>
                                                                             {/* Pagar */}
                                                                         </IconButton>
                                                                         <IconButton size="large" color="error" onClick={() => handleClickOpen(id, 'cancelled', invoiceNumber)}>
-                                                                            <Iconify icon={'mdi:close'} />
+                                                                            <Iconify icon={'mdi:close'} /> <Typography variant="caption">Cancel</Typography>
                                                                             {/* Anular */}
                                                                         </IconButton>
-                                                                    </>
+                                                                    </Stack>
                                                                     )
                                                                     :
-                                                                    <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'pending', invoiceNumber)}>
-                                                                        <Iconify icon={'mdi:check'} />
-                                                                        {/* Pendiente */}
+                                                                    <IconButton size="large" color="warning" onClick={() => handleClickOpen(id, 'pending', invoiceNumber)}>
+                                                                        <Iconify icon={'mdi:timer-sand'} />
+                                                                        {/* Pendiente */} <Typography variant="caption">Pending</Typography>
                                                                     </IconButton>
                                                         }
                                                     </TableCell>

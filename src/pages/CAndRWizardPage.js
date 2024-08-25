@@ -42,6 +42,9 @@ import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 
+import useResponsive from '../hooks/useResponsive';
+
+
 /* Review table */
 import { ReviewListHead, WizardListToolbar } from '../sections/@payroll/table';
 
@@ -97,6 +100,8 @@ export const CAndRWizardPage = () => {
     const [responseCARWizard, setResponseCARWizard] = useState('');
 
     const navigate = useNavigate();
+
+    const lgDown = useResponsive('down', 'lg');
 
     /* Set Up */
 
@@ -406,6 +411,7 @@ export const CAndRWizardPage = () => {
                     padding: '20px',
                     boxShadow: 2,
                     borderRadius: 1,
+                    maxWidth: '85vw',
                 }
             }>
                 <Typography variant="subtitle1" gutterBottom marginBottom={2}>
@@ -418,7 +424,6 @@ export const CAndRWizardPage = () => {
                             numSelected={selected.length}
                             filterAssignment={filterAssignmentReview}
                             onFilterAssignment={handleFilterByAssignment}
-
                             selected={selected}
                             toast={toast}
                             setSelected={setSelected}
@@ -644,8 +649,8 @@ export const CAndRWizardPage = () => {
                     <Box
                         sx={{
                             display: 'grid',
-                            gap: 3,
-                            gridTemplateColumns: 'repeat(2, 1fr)',
+                            gap: 2,
+                            gridTemplateColumns: lgDown ? '1fr' : 'repeat(2, 1fr)'
                         }}
                     >
                         <Button
@@ -703,6 +708,13 @@ export const CAndRWizardPage = () => {
                 <Breadcrumbs aria-label="breadcrumb">
                     <Link underline="hover" color="inherit" href="/dashboard/app">
                         Dashboard
+                    </Link>
+                    <Link
+                        underline="hover"
+                        color="inherit"
+                        href="/dashboard/payroll-panel"
+                    >
+                        Payroll
                     </Link>
                     <Link
                         underline="hover"

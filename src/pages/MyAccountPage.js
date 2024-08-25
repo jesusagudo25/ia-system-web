@@ -194,13 +194,16 @@ export const MyAccountPage = () => {
                             <Stack direction="row" alignItems="center" justifyContent="space-start" mb={2} sx={
                                 {
                                     gap: '10px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
                                 }
                             }>
-                                <Typography variant="body1" gutterBottom>
+                                <Typography variant="subtitle1" gutterBottom>
                                     Name
                                 </Typography>
                                 <FormControl
-                                    sx={{ width: '30%' }}
+                                    sx={{ width: '100%' }}
                                 >
                                     <TextField id="outlined-basic" placeholder='Ingrese su nombre completo' variant="outlined" value={name} onChange={
                                         (e) => {
@@ -217,12 +220,15 @@ export const MyAccountPage = () => {
                                 {
                                     gap: '10px',
                                     mt: '20px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
                                 }
                             }>
-                                <Typography variant="body1" gutterBottom>
+                                <Typography variant="subtitle1" gutterBottom>
                                     Email
                                 </Typography>
-                                <FormControl sx={{ width: '30%' }}>
+                                <FormControl sx={{ width: '100%' }}>
                                     <TextField id="outlined-basic" variant="outlined" value={email} onChange={
                                         (e) => {
                                             setEmail(e.target.value)
@@ -259,9 +265,12 @@ export const MyAccountPage = () => {
                             <Stack direction="row" alignItems="center" justifyContent="space-start" mb={2} sx={
                                 {
                                     gap: '10px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
                                 }
                             }>
-                                <Typography variant="body1" gutterBottom>
+                                <Typography variant="subtitle1" gutterBottom>
                                     Current password
                                 </Typography>
                                 <Controller
@@ -289,16 +298,20 @@ export const MyAccountPage = () => {
                                             onBlur={onBlur}
                                             error={!!error}
                                             helperText={error ? error.message : null}
+                                            sx={{ width: '100%' }}
                                         />
                                     )}
                                 />
                             </Stack>
                             <Stack direction="row" alignItems="center" justifyContent="space-start" mb={2} sx={
                                 {
-                                    gap: '33px',
+                                    gap: '10px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
                                 }
                             }>
-                                <Typography variant="body1" gutterBottom>
+                                <Typography variant="subtitle1" gutterBottom>
                                     New password
                                 </Typography>
                                 <Controller
@@ -338,6 +351,7 @@ export const MyAccountPage = () => {
                                             onBlur={onBlur}
                                             error={!!error}
                                             helperText={error ? error.message : null}
+                                            sx={{ width: '100%' }}
                                         />
                                     )}
                                 />
