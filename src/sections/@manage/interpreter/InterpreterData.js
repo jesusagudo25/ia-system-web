@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Stack, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material'
 import axios from 'axios';
+import config from '../../../config.json';
 
 export const InterpreterData = ({
     setInterpreterPhoneNum,
@@ -25,7 +26,7 @@ export const InterpreterData = ({
     const [states, setStates] = useState([]);
 
     const getStates = () => {
-        axios.get('https://api.countrystatecity.in/v1/countries/US/states', {
+        axios.get(`${config.APP_URL}/assets/json/states.json`, {
             headers: {
                 'X-CSCAPI-KEY': 'N3NXRVN4V1Y1YVJmSTd6ZHR3b1NlMDlMRkRRVFQ2c0JWWmcxbmNUWg=='
             }

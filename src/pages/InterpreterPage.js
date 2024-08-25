@@ -315,7 +315,7 @@ export const InterpreterPage = () => {
 
   const getStates = () => {
     setIsLoading(true);
-    axios.get('https://api.countrystatecity.in/v1/countries/US/states', {
+    axios.get(`${config.APP_URL}/assets/json/states.json` , {
       headers: {
         'X-CSCAPI-KEY': 'N3NXRVN4V1Y1YVJmSTd6ZHR3b1NlMDlMRkRRVFQ2c0JWWmcxbmNUWg=='
       }

@@ -307,7 +307,7 @@ export const LenguagePage = () => {
   return (
     <>
       <Helmet>
-        <title> Lenguages | IA System </title>
+        <title> Languages | IA System </title>
       </Helmet>
 
       <Container>
@@ -327,7 +327,7 @@ export const LenguagePage = () => {
             color="inherit"
             href="#"
           >
-            Lenguages
+            Languages
           </Link>
         </Breadcrumbs>
 
@@ -335,10 +335,10 @@ export const LenguagePage = () => {
 
         <Stack direction="row" alignItems="center" justifyContent="space-between" my={5}>
           <Typography variant="h4">
-            Lenguages
+            Languages
           </Typography>
           <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />} onClick={handleCreateDialog}>
-            New Lenguage
+            New Language
           </Button>
         </Stack>
 
@@ -502,7 +502,7 @@ export const LenguagePage = () => {
         maxWidth='sm'
       >
         <BootstrapDialogTitle id="customized-dialog-title" onClose={handleCloseDialog}>
-          Manage Lenguages
+          Manage Languages
         </BootstrapDialogTitle>
         <DialogContent dividers>
           <Stack spacing={3} sx={{ minWidth: 550 }}>

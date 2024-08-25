@@ -7,6 +7,7 @@ import {
 import { LoadingButton } from '@mui/lab';
 
 import PropTypes from 'prop-types';
+import config from '../config.json';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -153,7 +154,7 @@ export const CoordinatorPage = () => {
     }
 
     const getStates = () => {
-        axios.get('https://api.countrystatecity.in/v1/countries/US/states', {
+        axios.get(`${config.APP_URL}/assets/json/states.json`, {
             headers: {
                 'X-CSCAPI-KEY': 'N3NXRVN4V1Y1YVJmSTd6ZHR3b1NlMDlMRkRRVFQ2c0JWWmcxbmNUWg=='
             }

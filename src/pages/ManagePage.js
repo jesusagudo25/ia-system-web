@@ -59,7 +59,7 @@ export const ManagePage = () => {
                                 role: [1, 2, 3]
                             },
                             {
-                                name: 'Lenguages',
+                                name: 'Languages',
                                 path: '/dashboard/manage/lenguages',
                                 icon: <Iconify icon={'mdi:translate'} color="#2065D1" width={32} />,
                                 role: [1, 2, 3]
