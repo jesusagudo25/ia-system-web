@@ -381,7 +381,7 @@ export const InterpreterPage = () => {
           <Link
             underline="hover"
             color="inherit"
-            href="#"
+            href="/dashboard/manage"
           >
             Manage
           </Link>
@@ -497,7 +497,7 @@ export const InterpreterPage = () => {
                                 setOpen(true);
                               }
                             }>
-                              <Iconify icon={'mdi:pencil-box'} />
+                              <Iconify icon={'mdi:pencil-box'} /> <Typography variant="caption">Edit</Typography>
                             </IconButton>
                           </TableCell>
                         </TableRow>

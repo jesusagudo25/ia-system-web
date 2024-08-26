@@ -380,7 +380,7 @@ export const UserPage = () => {
           <Link
             underline="hover"
             color="inherit"
-            href="#"
+            href="/dashboard/manage"
           >
             Manage
           </Link>
@@ -460,14 +460,17 @@ export const UserPage = () => {
                           </TableCell>
 
                           <TableCell align="right">
-                            <IconButton size="large" color="inherit" onClick={() => {
+                            <Stack direction="row" alignItems="center" spacing={2}>
+                            <IconButton size="large" 
+                              color="error"
+                             onClick={() => {
                               setOpen(true);
                               setId(id);
                               setContainerPassword(true);
                               setShowCreate(false);
                               setPassword('');
                             }}>
-                              <Iconify icon={'mdi:lock'} />
+                              <Iconify icon={'mdi:lock'} /> <Typography variant="caption">Password</Typography>
                             </IconButton>
                             <IconButton size="large" color="inherit" onClick={() => {
                               setOpen(true);
@@ -477,8 +480,9 @@ export const UserPage = () => {
                               setShowCreate(false);
                               setContainerPassword(false);
                             }}>
-                              <Iconify icon={'mdi:pencil-box'} />
+                              <Iconify icon={'mdi:pencil-box'} /> <Typography variant="caption">Edit</Typography>
                             </IconButton>
+                            </Stack>
                           </TableCell>
                         </TableRow>
                       );

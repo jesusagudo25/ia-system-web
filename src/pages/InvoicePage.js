@@ -187,7 +187,7 @@ export const InvoicePage = () => {
           <Link
             underline="hover"
             color="inherit"
-            href="#"
+            href="/dashboard/manage"
           >
             Manage
           </Link>
@@ -266,7 +266,7 @@ console.log(row);
                               rel="noreferrer"
                             >
                               <IconButton size="large" color="primary">
-                                <Iconify icon={'mdi:file-pdf'} />
+                                <Iconify icon={'mdi:file-pdf'} /> <Typography variant="caption">Download</Typography>
                               </IconButton>
                             </a>
                           </TableCell>

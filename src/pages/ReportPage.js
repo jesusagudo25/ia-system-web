@@ -32,6 +32,7 @@ import {
   Button,
   Slide,
   Box,
+  FormControl,
 } from '@mui/material';
 
 // components
@@ -39,11 +40,11 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 // date-fns
-import { differenceInDays, format, lastDayOfMonth, parseISO } from 'date-fns';
+import { differenceInDays, format, parseISO } from 'date-fns';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
-// date-fns
 
+import useResponsive from '../hooks/useResponsive';
 
 // sections
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
@@ -96,6 +97,7 @@ const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={r
 
 export const ReportPage = () => {
 
+  const lgDown = useResponsive('down', 'lg');
 
   /* Report */
   const [startDate, setStartDate] = useState(new Date(`${format(new Date(), 'yyyy-01-01')}T00:00:00`));
@@ -156,7 +158,6 @@ export const ReportPage = () => {
     const difference = differenceInDays(endDate, startDate);
     let type = 'a';
 
-    console.log(difference);
     if (difference >= 300 && difference <= 364) {
       type = 'm';
     }
@@ -220,6 +221,7 @@ export const ReportPage = () => {
   };
 
   const getReports = async () => {
+    
     setIsLoading(true);
     try {
       const response = await axios.get(`${config.APPBACK_URL}/api/reports`);
@@ -270,7 +272,8 @@ export const ReportPage = () => {
               Date range
             </Typography>
           </Stack>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingX: 3, paddingBottom: 3 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingX: 3, paddingBottom: 3, flexWrap: 'wrap', gap: 2, flexDirection: lgDown ? 'column' : 'row' }}>
+          <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="Start date"
@@ -281,6 +284,7 @@ export const ReportPage = () => {
                 format='MM/dd/yyyy'
               />
             </LocalizationProvider>
+          </FormControl>
             <Avatar
               sx={{
                 bgcolor: 'primary.main',
@@ -290,6 +294,7 @@ export const ReportPage = () => {
               <Iconify icon="bx:bxs-calendar" />
             </Avatar>
 
+            <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="End date"
@@ -300,7 +305,10 @@ export const ReportPage = () => {
                 format='MM/dd/yyyy'
               />
             </LocalizationProvider>
-            <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} sx={{ ml: 1, width: '15%' }} onClick={
+          </FormControl>
+            <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} 
+            sx={{ ml: 1, width: lgDown ? '100%' : '15%' }}
+            onClick={
               () => {
                 setIsLoading(true);
                 handleGenerateReport();
@@ -350,6 +358,7 @@ export const ReportPage = () => {
 
                           <TableCell align="left">{format(parseISO(`${endDate.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}</TableCell>
                           <TableCell align="right">
+                          <Stack direction="row" spacing={2}>
                             <a
                               style={{ textDecoration: 'none', color: 'inherit' }}
                               target="_blank"
@@ -357,13 +366,14 @@ export const ReportPage = () => {
                               rel="noreferrer"
                             >
                               <IconButton size="large" color="inherit">
-                                <Iconify icon="bx:bxs-file-pdf" />
+                                <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>
                               </IconButton>
                             </a>
 
                             <IconButton size="large" color="error" onClick={() => handleClickDelete(id)}>
-                              <Iconify icon="bx:bxs-trash" />
+                              <Iconify icon="bx:bxs-trash" /> <Typography variant="caption">Delete</Typography>
                             </IconButton>
+                          </Stack>
                           </TableCell>
                         </TableRow>
                       );

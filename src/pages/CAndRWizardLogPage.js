@@ -148,7 +148,7 @@ export const CAndRWizardLogPage = () => {
           <Link
             underline="hover"
             color="inherit"
-            href="#"
+            href="/dashboard/manage"
           >
             Manage
           </Link>
@@ -191,7 +191,7 @@ export const CAndRWizardLogPage = () => {
 
                           <TableCell component="th" scope="row" padding="normal" width={400}>
                             <Stack direction="row" alignItems="center" spacing={2} >
-                              <Typography variant="subtitle2" wrap>
+                              <Typography variant="subtitle2" >
                                 {comment}
                               </Typography>
                             </Stack>

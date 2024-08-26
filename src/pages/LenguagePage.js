@@ -318,7 +318,7 @@ export const LenguagePage = () => {
           <Link
             underline="hover"
             color="inherit"
-            href="#"
+            href="/dashboard/manage"
           >
             Manage
           </Link>
@@ -412,7 +412,7 @@ export const LenguagePage = () => {
                                 setOpen(true);
                               }
                             }>
-                              <Iconify icon={'mdi:pencil-box'} />
+                              <Iconify icon={'mdi:pencil-box'} /><Typography variant="caption">Edit</Typography>
                             </IconButton>
                           </TableCell>
                         </TableRow>
