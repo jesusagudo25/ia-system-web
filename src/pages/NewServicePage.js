@@ -21,6 +21,12 @@ import {
     Backdrop,
     FormControlLabel,
     Checkbox,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Slide,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -41,6 +47,8 @@ import Iconify from '../components/iconify';
 import useResponsive from '../hooks/useResponsive';
 
 const steps = ['Agency and Interpreter data', 'Service data', 'Summary'];
+
+const Transition = React.forwardRef( (props, ref) => { return <Slide direction="up" ref={ref} {...props} />; });
 
 export const NewServicePage = () => {
 
@@ -82,12 +90,12 @@ export const NewServicePage = () => {
 
     /* Service address */
 
-    const [serviceAddressId, setServiceAddressId] = useState(''); // [1]
+    const [serviceAddressId, setServiceAddressId] = useState(''); 
     const [serviceAddress, setServiceAddress] = useState('');
     const [serviceCity, setServiceCity] = useState('');
     const [serviceState, setServiceState] = useState('none');
     const [serviceZipCode, setServiceZipCode] = useState('');
-    const [addressSelected, setAddressSelected] = useState(false); // [1
+    const [addressSelected, setAddressSelected] = useState(false); 
 
     /* New service variable */
 
@@ -101,6 +109,10 @@ export const NewServicePage = () => {
     const [descriptionId, setDescriptionId] = useState('');
 
     const [dateServiceProvided, setDateServiceProvided] = useState(new Date());
+    const [dateServiceCompleted, setDateServiceCompleted] = useState(new Date());
+    const [isServiceNextDay, setIsServiceNextDay] = useState(false);
+    const [openNextDayAlert, setOpenNextDayAlert] = useState(false);
+    
     const [arrivalTime, setArrivalTime] = useState('');
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
@@ -342,7 +354,7 @@ export const NewServicePage = () => {
         setInterpreterZipCode(interpreter.zip_code);
         setInterpreterContainer(true);
         setInterpreterSelected(true);
-        calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull, interpreterLenguageId);
+        calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull, interpreterLenguageId, isServiceNextDay, dateServiceProvided);
     }
 
     const handleClearInterpreter = () => {
@@ -357,7 +369,7 @@ export const NewServicePage = () => {
         setInterpreterContainer(false);
         setInterpreterSelected(false);
         setErrors({});
-        calculateInterpreterService('', '', '', true, 'none');
+        calculateInterpreterService('', '', '', true, 'none', false, dateServiceProvided);
     }
 
     /* Autocomplete address */
@@ -394,73 +406,95 @@ export const NewServicePage = () => {
         return Math.round((parseFloat(hours) + parseFloat(minutes) / 60) * 100) / 100;
     }
 
-    const calculateInterpreterService = (arrivalTime, startTime, endTime, timeIsNull, interpreterLenguageId) => {
+    const calculateInterpreterService = (
+            arrivalTime, startTime, endTime, timeIsNull, interpreterLenguageId, isServiceNextDay, dateServiceProvided
+    ) => {
 
         setContainerOrderDetails(false);
+        setOpenNextDayAlert(false);
 
-        if (timeIsNull) { // Si el tiempo esta habilitado, se calcula el servicio en base a las horas ingresadas
-            if (arrivalTime && startTime && endTime) {
-                const arrivalTimeFloat = timeStringToFloat(format(arrivalTime, 'HH:mm'));
-                const startTimeFloat = timeStringToFloat(format(startTime, 'HH:mm'));
-                const endTimeFloat = timeStringToFloat(format(endTime, 'HH:mm'));
+        if (dateServiceProvided) {
 
-                // Calcular utilizando cuartos de hora
-                const arrivalTimeRounded = Math.ceil(arrivalTimeFloat * 4) / 4;
-                const startTimeRounded = Math.ceil(startTimeFloat * 4) / 4;
-                const endTimeRounded = Math.ceil(endTimeFloat * 4) / 4;
+            if (timeIsNull) { /* Si el tiempo esta habilitado, se calcula el servicio en base a las horas ingresadas */
+                if (arrivalTime && startTime && endTime) {
+                    const arrivalTimeFloat = timeStringToFloat(format(arrivalTime, 'HH:mm'));
+                    const startTimeFloat = timeStringToFloat(format(startTime, 'HH:mm'));
+                    const endTimeFloat = timeStringToFloat(format(endTime, 'HH:mm'));                    
 
-                /* Se busca el lenguaje seleccionado, para obtener el precio por hora */
-                const LenguageNameSelected = lenguages.find(lenguage => lenguage.id === interpreterLenguageId);
+                    /* Calcular utilizando cuartos de hora */
+                    const arrivalTimeRounded = Math.ceil(arrivalTimeFloat * 4) / 4;
+                    const startTimeRounded = Math.ceil(startTimeFloat * 4) / 4;
+                    const endTimeRounded = Math.ceil(endTimeFloat * 4) / 4;
 
-                let totalTime = Math.round((endTimeRounded - startTimeRounded) * 100) / 100;
+                    /* Se busca el lenguaje seleccionado, para obtener el precio por hora */
+                    const LenguageNameSelected = lenguages.find(lenguage => lenguage.id === interpreterLenguageId);
 
-                if (totalTime > 0 && totalTime <= 2) {
-                    totalTime = 2;
+                    let totalTime;
+                    if(isServiceNextDay){
+                        totalTime = Math.round(((endTimeRounded + 24) - startTimeRounded) * 100) / 100;
+                    }
+                    else{
+                        totalTime = Math.round((endTimeRounded - startTimeRounded) * 100) / 100;
+                    }
+
+                    if (totalTime > 0 && totalTime <= 2) {
+                        totalTime = 2;
+                    }
+
+                    if (totalTime <= 0) {
+                        setOpenNextDayAlert(true);
+                        return;
+                    }
+                    
+                    const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
+
+                    if (totalCostService > 0) {
+                        const totalInterpreter = LenguageNameSelected.price_per_hour_interpreter * totalTime;
+                        const totalCoordinador = (LenguageNameSelected.price_per_hour - (totalInterpreter / totalTime)) * totalTime;
+
+                        setTotalServiceInterpreter(totalInterpreter);
+                        setTotalServiceCoordinator(totalCoordinador);
+                        setTotalService(totalCostService);
+                        setContainerOrderDetails(true);
+                    }
                 }
-
-                const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
-
-                if (totalCostService > 0) {
-                    const totalInterpreter = LenguageNameSelected.price_per_hour_interpreter * totalTime;
-                    const totalCoordinador = (LenguageNameSelected.price_per_hour - (totalInterpreter / totalTime)) * totalTime;
-
-                    setTotalServiceInterpreter(totalInterpreter);
-                    setTotalServiceCoordinator(totalCoordinador);
-                    setTotalService(totalCostService);
-                    setContainerOrderDetails(true);
+                else {
+                    setTotalServiceInterpreter(0);
+                    setTotalServiceCoordinator(0);
+                    setTotalService(0);
+                    setContainerOrderDetails(false);
                 }
             }
             else {
-                setTotalServiceInterpreter(0);
-                setTotalServiceCoordinator(0);
-                setTotalService(0);
-                setContainerOrderDetails(false);
+                const LenguageNameSelected = lenguages.find(lenguage => lenguage.id === interpreterLenguageId);
+                const totalTime = 2;
+                const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
+                /*  40 * 2 = 80 */
+
+                /* Se calcula la cantidad para el interprete, en base al lenguaje seleccionado:
+                    * el tiempo total
+                    * el precio por hora del interprete (25 o 30) */
+                const totalInterpreter = LenguageNameSelected.price_per_hour_interpreter * totalTime;
+
+                /*
+                El 40 es el precio por hora del lenguaje seleccionado
+                El 50 es el precio por hora del interprete
+                El 2 es el tiempo total
+                Aqui se calcula el precio del coordinador restandole el precio del interprete y multiplicandolo por el tiempo total del servicio.
+                */
+                const totalCoordinador = (LenguageNameSelected.price_per_hour - (totalInterpreter / totalTime)) * totalTime;
+                /* 40 - (50 / 2) * 2 = 40 - 25 = 15 * 2 = 30 */
+
+                setTotalServiceInterpreter(totalInterpreter);
+                setTotalServiceCoordinator(totalCoordinador);
+                setTotalService(totalCostService);
+                setContainerOrderDetails(true);
             }
-        }
-        else {
-            const LenguageNameSelected = lenguages.find(lenguage => lenguage.id === interpreterLenguageId);
-            const totalTime = 2;
-            const totalCostService = LenguageNameSelected.price_per_hour * totalTime;
-            /*  40 * 2 = 80 */
 
-            /* Se calcula la cantidad para el interprete, en base al lenguaje seleccionado:
-                * el tiempo total
-                * el precio por hora del interprete (25 o 30) */
-            const totalInterpreter = LenguageNameSelected.price_per_hour_interpreter * totalTime;
-
-            /*
-            El 40 es el precio por hora del lenguaje seleccionado
-            El 50 es el precio por hora del interprete
-            El 2 es el tiempo total
-            Aqui se calcula el precio del coordinador restandole el precio del interprete y multiplicandolo por el tiempo total del servicio.
-            */
-            const totalCoordinador = (LenguageNameSelected.price_per_hour - (totalInterpreter / totalTime)) * totalTime;
-            // 40 - (50 / 2) * 2 = 40 - 25 = 15 * 2 = 30
-
-            setTotalServiceInterpreter(totalInterpreter);
-            setTotalServiceCoordinator(totalCoordinador);
-            setTotalService(totalCostService);
-            setContainerOrderDetails(true);
+        } else {
+            setTotalServiceInterpreter(0);
+            setTotalServiceCoordinator(0);
+            setTotalService(0);
         }
     }
 
@@ -491,6 +525,23 @@ export const NewServicePage = () => {
             setTotalMileageCoordinator(0);
             setTotalMileage(0);
         }
+    }
+
+    /* Hanlde set service is next day */
+
+    const handleSetServiceNextDay = () => {
+        
+        const nextDay = new Date(dateServiceProvided);
+        nextDay.setDate(nextDay.getDate() + 1);
+
+        setDateServiceCompleted(nextDay);
+        
+        setIsServiceNextDay(true);
+        setOpenNextDayAlert(false);
+
+        calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull, interpreterLenguageId, true, dateServiceProvided);
+
+        toast.success('The service is next day');
     }
 
     /* Handle submit new service or update */
@@ -527,6 +578,7 @@ export const NewServicePage = () => {
             'description_id': descriptionId,
             'description': description,
             'date_of_service_provided': format(dateServiceProvided, 'yyyy-MM-dd'),
+            'date_of_completion_service': format(dateServiceCompleted, 'yyyy-MM-dd'),
             'arrival_time': timeIsNull ? format(arrivalTime, 'HH:mm') : null,
             'start_time': timeIsNull ? format(startTime, 'HH:mm') : null,
             'end_time': timeIsNull ? format(endTime, 'HH:mm') : null,
@@ -670,23 +722,39 @@ export const NewServicePage = () => {
                 setAssignmentNumberOld(response.data.details.assignment_number);
                 setDescriptionId(response.data.description.id);
                 setDescription(response.data.description.title);
+
                 setDateServiceProvided(new Date(`${format(parseISO(response.data.details.date_of_service_provided), 'yyyy-MM-dd')}T00:00:00`));
+                setDateServiceCompleted(new Date(`${format(parseISO(response.data.details.date_of_completion_service), 'yyyy-MM-dd')}T00:00:00`));
+
+                const isNextDay = format(parseISO(response.data.details.date_of_service_provided), 'yyyy-MM-dd') !== format(parseISO(response.data.details.date_of_completion_service), 'yyyy-MM-dd');
+                setIsServiceNextDay(isNextDay);
+                
                 setMiscellaneous(response.data.details.miscellaneous);
 
                 if (response.data.details.arrival_time === null && response.data.details.start_time === null && response.data.details.end_time === null) {
                     setTimeIsNull(false);
-                    calculateInterpreterService(response.data.details.arrival_time, response.data.details.start_time, response.data.details.end_time, false, response.data.interpreter.lenguage_id);
+                    calculateInterpreterService(
+                        response.data.details.arrival_time, 
+                        response.data.details.start_time, 
+                        response.data.details.end_time, 
+                        false, 
+                        response.data.interpreter.lenguage_id, 
+                        isNextDay, 
+                        parseISO(response.data.details.date_of_service_provided)
+                    );
                 } else {
                     setTimeIsNull(true);
                     setArrivalTime(parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.arrival_time}`));
                     setStartTime(parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.start_time}`));
-                    setEndTime(parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.end_time}`));
+                    setEndTime(parseISO(`${response.data.details.date_of_completion_service}T${response.data.details.end_time}`));
                     calculateInterpreterService(
                         parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.arrival_time}`),
                         parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.start_time}`),
-                        parseISO(`${response.data.details.date_of_service_provided}T${response.data.details.end_time}`),
+                        parseISO(`${response.data.details.date_of_completion_service}T${response.data.details.end_time}`),
                         true,
-                        response.data.interpreter.lenguage_id
+                        response.data.interpreter.lenguage_id,
+                        isNextDay,
+                        parseISO(response.data.details.date_of_service_provided)
                     );
                 }
 
@@ -748,6 +816,7 @@ export const NewServicePage = () => {
             setDescriptionId('');
             setDescription('');
             setDateServiceProvided(new Date());
+            setDateServiceCompleted(new Date());
             setTimeIsNull(true);
             setArrivalTime('');
             setStartTime('');
@@ -878,7 +947,7 @@ export const NewServicePage = () => {
                                 setInterpreterLenguageId(e.target.value);
                                 setInterpreterName('');
                                 handleClearInterpreter();
-                                calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull, e.target.value);
+                                calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull, e.target.value, isServiceNextDay, dateServiceProvided);
                             }}
                         >
                             <MenuItem disabled value="none">
@@ -966,6 +1035,16 @@ export const NewServicePage = () => {
                                 value={dateServiceProvided}
                                 onChange={(newValue) => {
                                     setDateServiceProvided(newValue);
+                                    if(isServiceNextDay){
+                                        const nextDay = new Date(newValue);
+                                        nextDay.setDate(nextDay.getDate() + 1);
+                                        setDateServiceCompleted(nextDay);
+                                    }
+                                    else{
+                                        setDateServiceCompleted(newValue);
+                                    }
+
+                                    calculateInterpreterService(arrivalTime, startTime, endTime, timeIsNull, interpreterLenguageId, isServiceNextDay, newValue);
                                 }}
                                 slotProps={{
                                     textField: {
@@ -983,7 +1062,9 @@ export const NewServicePage = () => {
                             setArrivalTime('');
                             setStartTime('');
                             setEndTime('');
-                            calculateInterpreterService('', '', '', e.target.checked, interpreterLenguageId);
+                            setIsServiceNextDay(false);
+                            setDateServiceCompleted(dateServiceProvided);
+                            calculateInterpreterService('', '', '', e.target.checked, interpreterLenguageId, false, dateServiceProvided);
                         }} />
                     </FormControl>
                     <FormControl sx={{ width: lgDown ? '100%' : '15%' }}>
@@ -993,7 +1074,11 @@ export const NewServicePage = () => {
                                 value={arrivalTime}
                                 onChange={(newValue) => {
                                     setArrivalTime(newValue);
-                                    calculateInterpreterService(newValue, startTime, endTime, timeIsNull, interpreterLenguageId);
+                                    if(isServiceNextDay){
+                                        setIsServiceNextDay(false);
+                                        setDateServiceCompleted(dateServiceProvided);
+                                    }
+                                    calculateInterpreterService(newValue, startTime, endTime, timeIsNull, interpreterLenguageId, false, dateServiceProvided);
                                 }}
                                 slotProps={{
                                     textField: {
@@ -1012,7 +1097,11 @@ export const NewServicePage = () => {
                                 value={startTime}
                                 onChange={(newValue) => {
                                     setStartTime(newValue);
-                                    calculateInterpreterService(arrivalTime, newValue, endTime, timeIsNull, interpreterLenguageId);
+                                    if(isServiceNextDay){
+                                        setIsServiceNextDay(false);
+                                        setDateServiceCompleted(dateServiceProvided);
+                                    }
+                                    calculateInterpreterService(arrivalTime, newValue, endTime, timeIsNull, interpreterLenguageId, false, dateServiceProvided);
                                 }}
                                 slotProps={{
                                     textField: {
@@ -1031,7 +1120,11 @@ export const NewServicePage = () => {
                                 value={endTime}
                                 onChange={(newValue) => {
                                     setEndTime(newValue);
-                                    calculateInterpreterService(arrivalTime, startTime, newValue, timeIsNull, interpreterLenguageId);
+                                    if(isServiceNextDay){
+                                        setIsServiceNextDay(false);
+                                        setDateServiceCompleted(dateServiceProvided);
+                                    }
+                                    calculateInterpreterService(arrivalTime, startTime, newValue, timeIsNull, interpreterLenguageId, false, dateServiceProvided);
                                 }}
                                 slotProps={{
                                     textField: {
@@ -1136,6 +1229,14 @@ export const NewServicePage = () => {
                                                     lenguages.find((item) => item.id === interpreterLenguageId).price_per_hour
                                                 } per hour for two (2) hours minium
                                             </Typography>
+
+                                            {
+                                                isServiceNextDay ?
+                                                    <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                                                        (Service until the next day)
+                                                    </Typography>
+                                                    : null
+                                            }
                                         </Grid>
                                         <Grid item xs={10} md={1}>
                                             <Typography variant="subtitle2" sx={{ color: 'text.secondary', textDecoration: 'underline' }}>
@@ -1158,6 +1259,31 @@ export const NewServicePage = () => {
                         )
                         : null
                 }
+
+            {/* Dialog - is a service until the next day */}
+
+            <Dialog
+                open={openNextDayAlert}
+                TransitionComponent={Transition}
+                keepMounted
+                onClose={ () => setOpenNextDayAlert(false) }
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">
+                    {"Service until the next day"}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Is this a service that ends the following day?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={ () => setOpenNextDayAlert(false) }> No </Button>
+                    <Button onClick={ handleSetServiceNextDay } autoFocus> Yes </Button>
+                </DialogActions>
+            </Dialog>
+
             </Container>
         );
     }
@@ -1278,6 +1404,13 @@ export const NewServicePage = () => {
                         lgDown ? <br /> : null
                     }
                     <u>${(totalService.toFixed(2))}</u>
+                    {
+                        isServiceNextDay ?
+                            <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+                                (Service until the next day)
+                            </Typography>
+                            : null
+                    }
                 </Typography>
                 <Typography variant="subtitle1" sx={{ marginY: 2, textAlign: 'center' }}>
                     Total Amount Due: 

@@ -759,6 +759,7 @@ export const RequestPage = () => {
                         aria-describedby="alert-dialog-slide-description"
                         fullWidth
                         maxWidth='md'
+                        fullScreen={lgDown}
                     >
                         <DialogTitle id="alert-dialog-title">
                             {"Services provided"}

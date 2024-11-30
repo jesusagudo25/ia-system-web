@@ -51,6 +51,8 @@ import config from '../config.json';
 // Sections - Se debe reempazar el nombre del componente por uno mas general
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 
+import useResponsive from '../hooks/useResponsive';
+
 const TABLE_HEAD = [
   { id: 'full_name', label: 'Name', alignRight: false },
   { id: 'email', label: 'Email', alignRight: false },
@@ -196,6 +198,8 @@ export const UserPage = () => {
       });
     }
   };
+
+  const lgDown = useResponsive('down', 'lg');
 
   /* User */
 
@@ -569,16 +573,13 @@ export const UserPage = () => {
         aria-labelledby="customized-dialog-title"
         open={open}
         maxWidth='sm'
+        fullScreen={lgDown}
       >
         <BootstrapDialogTitle id="customized-dialog-title" onClose={handleCloseDialog}>
           Manage User
         </BootstrapDialogTitle>
         <DialogContent dividers>
-          <Stack spacing={3} sx={
-            {
-              minWidth: 550,
-            }
-          }>
+        <Stack spacing={3} sx={{ minWidth: lgDown ? '' : 550 }}>
             {
               showCreate ?
                 (

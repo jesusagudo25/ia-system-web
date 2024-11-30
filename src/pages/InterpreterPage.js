@@ -48,6 +48,8 @@ import Scrollbar from '../components/scrollbar';
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import config from '../config.json';
 
+import useResponsive from '../hooks/useResponsive';
+
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
@@ -224,6 +226,8 @@ export const InterpreterPage = () => {
   const { control, handleSubmit, reset, setValue, getValues, formState: { errors }, } = useForm({
     reValidateMode: 'onBlur'
   });
+
+  const lgDown = useResponsive('down', 'lg');
 
   /* Description */
 
@@ -585,12 +589,13 @@ export const InterpreterPage = () => {
         aria-labelledby="customized-dialog-title"
         open={open}
         maxWidth='sm'
+        fullScreen={lgDown}
       >
         <BootstrapDialogTitle id="customized-dialog-title" onClose={handleCloseDialog}>
           Manage Interpreter
         </BootstrapDialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2} sx={{ minWidth: 550 }}>
+          <Stack spacing={2} sx={{ minWidth: lgDown ? '' : 550 }}>
 
             <FormControl sx={{ width: '100%' }}>
               <Controller
