@@ -393,8 +393,20 @@ export const CAndRWizardPage = () => {
                         defaultValue="Cancel"
                         name="radio-buttons-group"
                     >
-                        <FormControlLabel value="Cancel" checked={actionRequest === 'Cancel'} onChange={(e) => setActionRequest(e.target.value)} control={<Radio />} label="Cancel" />
-                        <FormControlLabel value="Regenerate" checked={actionRequest === 'Regenerate'} onChange={(e) => setActionRequest(e.target.value)} control={<Radio />} label="Regenerate" />
+                        <FormControlLabel 
+                            value="Cancel" 
+                            checked={actionRequest === 'Cancel'} 
+                            onChange={(e) => setActionRequest(e.target.value)} 
+                            control={<Radio />} 
+                            label="Cancel" 
+                        />
+                        <FormControlLabel 
+                            value="Regenerate" 
+                            checked={actionRequest === 'Regenerate'}
+                            onChange={(e) => setActionRequest(e.target.value)} 
+                            control={<Radio />} 
+                            label="Regenerate" 
+                        />
                     </RadioGroup>
                 </FormControl>
 

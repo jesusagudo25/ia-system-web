@@ -33,6 +33,9 @@ import {
   Slide,
   Box,
   FormControl,
+  RadioGroup,
+  FormControlLabel,
+  Radio
 } from '@mui/material';
 
 // components
@@ -97,6 +100,12 @@ const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={r
 export const ReportPage = () => {
 
   const lgDown = useResponsive('down', 'lg');
+
+  /* Date range */
+
+  const [startDate, setStartDate] = useState(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
+  const [endDate, setEndDate] = useState(new Date(`${format(new Date(), 'yyyy-MM-31')}T00:00:00`));
+  const [typeOfPerson, setTypeOfPerson] = useState('All');
 
   /* Reports */
 
@@ -184,31 +193,6 @@ export const ReportPage = () => {
 
   }; */
 
-  /* const handleClickDelete = (id) => {
-    setOpenDelete(true);
-    setCurrentId(id);
-  }; */
-
-  /*   const handleDeleteReport = async () => {
-      setIsLoading(true);
-      setOpenDelete(false);
-      try {
-        const response = await axios.delete(`${config.APPBACK_URL}/api/reports/${currentId}`);
-        toast.success('Report deleted successfully');
-        getReports();
-        setIsLoading(false);
-      } catch (error) {
-        console.log(error);
-        toast.error('Error deleting report');
-        setIsLoading(false);
-      }
-    }; */
-
-  /*   const handleClose = () => {
-      setOpenDelete(false);
-      setCurrentId(null);
-    }; */
-
   const getReports = async () => {
 
     setIsLoading(true);
@@ -250,63 +234,6 @@ export const ReportPage = () => {
             Reports
           </Link>
         </Breadcrumbs>
-        {/*
-        <Typography variant="h4" sx={{ mb: 5, mt: 3 }}>
-          Generate
-        </Typography>
-
-         <Card>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingLeft: 3, paddingTop: 3, paddingBottom: 2 }}>
-            <Typography variant="subtitle1">
-              Date range
-            </Typography>
-          </Stack>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingX: 3, paddingBottom: 3, flexWrap: 'wrap', gap: 2, flexDirection: lgDown ? 'column' : 'row' }}>
-            <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Start date"
-                  value={startDate}
-                  onChange={(newValue) => {
-                    setStartDate(newValue);
-                  }}
-                  format='MM/dd/yyyy'
-                />
-              </LocalizationProvider>
-            </FormControl>
-            <Avatar
-              sx={{
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
-              }}
-            >
-              <Iconify icon="bx:bxs-calendar" />
-            </Avatar>
-
-            <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="End date"
-                  value={endDate}
-                  onChange={(newValue) => {
-                    setEndDate(newValue);
-                  }}
-                  format='MM/dd/yyyy'
-                />
-              </LocalizationProvider>
-            </FormControl>
-            <LoadingButton variant="contained" color="primary" size="large" loading={isLoading}
-              sx={{ ml: 1, width: lgDown ? '100%' : '15%' }}
-              onClick={
-                () => {
-                  setIsLoading(true);
-                  handleGenerateReport();
-                }
-              }>
-              Generate
-            </LoadingButton>
-          </Stack>
-        </Card> */}
 
         <Typography variant="h4" sx={{ my: 5 }}>
           Reports
@@ -448,21 +375,87 @@ export const ReportPage = () => {
             keepMounted
             aria-describedby="alert-dialog-slide-description"
             fullWidth
-            maxWidth='sm'
+            maxWidth='md'
+            fullScreen={lgDown}
           >
+            <DialogTitle id="alert-dialog-title">
+              {report.title}
+            </DialogTitle>
             <DialogContent dividers>
 
-              <Stack
-                direction="column"
-                sx={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  width: '100%',
-                }}
-              >
+              <Card>
+                <Stack
+                  direction="column"
+                  sx={{
 
-              </Stack>
+                    width: '100%',
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingLeft: 3, paddingTop: 3, paddingBottom: 2 }}>
+                    <Typography variant="subtitle1">
+                      Date range
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingX: 3, paddingBottom: 3, flexWrap: 'wrap', gap: 2, flexDirection: lgDown ? 'column' : 'row' }}>
+                    <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
+                      <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <DatePicker
+                          label="Start date"
+                          value={startDate}
+                          views={JSON.parse(report.filters).date}
+                        />
+                      </LocalizationProvider>
+                    </FormControl>
+                    <Avatar
+                      sx={{
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                      }}
+                    >
+                      <Iconify icon="bx:bxs-calendar" />
+                    </Avatar>
 
+                    <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
+                      <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <DatePicker
+                          label="End date"
+                          value={endDate}
+                          views={JSON.parse(report.filters).date}
+                        />
+                      </LocalizationProvider>
+                    </FormControl>
+
+                  </Stack>
+
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingLeft: 3, paddingBottom: 2 }}>
+                    <Typography variant="subtitle1">
+                      Type of person
+                    </Typography>
+                  </Stack>
+
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingX: 3, paddingBottom: 3, flexWrap: 'wrap', gap: 2, flexDirection: lgDown ? 'column' : 'row' }}>
+                    <FormControl>
+                      <RadioGroup
+                        aria-labelledby="action-request-label"
+                        defaultValue="Cancel"
+                        name="radio-buttons-group"
+                      >
+                        {JSON.parse(report.filters).type_of_person.map((item, index) => (
+                          <FormControlLabel
+                            key={index}
+                            value={item}
+                            control={<Radio />}
+                            label={item}
+                            checked={typeOfPerson === item}
+                            onChange={() => setTypeOfPerson(item)}
+                          />
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                  </Stack>
+
+                </Stack>
+              </Card>
             </DialogContent>
             <DialogActions
               sx={{

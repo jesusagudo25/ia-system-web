@@ -89,7 +89,7 @@ export default function ReviewListToolbar({
 
             {numSelected > 0 ? (
                 <Tooltip
-                    title="Select all"
+                    title="Generate request"
                     onClick={() => {
                         setIsLoading(true);
                         setOpen(false);
