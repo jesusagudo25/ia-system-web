@@ -53,10 +53,9 @@ import config from '../config.json';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'user', label: 'User', alignRight: false },
-  { id: 'type', label: 'Type', alignRight: false },
-  { id: 'start_date', label: 'Start date', alignRight: false },
-  { id: 'end_date', label: 'End date', alignRight: false },
+  { id: 'title', label: 'Title', alignRight: false },
+  { id: 'description', label: 'Description', alignRight: false },
+  { id: 'create', label: 'Date of creation', alignRight: false },
   { id: '' },
 ];
 // ----------------------------------------------------------------------
@@ -91,17 +90,13 @@ function applySortFilter(array, comparator, query) {
   return stabilizedThis.map((el) => el[0]);
 }
 
-// ----------------------------------------------------------------------
-
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
+
+// ----------------------------------------------------------------------
 
 export const ReportPage = () => {
 
   const lgDown = useResponsive('down', 'lg');
-
-  /* Report */
-  const [startDate, setStartDate] = useState(new Date(`${format(new Date(), 'yyyy-01-01')}T00:00:00`));
-  const [endDate, setEndDate] = useState(new Date(`${format(new Date(), 'yyyy-12-31')}T00:00:00`));
 
   /* Reports */
 
@@ -121,11 +116,7 @@ export const ReportPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const [openDelete, setOpenDelete] = useState(false);
-
   const [openReport, setOpenReport] = useState(false);
-
-  const [currentId, setCurrentId] = useState(null);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -149,11 +140,9 @@ export const ReportPage = () => {
 
   /* -------------------------- */
 
-  const handleGenerateReport = async () => {
+  /* const handleGenerateReport = async () => {
 
     setIsLoading(true);
-
-    /* Get differenceInDays */
 
     const difference = differenceInDays(endDate, startDate);
     let type = 'a';
@@ -193,35 +182,35 @@ export const ReportPage = () => {
     }
 
 
-  };
+  }; */
 
-  const handleClickDelete = (id) => {
+  /* const handleClickDelete = (id) => {
     setOpenDelete(true);
     setCurrentId(id);
-  };
+  }; */
 
-  const handleDeleteReport = async () => {
-    setIsLoading(true);
-    setOpenDelete(false);
-    try {
-      const response = await axios.delete(`${config.APPBACK_URL}/api/reports/${currentId}`);
-      toast.success('Report deleted successfully');
-      getReports();
-      setIsLoading(false);
-    } catch (error) {
-      console.log(error);
-      toast.error('Error deleting report');
-      setIsLoading(false);
-    }
-  };
+  /*   const handleDeleteReport = async () => {
+      setIsLoading(true);
+      setOpenDelete(false);
+      try {
+        const response = await axios.delete(`${config.APPBACK_URL}/api/reports/${currentId}`);
+        toast.success('Report deleted successfully');
+        getReports();
+        setIsLoading(false);
+      } catch (error) {
+        console.log(error);
+        toast.error('Error deleting report');
+        setIsLoading(false);
+      }
+    }; */
 
-  const handleClose = () => {
-    setOpenDelete(false);
-    setCurrentId(null);
-  };
+  /*   const handleClose = () => {
+      setOpenDelete(false);
+      setCurrentId(null);
+    }; */
 
   const getReports = async () => {
-    
+
     setIsLoading(true);
     try {
       const response = await axios.get(`${config.APPBACK_URL}/api/reports`);
@@ -261,30 +250,30 @@ export const ReportPage = () => {
             Reports
           </Link>
         </Breadcrumbs>
-
+        {/*
         <Typography variant="h4" sx={{ mb: 5, mt: 3 }}>
           Generate
         </Typography>
 
-        <Card>
+         <Card>
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingLeft: 3, paddingTop: 3, paddingBottom: 2 }}>
             <Typography variant="subtitle1">
               Date range
             </Typography>
           </Stack>
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingX: 3, paddingBottom: 3, flexWrap: 'wrap', gap: 2, flexDirection: lgDown ? 'column' : 'row' }}>
-          <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Start date"
-                value={startDate}
-                onChange={(newValue) => {
-                  setStartDate(newValue);
-                }}
-                format='MM/dd/yyyy'
-              />
-            </LocalizationProvider>
-          </FormControl>
+            <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Start date"
+                  value={startDate}
+                  onChange={(newValue) => {
+                    setStartDate(newValue);
+                  }}
+                  format='MM/dd/yyyy'
+                />
+              </LocalizationProvider>
+            </FormControl>
             <Avatar
               sx={{
                 bgcolor: 'primary.main',
@@ -295,29 +284,29 @@ export const ReportPage = () => {
             </Avatar>
 
             <FormControl sx={{ width: lgDown ? '100%' : '37%' }}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="End date"
-                value={endDate}
-                onChange={(newValue) => {
-                  setEndDate(newValue);
-                }}
-                format='MM/dd/yyyy'
-              />
-            </LocalizationProvider>
-          </FormControl>
-            <LoadingButton variant="contained" color="primary" size="large" loading={isLoading} 
-            sx={{ ml: 1, width: lgDown ? '100%' : '15%' }}
-            onClick={
-              () => {
-                setIsLoading(true);
-                handleGenerateReport();
-              }
-            }>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="End date"
+                  value={endDate}
+                  onChange={(newValue) => {
+                    setEndDate(newValue);
+                  }}
+                  format='MM/dd/yyyy'
+                />
+              </LocalizationProvider>
+            </FormControl>
+            <LoadingButton variant="contained" color="primary" size="large" loading={isLoading}
+              sx={{ ml: 1, width: lgDown ? '100%' : '15%' }}
+              onClick={
+                () => {
+                  setIsLoading(true);
+                  handleGenerateReport();
+                }
+              }>
               Generate
             </LoadingButton>
           </Stack>
-        </Card>
+        </Card> */}
 
         <Typography variant="h4" sx={{ my: 5 }}>
           Reports
@@ -340,40 +329,41 @@ export const ReportPage = () => {
                 {reports.length > 0 ? (
                   <TableBody>
                     {filteredReports.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                      const { id, type, start_date: startDate, end_date: endDate, user } = row;
+                      const { id, title, description, created_at: create, filters } = row;
 
                       return (
                         <TableRow hover key={id} tabIndex={-1} role="checkbox">
 
-                          <TableCell align="left">{user.full_name}</TableCell>
                           <TableCell component="th" scope="row" padding="normal">
                             <Stack direction="row" alignItems="center" spacing={2}>
                               <Typography variant="subtitle2" noWrap>
-                                {type === 'm' ? 'Month' : 'Annual'}
+                                {title}
                               </Typography>
                             </Stack>
                           </TableCell>
 
-                          <TableCell align="left">{format(parseISO(`${startDate.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}</TableCell>
+                          <TableCell component="th" scope="row" padding="normal">
+                            <Stack direction="row" alignItems="center" spacing={2}>
+                              {description}
+                            </Stack>
+                          </TableCell>
 
-                          <TableCell align="left">{format(parseISO(`${endDate.split('T')[0]}T00:00:00`), 'MM/dd/yyyy')}</TableCell>
+                          <TableCell align="left">
+                            {format(parseISO(create), 'dd/MM/yyyy')}
+                          </TableCell>
+
                           <TableCell align="right">
-                          <Stack direction="row" spacing={2}>
-                            <a
-                              style={{ textDecoration: 'none', color: 'inherit' }}
-                              target="_blank"
-                              href={`${config.APPBACK_URL}/api/reports/${id}/download`}
-                              rel="noreferrer"
-                            >
-                              <IconButton size="large" color="inherit">
-                                <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>
+                            <Stack direction="row" spacing={2}>
+                              <IconButton size="large" color="primary"
+                                onClick={() => {
+                                  setOpenReport(true);
+                                  setReport(row);
+                                }}
+                              >
+                                <Iconify icon="bx:bxs-show" />
+                                <Typography variant="caption">View</Typography>
                               </IconButton>
-                            </a>
-
-                            <IconButton size="large" color="error" onClick={() => handleClickDelete(id)}>
-                              <Iconify icon="bx:bxs-trash" /> <Typography variant="caption">Delete</Typography>
-                            </IconButton>
-                          </Stack>
+                            </Stack>
                           </TableCell>
                         </TableRow>
                       );
@@ -451,7 +441,7 @@ export const ReportPage = () => {
 
       {/* Dialog - Report result */}
       {
-        report ? (
+        report && Object.keys(report).length > 0 && (
           <Dialog
             open={openReport}
             TransitionComponent={Transition}
@@ -470,60 +460,6 @@ export const ReportPage = () => {
                   width: '100%',
                 }}
               >
-                <Box sx={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                  <Iconify icon="mdi:check-circle" color="#4caf50" width="130px" height="130px" />
-                </Box>
-
-                <Stack
-                  direction="row"
-                  sx={{
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    width: '100%',
-                    gap: 1,
-                    marginTop: 1,
-                  }}
-                >
-                  {/* Details */}
-                  <Typography variant="subtitle1" sx={{ fontWeight: '600' }}>Report type:</Typography>
-
-                  <Typography variant="subtitle1" sx={{ fontWeight: '600' }}>{report.type === 'm' ? 'Month' : 'Annual'}</Typography>
-
-                </Stack>
-
-                <Typography variant="h4" sx={{
-                  fontWeight: '600',
-                  marginTop: 2,
-                }}>Report generated successfully</Typography>
-
-                <Typography variant="h6" sx={{
-                  marginY: 2,
-                  fontWeight: '400'
-                }}>You can download the report in PDF format</Typography>
-
-                <a
-                  href={`${config.APPBACK_URL}/api/reports/${report.id}/download/`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
-                  style={{ textDecoration: 'none' }}
-                >
-                  <Button variant="contained"
-                    size='large'
-                    sx={{
-                      width: '100%',
-                    }}
-                    color="error"
-                    startIcon={<Iconify icon="mdi:file-pdf" />}
-                  >
-                    Download
-                  </Button>
-                </a>
 
               </Stack>
 
@@ -542,36 +478,30 @@ export const ReportPage = () => {
                 }}
                 onClick={() => {
                   setOpenReport(false);
+                  setReport({});
                 }}
-              >Close</Button>
+              >
+                Close
+              </Button>
+
+              <Button
+                variant="contained"
+                size='large'
+                sx={{
+                  margin: 2,
+                }}
+                onClick={() => {
+                  setOpenReport(false);
+                  setReport({});
+                }}
+              >
+                Generate
+              </Button>
+
             </DialogActions>
           </Dialog>
-        ) : null
+        )
       }
-
-      {/* Dialog - delete */}
-
-      <Dialog
-        open={openDelete}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {"Confirm action"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you sure you want to delete?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Disagree</Button>
-          <Button onClick={handleDeleteReport} autoFocus>
-            Agree
-          </Button>
-        </DialogActions>
-      </Dialog>
 
 
       {/* Toastify */}

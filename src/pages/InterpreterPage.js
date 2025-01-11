@@ -273,31 +273,7 @@ export const InterpreterPage = () => {
     setFilterName(event.target.value);
   };
 
-  const getInterpreters = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get(`${config.APPBACK_URL}/api/interpreters`);
-      setInterpreters(response.data.map((interpreter) => ({ 
-        ...interpreter,
-        lenguage: interpreter.lenguage.name,
-      })));
-      setIsLoading(false);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  /* --------------------------- */
-  const handleCreateDialog = (event) => {
-    setOpen(true);
-    setId('');
-    reset();
-  };
-
-  const handleCloseDialog = () => {
-    setOpen(false);
-    reset();
-  };
+  // ----------------------------->
 
   const handleSubmitDialog = async (event) => {
     /*     event.preventDefault(); */
@@ -315,6 +291,33 @@ export const InterpreterPage = () => {
     reset();
     handleCloseDialog();
     getInterpreters();
+  };
+
+  const handleCreateDialog = (event) => {
+    setOpen(true);
+    setId('');
+    reset();
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    reset();
+  };
+
+  // ----------------------------->
+
+  const getInterpreters = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${config.APPBACK_URL}/api/interpreters`);
+      setInterpreters(response.data.map((interpreter) => ({ 
+        ...interpreter,
+        lenguage: interpreter.lenguage.name,
+      })));
+      setIsLoading(false);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const getStates = () => {
@@ -360,6 +363,7 @@ export const InterpreterPage = () => {
   }
 
   useEffect(() => {
+    setIsLoading(true);
     getInterpreters();
     getLenguages();
     getStates();

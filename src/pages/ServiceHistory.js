@@ -33,6 +33,7 @@ import {
 } from '@mui/material';
 // components
 import CloseIcon from '@mui/icons-material/Close';
+import { differenceInDays, format, parseISO } from 'date-fns';
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 
 // date-fns
@@ -303,7 +304,7 @@ export const ServiceHistory = () => {
                                                     </TableCell>
 
                                                     <TableCell align="left">
-                                                        {date}
+                                                        {format(new Date(`${date}T00:00:00`), 'MM/dd/yyyy')}
                                                     </TableCell>
 
                                                     <TableCell align="left">
