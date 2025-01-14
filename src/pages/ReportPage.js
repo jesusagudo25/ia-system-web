@@ -27,7 +27,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogContentText,
   DialogActions,
   Button,
   Slide,
@@ -35,7 +34,11 @@ import {
   FormControl,
   RadioGroup,
   FormControlLabel,
-  Radio
+  Radio,
+  TextField,
+  Select,
+  MenuItem,
+  InputLabel,
 } from '@mui/material';
 
 // components
@@ -43,7 +46,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 // date-fns
-import { differenceInDays, format, parseISO } from 'date-fns';
+import { differenceInDays, format, parseISO, lastDayOfMonth, lastDayOfYear } from 'date-fns';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 
@@ -104,14 +107,20 @@ export const ReportPage = () => {
   /* Date range */
 
   const [startDate, setStartDate] = useState(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
-  const [endDate, setEndDate] = useState(new Date(`${format(new Date(), 'yyyy-MM-31')}T00:00:00`));
+  const [endDate, setEndDate] = useState(new Date(`${format(lastDayOfMonth(new Date()), 'yyyy-MM-dd')}T00:00:00`));
   const [typeOfPerson, setTypeOfPerson] = useState('All');
 
   /* Reports */
 
   const [reports, setReports] = useState([]);
 
+  const [languages, setLanguages] = useState([]);
+
+  const [language, setLanguage] = useState('');
+
   const [report, setReport] = useState({});
+
+  const [file, setFile] = useState({});
 
   const [page, setPage] = useState(0);
 
@@ -126,6 +135,8 @@ export const ReportPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [openReport, setOpenReport] = useState(false);
+
+  const [openFile, setOpenFile] = useState(false);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -149,49 +160,40 @@ export const ReportPage = () => {
 
   /* -------------------------- */
 
-  /* const handleGenerateReport = async () => {
+  const handleGenerateReport = async () => {
 
     setIsLoading(true);
 
-    const difference = differenceInDays(endDate, startDate);
-    let type = 'a';
+    if (differenceInDays(endDate, startDate) < 0) {
+      toast.error('The start date must be less than the end date');
+      setIsLoading(false);
+      return;
+    }
 
-    if (difference >= 300 && difference <= 364) {
-      type = 'm';
-    }
-    else if (difference > 364) {
-      type = 'a';
-    }
-    else {
+    try {
+      const response = await axios.post(`${config.APPBACK_URL}/api/reports`, {
+        start_date: format(startDate, 'yyyy-MM-dd'),
+        end_date: format(endDate, 'yyyy-MM-dd'),
+        type_of_person: typeOfPerson,
+        language_id: language,
+        report_id: report.id,
+        user_id: localStorage.getItem('id'),
+      });
+      setOpenFile(true);
+      setFile(response.data);
+      toast.success('Report generated successfully');
+      setStartDate(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
+      setEndDate(new Date(`${format(lastDayOfMonth(new Date()), 'yyyy-MM-dd')}T00:00:00`));
+      setTypeOfPerson('All');
+      setLanguage('');
+      setOpenReport(false);
+      setIsLoading(false);
+    } catch (error) {
+      console.log(error);
       toast.error('Error generating report');
       setIsLoading(false);
-      type = null;
-    };
-
-    if (type) {
-      try {
-        const response = await axios.post(`${config.APPBACK_URL}/api/reports`, {
-          start_date: format(startDate, 'yyyy-MM-dd'),
-          end_date: format(endDate, 'yyyy-MM-dd'),
-          type,
-          user_id: localStorage.getItem('id'),
-        });
-        setOpenReport(true)
-        setReport(response.data);
-        toast.success('Report generated successfully');
-        setStartDate(new Date(`${format(new Date(), 'yyyy-01-01')}T00:00:00`));
-        setEndDate(new Date(`${format(new Date(), 'yyyy-12-31')}T00:00:00`));
-        getReports();
-        setIsLoading(false);
-      } catch (error) {
-        console.log(error);
-        toast.error('Error generating report');
-        setIsLoading(false);
-      }
     }
-
-
-  }; */
+  };
 
   const getReports = async () => {
 
@@ -206,8 +208,25 @@ export const ReportPage = () => {
     }
   };
 
+  const getLenguages = () => {
+    setIsLoading(true);
+    axios.get('/api/lenguages/status')
+      .then((response) => {
+        setLanguages(response.data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.log(error);
+        toast.error('Error to get lenguages', {
+          position: toast.POSITION.TOP_RIGHT
+        });
+      }
+      );
+  }
+
   useEffect(() => {
     getReports();
+    getLenguages();
   }, []);
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - reports.length) : 0;
@@ -403,6 +422,15 @@ export const ReportPage = () => {
                           label="Start date"
                           value={startDate}
                           views={JSON.parse(report.filters).date}
+                          onChange={(newValue) => {
+                            //Tomar en cuenta el views, si es month, year: llevarlo al primer dia del mes. Si es year, llevarlo al primer dia del año
+                            if (JSON.parse(report.filters).date[0] === 'year') {
+                              setStartDate(new Date(`${format(newValue, 'yyyy-01-01')}T00:00:00`));
+                            } else {
+                              setStartDate(new Date(`${format(newValue, 'yyyy-MM-01')}T00:00:00`));
+                            }
+                          }}
+
                         />
                       </LocalizationProvider>
                     </FormControl>
@@ -421,6 +449,16 @@ export const ReportPage = () => {
                           label="End date"
                           value={endDate}
                           views={JSON.parse(report.filters).date}
+                          onChange={(newValue) => {
+                            //Tomar en cuenta el views, si es month, year: llevarlo al primer dia del mes. Si es year, llevarlo al primer dia del año
+                            if (JSON.parse(report.filters).date[0] === 'year') {
+                              // Obtén el último día del año seleccionado
+                              setEndDate(new Date(`${format(lastDayOfYear(newValue), 'yyyy-MM-dd')}T00:00:00`));
+                            } else {
+                              // Obtén el último día del mes seleccionado
+                              setEndDate(new Date(`${format(lastDayOfMonth(newValue), 'yyyy-MM-dd')}T00:00:00`));
+                            }
+                          }}
                         />
                       </LocalizationProvider>
                     </FormControl>
@@ -454,6 +492,75 @@ export const ReportPage = () => {
                     </FormControl>
                   </Stack>
 
+                  {
+                    ['All', 'Interpreter'].includes(typeOfPerson) && (
+                      <>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingLeft: 3, paddingBottom: 2 }}>
+                          <Typography variant="subtitle1">
+                            Interpreter
+                          </Typography>
+                        </Stack>
+
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ paddingX: 3, paddingBottom: 3, flexWrap: 'wrap', gap: 2, flexDirection: lgDown ? 'column' : 'row' }}>
+                          {
+                            JSON.parse(report.filters).interpreter.map((item, index) => (
+                              <>
+                                {
+                                  item === 'Language' ? (
+                                    <FormControl
+                                      sx={{ width: lgDown ? '100%' : '40%' }}
+                                    >
+                                      <InputLabel id="language-select-label"
+                                        sx={{ width: 400 }}
+                                      >Language</InputLabel>
+                                      <Select
+                                        labelId="language-select-label"
+                                        id="language-select"
+                                        value={language}
+                                        label="Language"
+                                        onChange={(event) => setLanguage(event.target.value)}
+                                      >
+                                        {
+                                          languages.map((item, index) => (
+                                            <MenuItem key={index} value={item.id}>{item.name}</MenuItem>
+                                          ))
+                                        }
+                                      </Select>
+                                    </FormControl>
+                                  ) : (
+                                    <FormControl
+                                      sx={{ width: lgDown ? '100%' : '40%' }}
+                                    >
+                                      <TextField
+                                        id={item}
+                                        label={item}
+                                        variant="outlined"
+                                        placeholder={`Enter the ${item} of the interpreter`}
+                                      />
+                                    </FormControl>
+                                  )
+                                }
+
+
+                                {(index !== JSON.parse(report.filters).interpreter.length - 1) && (
+                                  <Avatar
+                                    sx={{
+                                      bgcolor: 'primary.main',
+                                      color: 'primary.contrastText',
+                                      width: 40,
+                                    }}
+                                  >
+                                    <span>OR</span>
+                                  </Avatar>
+                                )}
+                              </>
+                            ))
+                          }
+                        </Stack>
+                      </>
+                    )
+                  }
+
                 </Stack>
               </Card>
             </DialogContent>
@@ -472,6 +579,10 @@ export const ReportPage = () => {
                 onClick={() => {
                   setOpenReport(false);
                   setReport({});
+                  setTypeOfPerson('All');
+                  setLanguage('');
+                  setStartDate(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
+                  setEndDate(new Date(`${format(lastDayOfMonth(new Date()), 'yyyy-MM-dd')}T00:00:00`));
                 }}
               >
                 Close
@@ -483,14 +594,100 @@ export const ReportPage = () => {
                 sx={{
                   margin: 2,
                 }}
-                onClick={() => {
-                  setOpenReport(false);
-                  setReport({});
-                }}
+                onClick={handleGenerateReport}
               >
                 Generate
               </Button>
 
+            </DialogActions>
+          </Dialog>
+        )
+      }
+
+      {/* Dialog - File result */}
+      {
+        file && Object.keys(file).length > 0 && (
+          <Dialog
+            open={openFile}
+            TransitionComponent={Transition}
+            keepMounted
+            aria-describedby="alert-dialog-slide-description"
+            fullWidth
+            maxWidth='sm'
+            fullScreen={lgDown}
+          >
+            <DialogTitle id="alert-dialog-title">
+              {report.title}
+            </DialogTitle>
+            <DialogContent dividers>
+              <Stack
+                direction="column"
+                sx={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
+                <Box sx={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                  <Iconify icon="mdi:check-circle" color="#4caf50" width="130px" height="130px" />
+                </Box>
+
+                <Typography variant="h4" sx={{
+                  fontWeight: '600',
+                  marginTop: 2,
+                }}>Report generated successfully</Typography>
+
+                <Typography variant="h6" sx={{
+                  marginY: 2,
+                  fontWeight: '400'
+                }}>You can download the report in PDF format</Typography>
+
+                <a
+                  href={`${config.APPBACK_URL}/api/reports/files/${file.name}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  style={{ textDecoration: 'none' }}
+                >
+                  <Button variant="contained"
+                    size='large'
+                    sx={{
+                      width: '100%',
+                    }}
+                    color="error"
+                    startIcon={<Iconify icon="mdi:file-pdf" />}
+                  >
+                    Download
+                  </Button>
+                </a>
+
+
+              </Stack>
+            </DialogContent>
+            <DialogActions
+              sx={{
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Button
+                variant="contained"
+                size='large'
+                sx={{
+                  margin: 2,
+                }}
+                onClick={() => {
+                  setOpenFile(false);
+                  setFile({});
+                }}
+              >
+                Close
+              </Button>
             </DialogActions>
           </Dialog>
         )
