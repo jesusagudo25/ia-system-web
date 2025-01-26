@@ -118,6 +118,8 @@ export const ReportPage = () => {
 
   const [language, setLanguage] = useState('');
 
+  const [nameOfInterpreter, setNameOfInterpreter] = useState('');
+
   const [report, setReport] = useState({});
 
   const [file, setFile] = useState({});
@@ -163,6 +165,7 @@ export const ReportPage = () => {
   const handleGenerateReport = async () => {
 
     setIsLoading(true);
+    setOpenReport(false);
 
     if (differenceInDays(endDate, startDate) < 0) {
       toast.error('The start date must be less than the end date');
@@ -170,14 +173,19 @@ export const ReportPage = () => {
       return;
     }
 
+    /* Set report if monthly recording... */
+
     try {
-      const response = await axios.post(`${config.APPBACK_URL}/api/reports`, {
-        start_date: format(startDate, 'yyyy-MM-dd'),
-        end_date: format(endDate, 'yyyy-MM-dd'),
-        type_of_person: typeOfPerson,
-        language_id: language,
+      const response = await axios.post(`${config.APPBACK_URL}/api/reports/generate`, {
         report_id: report.id,
         user_id: localStorage.getItem('id'),
+        filters: {
+          start_date: format(startDate, 'yyyy-MM-dd'),
+          end_date: format(endDate, 'yyyy-MM-dd'),
+          type_of_person: typeOfPerson,
+          name_of_interpreter: nameOfInterpreter,
+          language_id: language,
+        }
       });
       setOpenFile(true);
       setFile(response.data);
@@ -186,14 +194,24 @@ export const ReportPage = () => {
       setEndDate(new Date(`${format(lastDayOfMonth(new Date()), 'yyyy-MM-dd')}T00:00:00`));
       setTypeOfPerson('All');
       setLanguage('');
+      setNameOfInterpreter('');
       setOpenReport(false);
       setIsLoading(false);
     } catch (error) {
       console.log(error);
-      toast.error('Error generating report');
+      toast.error(`Error generating report: ${error.response.data.message}`);
       setIsLoading(false);
+      setOpenReport(false);
+      setStartDate(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
+      setEndDate(new Date(`${format(lastDayOfMonth(new Date()), 'yyyy-MM-dd')}T00:00:00`));
+      setTypeOfPerson('All');
+      setLanguage('');
+      setNameOfInterpreter('');
+      setOpenReport(false);
     }
   };
+
+  /* -------------------------- */
 
   const getReports = async () => {
 
@@ -423,7 +441,7 @@ export const ReportPage = () => {
                           value={startDate}
                           views={JSON.parse(report.filters).date}
                           onChange={(newValue) => {
-                            //Tomar en cuenta el views, si es month, year: llevarlo al primer dia del mes. Si es year, llevarlo al primer dia del año
+                            /* Tomar en cuenta el views, si es month, year: llevarlo al primer dia del mes. Si es year, llevarlo al primer dia del año */
                             if (JSON.parse(report.filters).date[0] === 'year') {
                               setStartDate(new Date(`${format(newValue, 'yyyy-01-01')}T00:00:00`));
                             } else {
@@ -450,12 +468,12 @@ export const ReportPage = () => {
                           value={endDate}
                           views={JSON.parse(report.filters).date}
                           onChange={(newValue) => {
-                            //Tomar en cuenta el views, si es month, year: llevarlo al primer dia del mes. Si es year, llevarlo al primer dia del año
+                            /* Tomar en cuenta el views, si es month, year: llevarlo al primer dia del mes. Si es year, llevarlo al primer dia del año */
                             if (JSON.parse(report.filters).date[0] === 'year') {
-                              // Obtén el último día del año seleccionado
+                              /* Obtén el último día del año seleccionado */
                               setEndDate(new Date(`${format(lastDayOfYear(newValue), 'yyyy-MM-dd')}T00:00:00`));
                             } else {
-                              // Obtén el último día del mes seleccionado
+                              /*  Obtén el último día del mes seleccionado */
                               setEndDate(new Date(`${format(lastDayOfMonth(newValue), 'yyyy-MM-dd')}T00:00:00`));
                             }
                           }}
@@ -535,6 +553,8 @@ export const ReportPage = () => {
                                         id={item}
                                         label={item}
                                         variant="outlined"
+                                        value={nameOfInterpreter}
+                                        onChange={(event) => setNameOfInterpreter(event.target.value)}
                                         placeholder={`Enter the ${item} of the interpreter`}
                                       />
                                     </FormControl>
@@ -580,6 +600,7 @@ export const ReportPage = () => {
                   setOpenReport(false);
                   setReport({});
                   setTypeOfPerson('All');
+                  setNameOfInterpreter('');
                   setLanguage('');
                   setStartDate(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
                   setEndDate(new Date(`${format(lastDayOfMonth(new Date()), 'yyyy-MM-dd')}T00:00:00`));
@@ -648,7 +669,7 @@ export const ReportPage = () => {
                 }}>You can download the report in PDF format</Typography>
 
                 <a
-                  href={`${config.APPBACK_URL}/api/reports/files/${file.name}`}
+                  href={`${file.file_path}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   download

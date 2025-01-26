@@ -932,7 +932,6 @@ export const RequestPage = () => {
             }
 
             {/* Dialog - delete */}
-
             <Dialog
                 open={openDelete}
                 onClose={handleClose}
