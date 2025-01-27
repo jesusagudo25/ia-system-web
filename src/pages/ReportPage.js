@@ -674,6 +674,10 @@ export const ReportPage = () => {
                   rel="noopener noreferrer"
                   download
                   style={{ textDecoration: 'none' }}
+                  onClick={() => {
+                    setOpenFile(false);
+                    setFile({});
+                  }}
                 >
                   <Button variant="contained"
                     size='large'
