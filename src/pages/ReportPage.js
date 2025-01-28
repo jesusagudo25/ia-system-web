@@ -173,6 +173,12 @@ export const ReportPage = () => {
       return;
     }
 
+    if (differenceInDays(endDate, startDate) === 0) {
+      toast.error('The start date must be less than the end date');
+      setIsLoading(false);
+      return;
+    }
+
     /* Set report if monthly recording... */
 
     try {
@@ -439,14 +445,8 @@ export const ReportPage = () => {
                         <DatePicker
                           label="Start date"
                           value={startDate}
-                          views={JSON.parse(report.filters).date}
                           onChange={(newValue) => {
-                            /* Tomar en cuenta el views, si es month, year: llevarlo al primer dia del mes. Si es year, llevarlo al primer dia del año */
-                            if (JSON.parse(report.filters).date[0] === 'year') {
-                              setStartDate(new Date(`${format(newValue, 'yyyy-01-01')}T00:00:00`));
-                            } else {
-                              setStartDate(new Date(`${format(newValue, 'yyyy-MM-01')}T00:00:00`));
-                            }
+                            setStartDate(new Date(`${format(newValue, 'yyyy-MM-dd')}T00:00:00`));
                           }}
 
                         />
@@ -466,16 +466,8 @@ export const ReportPage = () => {
                         <DatePicker
                           label="End date"
                           value={endDate}
-                          views={JSON.parse(report.filters).date}
                           onChange={(newValue) => {
-                            /* Tomar en cuenta el views, si es month, year: llevarlo al primer dia del mes. Si es year, llevarlo al primer dia del año */
-                            if (JSON.parse(report.filters).date[0] === 'year') {
-                              /* Obtén el último día del año seleccionado */
-                              setEndDate(new Date(`${format(lastDayOfYear(newValue), 'yyyy-MM-dd')}T00:00:00`));
-                            } else {
-                              /*  Obtén el último día del mes seleccionado */
-                              setEndDate(new Date(`${format(lastDayOfMonth(newValue), 'yyyy-MM-dd')}T00:00:00`));
-                            }
+                            setEndDate(new Date(`${format(newValue, 'yyyy-MM-dd')}T00:00:00`));
                           }}
                         />
                       </LocalizationProvider>
