@@ -407,6 +407,11 @@ export const LenguagePage = () => {
                           </TableCell>
 
                           <TableCell align="right">
+                            <IconButton size="large" color="primary" onClick={
+                              () => {}
+                            }>
+                              <Iconify icon={'mdi:currency-usd'} /><Typography variant="caption">Special Price</Typography>
+                            </IconButton>
                             <IconButton size="large" color="inherit" onClick={
                               () => {
                                 setId(id);
