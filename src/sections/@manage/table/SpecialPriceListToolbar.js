@@ -1,8 +1,10 @@
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 // @mui
 import { styled, alpha } from '@mui/material/styles';
 import { Toolbar, Tooltip, IconButton, Typography, OutlinedInput, InputAdornment, Button, Stack } from '@mui/material';
 // component
+import { SearchAgency } from '../agency/SearchAgency';
 import Iconify from '../../../components/iconify';
 
 // ----------------------------------------------------------------------
@@ -38,19 +40,30 @@ SpecialPriceListToolbar.propTypes = {
   onFilterName: PropTypes.func,
 };
 
-export default function SpecialPriceListToolbar({ filterName, onFilterName }) {
+export default function SpecialPriceListToolbar({ toast }) {
+  /* Agency */
+  const [agencyName, setAgencyName] = useState('');
+  const [agencyId, setAgencyId] = useState('');
+  const [errors, setErrors] = useState({});
+
+  /* Autocomplete agency */
+
+  const handleOnChangeAgency = (agency) => {
+    setAgencyId(agency.id);
+  };
+
   return (
     <StyledRoot>
-      <StyledSearch
-        value={filterName}
-        onChange={onFilterName}
-        placeholder="Search..."
-        startAdornment={
-          <InputAdornment position="start">
-            <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 20, height: 20 }} />
-          </InputAdornment>
-        }
-      />
+      <Stack direction="row" alignItems="center" justifyContent="space-between" width="30%">
+      <SearchAgency
+          handleOnChangeAgency={handleOnChangeAgency}
+          setAgencyName={setAgencyName}
+          agencyName={agencyName}
+          setAgencyId={setAgencyId}
+          errors={errors}
+          toast={toast}
+        />
+      </Stack>
 
       <Stack direction="row" alignItems="center" justifyContent="flex-end" my={2} mx={2}>
         <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>

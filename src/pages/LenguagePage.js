@@ -42,7 +42,6 @@ import Scrollbar from '../components/scrollbar';
 // date-fns
 
 // sections
-import { SearchAgency } from '../sections/@manage/agency/SearchAgency';
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import { SpecialPriceListToolbar } from '../sections/@manage/table';
 import config from '../config.json';
@@ -239,8 +238,6 @@ export const LenguagePage = () => {
 
   const [specialPrices, setSpecialPrices] = useState([]);
 
-  const [errors, setErrors] = useState({});
-
   const [openSpecialPrice, setOpenSpecialPrice] = useState(false);
 
   const [dataSpecialPrice, setDataSpecialPrice] = useState({});
@@ -257,17 +254,8 @@ export const LenguagePage = () => {
 
   const [isLoadingSpecialPrice, setIsLoadingSpecialPrice] = useState(false);
 
-  /* Agency */
-  const [agencyName, setAgencyName] = useState('');
-  const [agencyId, setAgencyId] = useState('');
 
   /* Datatable - Special Price */
-
-  /* Autocomplete agency */
-
-  const handleOnChangeAgency = (agency) => {
-    setAgencyId(agency.id);
-  };
 
   const handleRequestSortSpecialPrice = (event, property) => {
     const isAsc = orderBySpecialPrice === property && orderSpecialPrice === 'asc';
@@ -314,10 +302,12 @@ export const LenguagePage = () => {
   /* --------------------------- Special Price --------------------------- */
 
   const getSpecialPrices = async (languageId) => {
+    setIsLoadingSpecialPrice(true);
     try {
       const response = await axios.get(`${config.APPBACK_URL}/api/lenguages/special-price/${languageId}`);
       setSpecialPrices(response.data?.lenguage?.agenciesWithSpecialPrices);
       setIsLoadingSpecialPrice(false);
+      setOpenSpecialPrice(true);
     } catch (error) {
       console.log(error);
     }
@@ -529,7 +519,6 @@ export const LenguagePage = () => {
                               onClick={() => {
                                 setId(id);
                                 getSpecialPrices(id);
-                                setOpenSpecialPrice(true);
                               }}
                             >
                               <Iconify icon={'mdi:currency-usd'} />
@@ -753,7 +742,7 @@ export const LenguagePage = () => {
             <Card>
 
               
-              <SpecialPriceListToolbar filterDate={filterNameSpecialPrice} onFilterName={handleFilterByNameSpecialPrice} />
+              <SpecialPriceListToolbar toast={toast} />
 
               <Scrollbar>
                 <TableContainer sx={{ minWidth: 800 }}>
@@ -782,25 +771,10 @@ export const LenguagePage = () => {
                           return (
                             <TableRow hover key={id} tabIndex={-1} role="checkbox">
                               <TableCell component="th" scope="row" padding="normal">
-                                <Stack
-                                  direction="row"
-                                  alignItems="center"
-                                  spacing={2}
-                                  sx={{
-                                    width: '100%',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                  }}
-                                >
-                                    <SearchAgency
-                                      handleOnChangeAgency={handleOnChangeAgency}
-                                      setAgencyName={setAgencyName}
-                                      agencyName={agencyName}
-                                      setAgencyId={setAgencyId}
-                                      errors={errors}
-                                      toast={toast}
-                                    />
+                                <Stack direction="row" alignItems="center" spacing={2}>
+                                  <Typography variant="subtitle2" noWrap>
+                                    {name}
+                                  </Typography>
                                 </Stack>
                               </TableCell>
 
@@ -871,6 +845,10 @@ export const LenguagePage = () => {
       ) : null}
 
       <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={isLoading}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
+      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={isLoadingSpecialPrice}>
         <CircularProgress color="inherit" />
       </Backdrop>
     </>
