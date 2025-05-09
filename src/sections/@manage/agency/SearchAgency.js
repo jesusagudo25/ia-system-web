@@ -81,6 +81,18 @@ export const SearchAgency = ({ handleOnChangeAgency, setAgencyName, agencyName, 
                     helperText={errors.agency ? errors.agency : null}
                 />
             )}
+            fullWidth
+            sx={{
+                '& .MuiAutocomplete-input': {
+                    padding: '0px 14px',
+                },
+                '& .MuiAutocomplete-endAdornment': {
+                    display: 'none',
+                },
+                '& .MuiAutocomplete-popupIndicator': {
+                    display: 'none',
+                },
+            }}
         />
     )
 }

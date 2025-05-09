@@ -32,6 +32,7 @@ import {
   Link,
   Backdrop,
   CircularProgress,
+  Slide,
 } from '@mui/material';
 
 // components
@@ -41,7 +42,9 @@ import Scrollbar from '../components/scrollbar';
 // date-fns
 
 // sections
+import { SearchAgency } from '../sections/@manage/agency/SearchAgency';
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
+import { SpecialPriceListToolbar } from '../sections/@manage/table';
 import config from '../config.json';
 
 import useResponsive from '../hooks/useResponsive';
@@ -53,6 +56,13 @@ const TABLE_HEAD = [
   { id: 'price_per_hour', label: 'Price per hour', alignRight: false },
   { id: 'price_per_hour_interpreter', label: 'Price per hour interpreter', alignRight: false },
   { id: 'status', label: 'Status', alignRight: false },
+  { id: '' },
+];
+
+const TABLE_HEAD_SPECIAL_PRICE = [
+  { id: 'agency', label: 'Agency', alignRight: false, width: '40%' },
+  { id: 'price_per_hour', label: 'Price per hour', alignRight: false, width: '17%' },
+  { id: 'price_per_hour_interpreter', label: 'Price per hour interpreter', alignRight: false, width: '17%' },
   { id: '' },
 ];
 
@@ -94,8 +104,7 @@ const ButtonSwitch = styled(Switch)(({ theme }) => ({
   '& .MuiSwitch-track': {
     borderRadius: 16 / 2,
     opacity: 1,
-    backgroundColor:
-      theme.palette.mode === 'dark' ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.25)',
+    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.25)',
     boxSizing: 'border-box',
   },
 }));
@@ -168,28 +177,32 @@ function applySortFilter(array, comparator, query) {
   }
   return stabilizedThis.map((el) => el[0]);
 }
+// ----------------------------------------------------------------------
+
+const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 
 export const LenguagePage = () => {
   /* Toastify */
 
   const showToastMessage = () => {
-    if (!id) toast.success('¡New lenguage created!', {
-      position: toast.POSITION.TOP_RIGHT
-    });
-    else toast.success('¡Lenguage updated!', {
-      position: toast.POSITION.TOP_RIGHT
-    });
+    if (!id)
+      toast.success('¡New lenguage created!', {
+        position: toast.POSITION.TOP_RIGHT,
+      });
+    else
+      toast.success('¡Lenguage updated!', {
+        position: toast.POSITION.TOP_RIGHT,
+      });
   };
 
   const showToastMessageStatus = (type, message) => {
     if (type === 'success') {
       toast.success(message, {
-        position: toast.POSITION.TOP_RIGHT
+        position: toast.POSITION.TOP_RIGHT,
       });
-    }
-    else {
+    } else {
       toast.error(message, {
-        position: toast.POSITION.TOP_RIGHT
+        position: toast.POSITION.TOP_RIGHT,
       });
     }
   };
@@ -197,12 +210,12 @@ export const LenguagePage = () => {
   /* useForm */
 
   const { control, handleSubmit, reset, setValue } = useForm({
-    reValidateMode: 'onBlur'
+    reValidateMode: 'onBlur',
   });
 
   const lgDown = useResponsive('down', 'lg');
 
-  /* Description */
+  /* Languaje */
 
   const [id, setId] = useState('');
 
@@ -221,6 +234,62 @@ export const LenguagePage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  /* Special prices */
+
+  const [specialPrices, setSpecialPrices] = useState([]);
+
+  const [errors, setErrors] = useState({});
+
+  const [openSpecialPrice, setOpenSpecialPrice] = useState(false);
+
+  const [dataSpecialPrice, setDataSpecialPrice] = useState({});
+
+  const [pageSpecialPrice, setPageSpecialPrice] = useState(0);
+
+  const [orderSpecialPrice, setOrderSpecialPrice] = useState('asc');
+
+  const [orderBySpecialPrice, setOrderBySpecialPrice] = useState('name');
+
+  const [filterNameSpecialPrice, setFilterNameSpecialPrice] = useState('');
+
+  const [rowsPerPageSpecialPrice, setRowsPerPageSpecialPrice] = useState(5);
+
+  const [isLoadingSpecialPrice, setIsLoadingSpecialPrice] = useState(false);
+
+  /* Agency */
+  const [agencyName, setAgencyName] = useState('');
+  const [agencyId, setAgencyId] = useState('');
+
+  /* Datatable - Special Price */
+
+  /* Autocomplete agency */
+
+  const handleOnChangeAgency = (agency) => {
+    setAgencyId(agency.id);
+  };
+
+  const handleRequestSortSpecialPrice = (event, property) => {
+    const isAsc = orderBySpecialPrice === property && orderSpecialPrice === 'asc';
+    setOrderSpecialPrice(isAsc ? 'desc' : 'asc');
+    setOrderBySpecialPrice(property);
+  };
+
+  const handleChangePageSpecialPrice = (event, newPage) => {
+    setPageSpecialPrice(newPage);
+  };
+
+  const handleChangeRowsPerPageSpecialPrice = (event) => {
+    setPageSpecialPrice(0);
+    setRowsPerPageSpecialPrice(parseInt(event.target.value, 10));
+  };
+
+  const handleFilterByNameSpecialPrice = (event) => {
+    setPageSpecialPrice(0);
+    setFilterNameSpecialPrice(event.target.value);
+  };
+
+  /* Datatable - Lenguage */
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -242,6 +311,58 @@ export const LenguagePage = () => {
     setFilterName(event.target.value);
   };
 
+  /* --------------------------- Special Price --------------------------- */
+
+  const getSpecialPrices = async (languageId) => {
+    try {
+      const response = await axios.get(`${config.APPBACK_URL}/api/lenguages/special-price/${languageId}`);
+      setSpecialPrices(response.data?.lenguage?.agenciesWithSpecialPrices);
+      setIsLoadingSpecialPrice(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleCloseDialogSpecialPrice = () => {
+    setOpenSpecialPrice(false);
+  };
+
+  const handleSubmitDialogSpecialPrice = async (event) => {
+    setIsLoadingSpecialPrice(true);
+    if (id) {
+      await axios
+        .put(`${config.APPBACK_URL}/api/special_prices/${id}`, {
+          name: event.name,
+          price: event.price,
+          id_lenguage: dataSpecialPrice.id_lenguage,
+        })
+        .then((response) => {
+          setIsLoadingSpecialPrice(false);
+        })
+        .catch((error) => {
+          setIsLoadingSpecialPrice(false);
+        });
+    } else {
+      await axios
+        .post(`${config.APPBACK_URL}/api/special_prices`, {
+          name: event.name,
+          price: event.price,
+          id_lenguage: dataSpecialPrice.id_lenguage,
+        })
+        .then((response) => {
+          setIsLoadingSpecialPrice(false);
+        })
+        .catch((error) => {
+          setIsLoadingSpecialPrice(false);
+        });
+    }
+    showToastMessage();
+    reset();
+    handleCloseDialogSpecialPrice();
+    getSpecialPrices();
+  };
+
+  /* --------------------------- LENGUAGES --------------------------- */
   const getLenguages = async () => {
     try {
       const response = await axios.get(`${config.APPBACK_URL}/api/lenguages`);
@@ -252,7 +373,6 @@ export const LenguagePage = () => {
     }
   };
 
-  /* --------------------------- */
   const handleCreateDialog = (event) => {
     setOpen(true);
     setId('');
@@ -267,27 +387,31 @@ export const LenguagePage = () => {
   const handleSubmitDialog = async (event) => {
     setIsLoading(true);
     if (id) {
-      await axios.put(`${config.APPBACK_URL}/api/lenguages/${id}`, { 
-        name: event.name, 
-        price_per_hour: event.price_per_hour,
-        price_per_hour_interpreter: event.price_per_hour_interpreter
-       }).then((response) => {
-        setIsLoading(false);
-      }).catch((error) => {
-        setIsLoading(false);
-      });
+      await axios
+        .put(`${config.APPBACK_URL}/api/lenguages/${id}`, {
+          name: event.name,
+          price_per_hour: event.price_per_hour,
+          price_per_hour_interpreter: event.price_per_hour_interpreter,
+        })
+        .then((response) => {
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          setIsLoading(false);
+        });
     } else {
-      await axios.post(`${config.APPBACK_URL}/api/lenguages`, { 
-        name: event.name, 
-        price_per_hour: event.price_per_hour,
-        price_per_hour_interpreter: event.price_per_hour_interpreter
-      }).then((response) => {
-        setIsLoading(false);
-      }
-      ).catch((error) => {
-        setIsLoading(false);
-      }
-      );
+      await axios
+        .post(`${config.APPBACK_URL}/api/lenguages`, {
+          name: event.name,
+          price_per_hour: event.price_per_hour,
+          price_per_hour_interpreter: event.price_per_hour_interpreter,
+        })
+        .then((response) => {
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          setIsLoading(false);
+        });
     }
 
     showToastMessage();
@@ -319,28 +443,16 @@ export const LenguagePage = () => {
           <Link underline="hover" color="inherit" href="/dashboard/app">
             Dashboard
           </Link>
-          <Link
-            underline="hover"
-            color="inherit"
-            href="/dashboard/manage"
-          >
+          <Link underline="hover" color="inherit" href="/dashboard/manage">
             Manage
           </Link>
-          <Link
-            underline='hover'
-            color="inherit"
-            href="#"
-          >
+          <Link underline="hover" color="inherit" href="#">
             Languages
           </Link>
         </Breadcrumbs>
 
-
-
         <Stack direction="row" alignItems="center" justifyContent="space-between" my={5}>
-          <Typography variant="h4">
-            Languages
-          </Typography>
+          <Typography variant="h4">Languages</Typography>
           <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />} onClick={handleCreateDialog}>
             New Language
           </Button>
@@ -363,11 +475,16 @@ export const LenguagePage = () => {
                 {lenguages.length > 0 ? (
                   <TableBody>
                     {filteredLenguages.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                      const { id, name, price_per_hour:pricePerHour, price_per_hour_interpreter:pricePerHourInterpreter, status } = row;
+                      const {
+                        id,
+                        name,
+                        price_per_hour: pricePerHour,
+                        price_per_hour_interpreter: pricePerHourInterpreter,
+                        status,
+                      } = row;
 
                       return (
                         <TableRow hover key={id} tabIndex={-1} role="checkbox">
-
                           <TableCell component="th" scope="row" padding="normal">
                             <Stack direction="row" alignItems="center" spacing={2}>
                               <Typography variant="subtitle2" noWrap>
@@ -376,52 +493,61 @@ export const LenguagePage = () => {
                             </Stack>
                           </TableCell>
 
-                          <TableCell align="left">
-                            $ {pricePerHour}
-                          </TableCell>
-                          
-                          <TableCell align="left">
-                            $ {pricePerHourInterpreter}
-                          </TableCell>
+                          <TableCell align="left">$ {pricePerHour}</TableCell>
+
+                          <TableCell align="left">$ {pricePerHourInterpreter}</TableCell>
 
                           <TableCell align="left">
-                            <ButtonSwitch checked={status} inputProps={{ 'aria-label': 'ant design' }} onClick={
-                              async () => {
+                            <ButtonSwitch
+                              checked={status}
+                              inputProps={{ 'aria-label': 'ant design' }}
+                              onClick={async () => {
                                 setIsLoading(true);
-                                if (status) (
-                                  showToastMessageStatus('error', 'Lenguage off')
-                                )
-                                else (
-                                  showToastMessageStatus('success', 'Lenguage on')
-                                )
-                                setLenguages(lenguages.map(lenguage => lenguage.id === id ? { ...lenguage, status: !status } : lenguage));
-                                await axios.put(`${config.APPBACK_URL}/api/lenguages/${id}`, { status: !status }).then((response) => {
-                                  setIsLoading(false);
-                                }
-                                ).catch((error) => {
-                                  setIsLoading(false);
-                                }
+                                if (status) showToastMessageStatus('error', 'Lenguage off');
+                                else showToastMessageStatus('success', 'Lenguage on');
+                                setLenguages(
+                                  lenguages.map((lenguage) =>
+                                    lenguage.id === id ? { ...lenguage, status: !status } : lenguage
+                                  )
                                 );
-                              }
-                            } />
+                                await axios
+                                  .put(`${config.APPBACK_URL}/api/lenguages/${id}`, { status: !status })
+                                  .then((response) => {
+                                    setIsLoading(false);
+                                  })
+                                  .catch((error) => {
+                                    setIsLoading(false);
+                                  });
+                              }}
+                            />
                           </TableCell>
 
                           <TableCell align="right">
-                            <IconButton size="large" color="primary" onClick={
-                              () => {}
-                            }>
-                              <Iconify icon={'mdi:currency-usd'} /><Typography variant="caption">Special Price</Typography>
+                            <IconButton
+                              size="large"
+                              color="primary"
+                              onClick={() => {
+                                setId(id);
+                                getSpecialPrices(id);
+                                setOpenSpecialPrice(true);
+                              }}
+                            >
+                              <Iconify icon={'mdi:currency-usd'} />
+                              <Typography variant="caption">Special Price</Typography>
                             </IconButton>
-                            <IconButton size="large" color="inherit" onClick={
-                              () => {
+                            <IconButton
+                              size="large"
+                              color="inherit"
+                              onClick={() => {
                                 setId(id);
                                 setValue('name', name);
                                 setValue('price_per_hour', pricePerHour);
                                 setValue('price_per_hour_interpreter', pricePerHourInterpreter);
                                 setOpen(true);
-                              }
-                            }>
-                              <Iconify icon={'mdi:pencil-box'} /><Typography variant="caption">Edit</Typography>
+                              }}
+                            >
+                              <Iconify icon={'mdi:pencil-box'} />
+                              <Typography variant="caption">Edit</Typography>
                             </IconButton>
                           </TableCell>
                         </TableRow>
@@ -433,31 +559,27 @@ export const LenguagePage = () => {
                       </TableRow>
                     )}
                   </TableBody>
-                )
-                  :
-                  (
-                    <TableBody>
-                      <TableRow>
-                        <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
-                          <Paper
-                            sx={{
-                              textAlign: 'center',
-                            }}
-                          >
-                            <Typography variant="h6" paragraph>
-                              No results found
-                            </Typography>
+                ) : (
+                  <TableBody>
+                    <TableRow>
+                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                        <Paper
+                          sx={{
+                            textAlign: 'center',
+                          }}
+                        >
+                          <Typography variant="h6" paragraph>
+                            No results found
+                          </Typography>
 
-                            <Typography variant="body2">
-                              Please <strong>reload</strong> the page.
-                            </Typography>
-                          </Paper>
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  )
-                }
-
+                          <Typography variant="body2">
+                            Please <strong>reload</strong> the page.
+                          </Typography>
+                        </Paper>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                )}
 
                 {isNotFound && (
                   <TableBody>
@@ -508,15 +630,14 @@ export const LenguagePage = () => {
         onClose={handleCloseDialog}
         aria-labelledby="customized-dialog-title"
         open={open}
-        maxWidth='sm'
+        maxWidth="sm"
         fullScreen={lgDown}
       >
         <BootstrapDialogTitle id="customized-dialog-title" onClose={handleCloseDialog}>
           Manage Languages
         </BootstrapDialogTitle>
         <DialogContent dividers>
-        <Stack spacing={2} sx={{ minWidth: lgDown ? '' : 550 }}>
-
+          <Stack spacing={2} sx={{ minWidth: lgDown ? '' : 550 }}>
             <FormControl sx={{ width: '100%' }}>
               <Controller
                 name="name"
@@ -526,14 +647,14 @@ export const LenguagePage = () => {
                   required: 'This field is required',
                   minLength: {
                     value: 3,
-                    message: 'The name must have a minimum of 3 characters'
+                    message: 'The name must have a minimum of 3 characters',
                   },
                   maxLength: {
                     value: 50,
-                    message: 'The name must have a maximum of 50 characters'
-                  }
+                    message: 'The name must have a maximum of 50 characters',
+                  },
                 }}
-                render={({ field: { onChange, onBlur, value, }, fieldState: { error } }) => (
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <TextField
                     fullWidth
                     label="Name"
@@ -559,7 +680,7 @@ export const LenguagePage = () => {
                 rules={{
                   required: 'This field is required',
                 }}
-                render={({ field: { onChange, onBlur, value, }, fieldState: { error } }) => (
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <TextField
                     fullWidth
                     label="Price per hour"
@@ -585,7 +706,7 @@ export const LenguagePage = () => {
                 rules={{
                   required: 'This field is required',
                 }}
-                render={({ field: { onChange, onBlur, value, }, fieldState: { error } }) => (
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <TextField
                     fullWidth
                     label="Price per hour interpreter"
@@ -602,25 +723,156 @@ export const LenguagePage = () => {
                 )}
               />
             </FormControl>
-          
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button size="large" onClick={handleCloseDialog}  >
+          <Button size="large" onClick={handleCloseDialog}>
             Cancel
           </Button>
-          <Button size="large" autoFocus onClick={handleSubmit(handleSubmitDialog)} disabled={isLoading} >
+          <Button size="large" autoFocus onClick={handleSubmit(handleSubmitDialog)} disabled={isLoading}>
             Save
           </Button>
         </DialogActions>
       </BootstrapDialog>
 
-      <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={isLoading}
-      >
+      {/* Dialog - Special Price */}
+
+      {Array.isArray(specialPrices) ? (
+        <Dialog
+          onClose={handleCloseDialogSpecialPrice}
+          aria-labelledby="customized-dialog-title"
+          open={openSpecialPrice}
+          fullScreen={lgDown}
+          TransitionComponent={Transition}
+          keepMounted
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle id="alert-dialog-title">{'Special Prices'}</DialogTitle>
+          <DialogContent dividers>
+            <Card>
+
+              
+              <SpecialPriceListToolbar filterDate={filterNameSpecialPrice} onFilterName={handleFilterByNameSpecialPrice} />
+
+              <Scrollbar>
+                <TableContainer sx={{ minWidth: 800 }}>
+                  <Table>
+                    <ListHead
+                      order={orderSpecialPrice}
+                      orderBy={orderBySpecialPrice}
+                      headLabel={TABLE_HEAD_SPECIAL_PRICE}
+                      rowCount={specialPrices.length}
+                      onRequestSort={handleRequestSortSpecialPrice}
+                    />
+                    <TableBody>
+                      {specialPrices
+                        .slice(
+                          pageSpecialPrice * rowsPerPageSpecialPrice,
+                          pageSpecialPrice * rowsPerPageSpecialPrice + rowsPerPageSpecialPrice
+                        )
+                        .map((row) => {
+                          const {
+                            agency_id: id,
+                            agency_name: name,
+                            price_per_hour: pricePerHour,
+                            price_per_hour_interpreter: pricePerHourInterpreter,
+                          } = row;
+
+                          return (
+                            <TableRow hover key={id} tabIndex={-1} role="checkbox">
+                              <TableCell component="th" scope="row" padding="normal">
+                                <Stack
+                                  direction="row"
+                                  alignItems="center"
+                                  spacing={2}
+                                  sx={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                    <SearchAgency
+                                      handleOnChangeAgency={handleOnChangeAgency}
+                                      setAgencyName={setAgencyName}
+                                      agencyName={agencyName}
+                                      setAgencyId={setAgencyId}
+                                      errors={errors}
+                                      toast={toast}
+                                    />
+                                </Stack>
+                              </TableCell>
+
+                              <TableCell align="left">
+                                <TextField value={pricePerHour} />
+                              </TableCell>
+                              <TableCell align="left">
+                                <TextField value={pricePerHourInterpreter} />
+                              </TableCell>
+
+                              <TableCell align="right">
+                                <IconButton size="large" color="error" onClick={() => {}}>
+                                  <Iconify icon={'mdi:trash-can'} />
+                                  <Typography variant="caption">Delete</Typography>
+                                </IconButton>
+                                <IconButton size="large" color="inherit" onClick={() => {}}>
+                                  <Iconify icon={'material-symbols:save'} />
+                                  <Typography variant="caption">Save</Typography>
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Scrollbar>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={specialPrices.length}
+                rowsPerPage={rowsPerPageSpecialPrice}
+                page={pageSpecialPrice}
+                onPageChange={handleChangePageSpecialPrice}
+                onRowsPerPageChange={handleChangeRowsPerPageSpecialPrice}
+              />
+            </Card>
+          </DialogContent>
+          <DialogActions
+            sx={{
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Button
+              variant="contained"
+              size="large"
+              sx={{
+                margin: 2,
+              }}
+              onClick={() => {
+                setOpenSpecialPrice(false);
+                setSpecialPrices([]);
+                setPageSpecialPrice(0);
+                setOrderSpecialPrice('asc');
+                setOrderBySpecialPrice('name');
+                setFilterNameSpecialPrice('');
+                setRowsPerPageSpecialPrice(5);
+                setIsLoadingSpecialPrice(false);
+                setDataSpecialPrice({});
+                setId('');
+              }}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      ) : null}
+
+      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={isLoading}>
         <CircularProgress color="inherit" />
       </Backdrop>
     </>
-  )
-}
+  );
+};

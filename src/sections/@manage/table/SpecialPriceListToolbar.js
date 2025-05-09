@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 // @mui
 import { styled, alpha } from '@mui/material/styles';
-import { Toolbar, Tooltip, IconButton, Typography, OutlinedInput, InputAdornment } from '@mui/material';
+import { Toolbar, Tooltip, IconButton, Typography, OutlinedInput, InputAdornment, Button, Stack } from '@mui/material';
 // component
 import Iconify from '../../../components/iconify';
 
@@ -32,26 +32,31 @@ const StyledSearch = styled(OutlinedInput)(({ theme }) => ({
 
 // ----------------------------------------------------------------------
 
-ListToolbar.propTypes = {
+SpecialPriceListToolbar.propTypes = {
   numSelected: PropTypes.number,
   filterName: PropTypes.string,
   onFilterName: PropTypes.func,
 };
 
-export default function ListToolbar({ filterName, onFilterName }) {
+export default function SpecialPriceListToolbar({ filterName, onFilterName }) {
   return (
     <StyledRoot>
-        <StyledSearch
-          value={filterName}
-          onChange={onFilterName}
-          placeholder="Search..."
-          startAdornment={
-            <InputAdornment position="start">
-              <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 20, height: 20 }} />
-            </InputAdornment>
-          }
-        />
+      <StyledSearch
+        value={filterName}
+        onChange={onFilterName}
+        placeholder="Search..."
+        startAdornment={
+          <InputAdornment position="start">
+            <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled', width: 20, height: 20 }} />
+          </InputAdornment>
+        }
+      />
 
+      <Stack direction="row" alignItems="center" justifyContent="flex-end" my={2} mx={2}>
+        <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
+          New Special Price
+        </Button>
+      </Stack>
     </StyledRoot>
   );
 }
