@@ -414,7 +414,10 @@ export const NewServicePage = () => {
         const language = lenguages.find(({ id }) => id === languageId);
         if (!language) return;
 
+        /* eslint-disable camelcase */
         const specialPrice = language.agenciesWithSpecialPrices?.find(({ agency_id }) => agency_id === agencyId);
+
+        /* eslint-disable consistent-return */
         return specialPrice || {
             price_per_hour: language.price_per_hour,
             price_per_hour_interpreter: language.price_per_hour_interpreter,

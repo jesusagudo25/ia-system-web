@@ -1,4 +1,4 @@
 {
-    "APP_URL": "http://localhost:3000",
-    "APPBACK_URL": "http://127.0.0.1:8000"
+    "APP_URL": "https://smiajax.com",
+    "APPBACK_URL": "https://cloud.smiajax.com"
 }

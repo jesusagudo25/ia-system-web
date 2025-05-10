@@ -33,7 +33,13 @@ import {
   Backdrop,
   CircularProgress,
   Slide,
+  Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
+
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 // components
 import CloseIcon from '@mui/icons-material/Close';
@@ -43,10 +49,10 @@ import Scrollbar from '../components/scrollbar';
 
 // sections
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
-import { SpecialPriceListToolbar } from '../sections/@manage/table';
 import config from '../config.json';
 
 import useResponsive from '../hooks/useResponsive';
+import { SearchAgency } from '../sections/@manage/agency/SearchAgency';
 
 // ----------------------------------------------------------------------
 
@@ -176,6 +182,23 @@ function applySortFilter(array, comparator, query) {
   }
   return stabilizedThis.map((el) => el[0]);
 }
+
+function applySortFilterSpecialPrice(array, comparator, query) {
+  const stabilizedThis = array.map((el, index) => [el, index]);
+  stabilizedThis.sort((a, b) => {
+    const order = comparator(a[0], b[0]);
+    if (order !== 0) return order;
+    return a[1] - b[1];
+  });
+  if (query) {
+    return filter(
+      array,
+      (_specialPrice) => _specialPrice.agency_name.toLowerCase().indexOf(query.toLowerCase()) !== -1
+    );
+  }
+  return stabilizedThis.map((el) => el[0]);
+}
+
 // ----------------------------------------------------------------------
 
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
@@ -192,6 +215,29 @@ export const LenguagePage = () => {
       toast.success('¡Lenguage updated!', {
         position: toast.POSITION.TOP_RIGHT,
       });
+  };
+
+  const showToastMessageSpecialPrice = (type) => {
+    if (type === 'create')
+      toast.success('¡New special price created!', {
+        position: toast.POSITION.TOP_RIGHT,
+      });
+    else
+      toast.success('¡Special price updated!', {
+        position: toast.POSITION.TOP_RIGHT,
+      });
+  };
+
+  const showToastMessageDelete = () => {
+    toast.success('¡Special price deleted!', {
+      position: toast.POSITION.TOP_RIGHT,
+    });
+  };
+
+  const showToastMessageError = (message) => {
+    toast.error(message, {
+      position: toast.POSITION.TOP_RIGHT,
+    });
   };
 
   const showToastMessageStatus = (type, message) => {
@@ -234,13 +280,22 @@ export const LenguagePage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  /* Agency */
+  const [agencyName, setAgencyName] = useState('');
+  const [agencyId, setAgencyId] = useState('');
+  const [errors, setErrors] = useState({});
+
+  /* Autocomplete agency */
+
+  const handleOnChangeAgency = (agency) => {
+    setAgencyId(agency.id);
+  };
+
   /* Special prices */
 
   const [specialPrices, setSpecialPrices] = useState([]);
 
   const [openSpecialPrice, setOpenSpecialPrice] = useState(false);
-
-  const [dataSpecialPrice, setDataSpecialPrice] = useState({});
 
   const [pageSpecialPrice, setPageSpecialPrice] = useState(0);
 
@@ -253,7 +308,6 @@ export const LenguagePage = () => {
   const [rowsPerPageSpecialPrice, setRowsPerPageSpecialPrice] = useState(5);
 
   const [isLoadingSpecialPrice, setIsLoadingSpecialPrice] = useState(false);
-
 
   /* Datatable - Special Price */
 
@@ -313,43 +367,113 @@ export const LenguagePage = () => {
     }
   };
 
-  const handleCloseDialogSpecialPrice = () => {
+  const handleCloseDialogSpecialPrice = (id = '') => {
     setOpenSpecialPrice(false);
+    setSpecialPrices([]);
+    setPageSpecialPrice(0);
+    setOrderSpecialPrice('asc');
+    setOrderBySpecialPrice('name');
+    setFilterNameSpecialPrice('');
+    setRowsPerPageSpecialPrice(5);
+    setIsLoadingSpecialPrice(false);
+    setAgencyId('');
+    setAgencyName('');
+    setErrors({});
+    setId(id);
   };
 
   const handleSubmitDialogSpecialPrice = async (event) => {
-    setIsLoadingSpecialPrice(true);
-    if (id) {
-      await axios
-        .put(`${config.APPBACK_URL}/api/special_prices/${id}`, {
-          name: event.name,
-          price: event.price,
-          id_lenguage: dataSpecialPrice.id_lenguage,
-        })
-        .then((response) => {
-          setIsLoadingSpecialPrice(false);
-        })
-        .catch((error) => {
-          setIsLoadingSpecialPrice(false);
-        });
+    setErrors({});
+
+    if (agencyId) {
+      setIsLoadingSpecialPrice(true);
+
+      const apiUrl = `${config.APPBACK_URL}/api/lenguages/special-price`;
+      const payload = {
+        lenguage_id: id,
+        agency_id: agencyId,
+        price_per_hour: 0,
+        price_per_hour_interpreter: 0,
+      };
+
+      try {
+        await axios.post(apiUrl, payload);
+        showToastMessageSpecialPrice('create');
+      } catch (error) {
+        showToastMessageError(error.response?.data?.message || 'An error occurred');
+      } finally {
+        setIsLoadingSpecialPrice(false);
+        reset();
+        handleCloseDialogSpecialPrice(id);
+        getSpecialPrices(id);
+      }
     } else {
-      await axios
-        .post(`${config.APPBACK_URL}/api/special_prices`, {
-          name: event.name,
-          price: event.price,
-          id_lenguage: dataSpecialPrice.id_lenguage,
-        })
-        .then((response) => {
-          setIsLoadingSpecialPrice(false);
-        })
-        .catch((error) => {
-          setIsLoadingSpecialPrice(false);
-        });
+      showToastMessageError('Please select an agency');
+      setErrors({
+        agency: 'Please select an agency',
+      });
     }
-    showToastMessage();
-    reset();
-    handleCloseDialogSpecialPrice();
-    getSpecialPrices();
+  };
+
+  const handleUpdateSpecialPrice = async (agencyId) => {
+    setIsLoadingSpecialPrice(true);
+
+    const specialPriceResult = specialPrices.find((item) => item.agency_id === agencyId);
+
+    if (specialPriceResult) {
+      const apiUrl = `${config.APPBACK_URL}/api/lenguages/special-price/${id}`;
+      const payload = {
+        agency_id: agencyId,
+        price_per_hour: specialPriceResult.price_per_hour,
+        price_per_hour_interpreter: specialPriceResult.price_per_hour_interpreter,
+      };
+
+      try {
+        await axios.put(apiUrl, payload);
+        showToastMessageSpecialPrice('update');
+      } catch (error) {
+        showToastMessageError(error.response?.data?.message || 'An error occurred');
+      } finally {
+        setIsLoadingSpecialPrice(false);
+        reset();
+        handleCloseDialogSpecialPrice(id);
+        getSpecialPrices(id);
+      }
+    } else {
+      showToastMessageError('Special price not found');
+      setIsLoadingSpecialPrice(false);
+    }
+  };
+
+  const handleUpdateDataSpecialPrice = (agencyId, field, value) => {
+    setSpecialPrices((prevData) =>
+      prevData.map((item) => {
+        if (item.agency_id === agencyId) {
+          return {
+            ...item,
+            [field]: value,
+          };
+        }
+        return item;
+      })
+    );
+  };
+
+  const handleDeleteSpecialPrice = async (agencyId) => {
+    if (window.confirm('Are you sure you want to delete this special price?')) {
+      setIsLoadingSpecialPrice(true);
+      try {
+        await axios.delete(`${config.APPBACK_URL}/api/lenguages/special-price/${id}`, {
+          data: { agency_id: agencyId },
+        });
+        showToastMessageDelete();
+        setSpecialPrices((prev) => prev.filter((item) => item.agency_id !== agencyId));
+      } catch (error) {
+        showToastMessageError(error.response?.data?.message || 'An error occurred');
+      } finally {
+        setIsLoadingSpecialPrice(false);
+      }
+    }
   };
 
   /* --------------------------- LENGUAGES --------------------------- */
@@ -422,6 +546,19 @@ export const LenguagePage = () => {
 
   const isNotFound = !filteredLenguages.length && !!filterName;
 
+  /* Special prices */
+
+  const emptyRowsSpecialPrice =
+    pageSpecialPrice > 0 ? Math.max(0, (1 + pageSpecialPrice) * rowsPerPageSpecialPrice - specialPrices.length) : 0;
+
+  const filteredSpecialPrices = applySortFilterSpecialPrice(
+    specialPrices,
+    getComparator(orderSpecialPrice, orderBySpecialPrice),
+    filterNameSpecialPrice
+  );
+
+  const isNotFoundSpecialPrice = !filteredSpecialPrices.length && !!filterNameSpecialPrice;
+
   return (
     <>
       <Helmet>
@@ -462,6 +599,7 @@ export const LenguagePage = () => {
                   onRequestSort={handleRequestSort}
                 />
                 {/* Tiene que cargar primero... */}
+
                 {lenguages.length > 0 ? (
                   <TableBody>
                     {filteredLenguages.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
@@ -513,31 +651,36 @@ export const LenguagePage = () => {
                           </TableCell>
 
                           <TableCell align="right">
-                            <IconButton
-                              size="large"
-                              color="primary"
-                              onClick={() => {
-                                setId(id);
-                                getSpecialPrices(id);
-                              }}
-                            >
-                              <Iconify icon={'mdi:currency-usd'} />
-                              <Typography variant="caption">Special Price</Typography>
-                            </IconButton>
-                            <IconButton
-                              size="large"
-                              color="inherit"
-                              onClick={() => {
-                                setId(id);
-                                setValue('name', name);
-                                setValue('price_per_hour', pricePerHour);
-                                setValue('price_per_hour_interpreter', pricePerHourInterpreter);
-                                setOpen(true);
-                              }}
-                            >
-                              <Iconify icon={'mdi:pencil-box'} />
-                              <Typography variant="caption">Edit</Typography>
-                            </IconButton>
+                            <Stack direction="row" spacing={2}>
+                              <IconButton
+                                size="large"
+                                color="primary"
+                                onClick={() => {
+                                  handleCloseDialogSpecialPrice();
+
+                                  setId(id);
+
+                                  getSpecialPrices(id);
+                                }}
+                              >
+                                <Iconify icon={'mdi:currency-usd'} />
+                                <Typography variant="caption">Special Price</Typography>
+                              </IconButton>
+                              <IconButton
+                                size="large"
+                                color="inherit"
+                                onClick={() => {
+                                  setId(id);
+                                  setValue('name', name);
+                                  setValue('price_per_hour', pricePerHour);
+                                  setValue('price_per_hour_interpreter', pricePerHourInterpreter);
+                                  setOpen(true);
+                                }}
+                              >
+                                <Iconify icon={'mdi:pencil-box'} />
+                                <Typography variant="caption">Edit</Typography>
+                              </IconButton>
+                            </Stack>
                           </TableCell>
                         </TableRow>
                       );
@@ -739,10 +882,39 @@ export const LenguagePage = () => {
         >
           <DialogTitle id="alert-dialog-title">{'Special Prices'}</DialogTitle>
           <DialogContent dividers>
+            <Card sx={{ marginBottom: 2 }}>
+              <Accordion>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="form-add-new-line-content"
+                  id="form-add-new-line-header"
+                >
+                  <Typography variant="subtitle1"> Add new special price</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Stack spacing={2}>
+                    <SearchAgency
+                      handleOnChangeAgency={handleOnChangeAgency}
+                      setAgencyName={setAgencyName}
+                      agencyName={agencyName}
+                      setAgencyId={setAgencyId}
+                      errors={errors}
+                      toast={toast}
+                    />
+                    <Button
+                      variant="contained"
+                      startIcon={<Iconify icon="eva:plus-fill" />}
+                      onClick={handleSubmitDialogSpecialPrice}
+                    >
+                      Add Special Price
+                    </Button>
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
+            </Card>
+            <Divider sx={{ marginBottom: 2 }} />
             <Card>
-
-              
-              <SpecialPriceListToolbar toast={toast} />
+              <ListToolbar filterDate={filterNameSpecialPrice} onFilterName={handleFilterByNameSpecialPrice} />
 
               <Scrollbar>
                 <TableContainer sx={{ minWidth: 800 }}>
@@ -754,51 +926,120 @@ export const LenguagePage = () => {
                       rowCount={specialPrices.length}
                       onRequestSort={handleRequestSortSpecialPrice}
                     />
-                    <TableBody>
-                      {specialPrices
-                        .slice(
-                          pageSpecialPrice * rowsPerPageSpecialPrice,
-                          pageSpecialPrice * rowsPerPageSpecialPrice + rowsPerPageSpecialPrice
-                        )
-                        .map((row) => {
-                          const {
-                            agency_id: id,
-                            agency_name: name,
-                            price_per_hour: pricePerHour,
-                            price_per_hour_interpreter: pricePerHourInterpreter,
-                          } = row;
+                    {specialPrices.length > 0 ? (
+                      <TableBody>
+                        {filteredSpecialPrices
+                          .slice(
+                            pageSpecialPrice * rowsPerPageSpecialPrice,
+                            pageSpecialPrice * rowsPerPageSpecialPrice + rowsPerPageSpecialPrice
+                          )
+                          .map((row) => {
+                            const {
+                              agency_id: id,
+                              agency_name: name,
+                              price_per_hour: pricePerHour,
+                              price_per_hour_interpreter: pricePerHourInterpreter,
+                            } = row;
 
-                          return (
-                            <TableRow hover key={id} tabIndex={-1} role="checkbox">
-                              <TableCell component="th" scope="row" padding="normal">
-                                <Stack direction="row" alignItems="center" spacing={2}>
-                                  <Typography variant="subtitle2" noWrap>
-                                    {name}
-                                  </Typography>
-                                </Stack>
-                              </TableCell>
+                            return (
+                              <TableRow hover key={id} tabIndex={-1} role="checkbox">
+                                <TableCell component="th" scope="row" padding="normal">
+                                  <Stack direction="row" alignItems="center" spacing={2}>
+                                    <Typography variant="subtitle2" noWrap>
+                                      {name}
+                                    </Typography>
+                                  </Stack>
+                                </TableCell>
 
-                              <TableCell align="left">
-                                <TextField value={pricePerHour} />
-                              </TableCell>
-                              <TableCell align="left">
-                                <TextField value={pricePerHourInterpreter} />
-                              </TableCell>
+                                <TableCell align="left">
+                                  <TextField
+                                    value={specialPrices.find((item) => item.agency_id === id)?.price_per_hour}
+                                    onChange={(e) => {
+                                      handleUpdateDataSpecialPrice(id, 'price_per_hour', e.target.value);
+                                    }}
+                                  />
+                                </TableCell>
+                                <TableCell align="left">
+                                  <TextField
+                                    value={
+                                      specialPrices.find((item) => item.agency_id === id)?.price_per_hour_interpreter
+                                    }
+                                    onChange={(e) => {
+                                      handleUpdateDataSpecialPrice(id, 'price_per_hour_interpreter', e.target.value);
+                                    }}
+                                  />
+                                </TableCell>
 
-                              <TableCell align="right">
-                                <IconButton size="large" color="error" onClick={() => {}}>
-                                  <Iconify icon={'mdi:trash-can'} />
-                                  <Typography variant="caption">Delete</Typography>
-                                </IconButton>
-                                <IconButton size="large" color="inherit" onClick={() => {}}>
-                                  <Iconify icon={'material-symbols:save'} />
-                                  <Typography variant="caption">Save</Typography>
-                                </IconButton>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                    </TableBody>
+                                <TableCell align="right">
+                                  <IconButton
+                                    size="large"
+                                    color="error"
+                                    onClick={() => {
+                                      handleDeleteSpecialPrice(id);
+                                    }}
+                                  >
+                                    <Iconify icon={'mdi:trash-can'} />
+                                    <Typography variant="caption">Delete</Typography>
+                                  </IconButton>
+                                  <IconButton size="large" color="inherit" onClick={() => handleUpdateSpecialPrice(id)}>
+                                    <Iconify icon={'material-symbols:save'} />
+                                    <Typography variant="caption">Save</Typography>
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        {emptyRowsSpecialPrice > 0 && (
+                          <TableRow style={{ height: 53 * emptyRowsSpecialPrice }}>
+                            <TableCell colSpan={4} />
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    ) : (
+                      <TableBody>
+                        <TableRow>
+                          <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                            <Paper
+                              sx={{
+                                textAlign: 'center',
+                              }}
+                            >
+                              <Typography variant="h6" paragraph>
+                                No results found
+                              </Typography>
+
+                              <Typography variant="body2">
+                                Please <strong>reload</strong> the page.
+                              </Typography>
+                            </Paper>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    )}
+
+                    {isNotFoundSpecialPrice && (
+                      <TableBody>
+                        <TableRow>
+                          <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
+                            <Paper
+                              sx={{
+                                textAlign: 'center',
+                              }}
+                            >
+                              <Typography variant="h6" paragraph>
+                                Not found
+                              </Typography>
+
+                              <Typography variant="body2">
+                                No results found for &nbsp;
+                                <strong>&quot;{filterNameSpecialPrice}&quot;</strong>.
+                                <br /> Try to check for errors or use complete words.
+                              </Typography>
+                            </Paper>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    )}
                   </Table>
                 </TableContainer>
               </Scrollbar>
@@ -825,18 +1066,7 @@ export const LenguagePage = () => {
               sx={{
                 margin: 2,
               }}
-              onClick={() => {
-                setOpenSpecialPrice(false);
-                setSpecialPrices([]);
-                setPageSpecialPrice(0);
-                setOrderSpecialPrice('asc');
-                setOrderBySpecialPrice('name');
-                setFilterNameSpecialPrice('');
-                setRowsPerPageSpecialPrice(5);
-                setIsLoadingSpecialPrice(false);
-                setDataSpecialPrice({});
-                setId('');
-              }}
+              onClick={handleCloseDialogSpecialPrice}
             >
               Close
             </Button>
