@@ -43,6 +43,7 @@ import Scrollbar from '../components/scrollbar';
 
 // Sections - Se debe reempazar el nombre del componente por uno mas general
 import config from '../config.json';
+import { openAuthenticatedDocument } from '../utils/documentDownload';
 
 
 
@@ -332,16 +333,9 @@ export const ServiceHistory = () => {
                                                                             <Iconify icon={'mdi:pencil-box'} /> <Typography variant="caption">Edit</Typography>
                                                                         </IconButton>
 
-                                                                        <a
-                                                                            style={{ textDecoration: 'none', color: 'inherit' }}
-                                                                            target="_blank"
-                                                                            href={`${config.APPBACK_URL}/api/invoices/${id}/download`}
-                                                                            rel="noreferrer"
-                                                                        >
-                                                                            <IconButton size="large" color="inherit">
+                                                                        <IconButton onClick={() => openAuthenticatedDocument(`/api/invoices/${id}/download`, `invoice_${id}.pdf`)} size="large" color="inherit">
                                                                                 <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>
                                                                             </IconButton>
-                                                                        </a>
                                                                         <IconButton size="large" color="warning" onClick={() => handleClickOpen(id, 'pending', invoiceNumber)}>
                                                                             <Iconify icon={'mdi:timer-sand'} /> <Typography variant="caption">Pending</Typography>
                                                                             {/* Pendiente */}
@@ -360,16 +354,9 @@ export const ServiceHistory = () => {
                                                                         <IconButton size="large" color="primary" onClick={() => validatePayroll(id)}>
                                                                             <Iconify icon={'mdi:pencil-box'} /> <Typography variant="caption">Edit</Typography>
                                                                         </IconButton>
-                                                                        <a
-                                                                            style={{ textDecoration: 'none', color: 'inherit' }}
-                                                                            target="_blank"
-                                                                            href={`${config.APPBACK_URL}/api/invoices/${id}/download`}
-                                                                            rel="noreferrer"
-                                                                        >
-                                                                            <IconButton size="large" color="inherit">
+                                                                        <IconButton onClick={() => openAuthenticatedDocument(`/api/invoices/${id}/download`, `invoice_${id}.pdf`)} size="large" color="inherit">
                                                                                 <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>
                                                                             </IconButton>
-                                                                        </a>
                                                                         <IconButton size="large" color="success" onClick={() => handleClickOpen(id, 'paid', invoiceNumber)}>
                                                                             <Iconify icon="bx:money-withdraw" /> <Typography variant="caption">Pay</Typography>
                                                                             {/* Pagar */}

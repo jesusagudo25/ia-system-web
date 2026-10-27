@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import PropTypes from 'prop-types';
 import axios from 'axios';
+import { ToastContainer } from 'react-toastify';
 // @mui
 import {
   Card,
@@ -34,6 +35,7 @@ import Scrollbar from '../components/scrollbar';
 
 // Sections - Se debe reempazar el nombre del componente por uno mas general
 import config from '../config.json';
+import { openAuthenticatedDocument } from '../utils/documentDownload';
 
 
 const TABLE_HEAD = [
@@ -259,16 +261,9 @@ console.log(row);
                           </TableCell>
 
                           <TableCell align="right">
-                            <a
-                              style={{ textDecoration: 'none', color: 'inherit' }}
-                              target="_blank"
-                              href={`${config.APPBACK_URL}/api/invoices/${id}/download`}
-                              rel="noreferrer"
-                            >
-                              <IconButton size="large" color="primary">
+                            <IconButton onClick={() => openAuthenticatedDocument(`/api/invoices/${id}/download`, `invoice_${id}.pdf`)} size="large" color="primary">
                                 <Iconify icon={'mdi:file-pdf'} /> <Typography variant="caption">Download</Typography>
                               </IconButton>
-                            </a>
                           </TableCell>
                         </TableRow>
                       );
@@ -346,6 +341,7 @@ console.log(row);
         </Card>
         
       </Container>
+      <ToastContainer />
 
       <Backdrop
                 sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}

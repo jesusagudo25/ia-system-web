@@ -43,6 +43,7 @@ import { InterpreterData } from '../sections/@manage/interpreter/InterpreterData
 import { SearchDescription } from '../sections/@manage/description/SearchDescription';
 import { SearchAddress } from '../sections/@manage/interpreter/SearchAddress';
 import config from '../config.json';
+import { openAuthenticatedDocument } from '../utils/documentDownload';
 import Iconify from '../components/iconify';
 import useResponsive from '../hooks/useResponsive';
 
@@ -1591,14 +1592,7 @@ export const NewServicePage = () => {
                                                 </Typography>
 
                                                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
-                                                    <a
-                                                        href={`${config.APPBACK_URL}/api/invoices/${invoiceId}/download/`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        download
-                                                        style={{ textDecoration: 'none' }}
-                                                    >
-                                                        <Button variant="contained"
+                                                    <Button onClick={() => openAuthenticatedDocument(`/api/invoices/${invoiceId}/download`, `invoice_${invoiceId}.pdf`)} variant="contained"
                                                             size='large'
                                                             sx={{
                                                                 width: '100%',
@@ -1608,7 +1602,6 @@ export const NewServicePage = () => {
                                                         >
                                                             Download PDF
                                                         </Button>
-                                                    </a>
 
                                                     <Button
                                                         variant="contained"
