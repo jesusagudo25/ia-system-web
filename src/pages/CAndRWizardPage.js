@@ -295,18 +295,20 @@ export const CAndRWizardPage = () => {
 
     /* Get axios */
 
-    const getLastPayroll = () => {
+    const getLastPayroll = async () => {
         setIsLoading(true);
-        axios.get(`${config.APPBACK_URL}/api/last-payroll`)
-            .then((response) => {
-                const data = [];
-                data.push(response.data);
-                setPayrolls(data);
-                setIsLoading(false);
-            })
-            .catch((error) => {
-                console.log(error);
-            });
+        try {
+            const response = await axios.get(`${config.APPBACK_URL}/api/last-payroll`);
+            const data = [];
+            data.push(response.data);
+            setPayrolls(data);
+        } catch (error) {
+            toast.error(error.response?.status === 401
+                ? 'Your session has expired. Please sign in again.'
+                : 'The last payroll could not be loaded. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     const getPayrollData = (id) => {

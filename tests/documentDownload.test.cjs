@@ -18,12 +18,24 @@ async function fixture(options = {}) {
   let opened = false;
   let nextTimer = 0;
   let created = 0;
+  const element = (tag) => ({
+    tagName: tag.toUpperCase(), style: {}, attributes: {}, children: [], textContent: '',
+    setAttribute(name, value) { this.attributes[name] = value; },
+    appendChild(child) { this.children.push(child); return child; },
+    replaceChildren(...children) {
+      this.children = children;
+      frames.push(...children.filter((child) => child.tagName === 'IFRAME'));
+    },
+  });
   const preview = {
     closed: false,
     document: {
       title: '',
-      body: { style: {}, replaceChildren: (frame) => frames.push(frame) },
-      createElement: () => ({ style: {} }),
+      documentElement: element('html'), head: element('head'), body: element('body'),
+      createElement: (tag) => {
+        if (options.failFrame && tag === 'iframe') throw new Error('synthetic frame failure');
+        return element(tag);
+      },
     },
     close() { this.closed = true; },
     addEventListener: (event, handler) => { events[event] = handler; },
@@ -54,13 +66,31 @@ async function fixture(options = {}) {
   });
   const source = fs.readFileSync(path.join(__dirname, '../src/utils/documentDownload.js'), 'utf8');
   const module = new vm.SourceTextModule(source, { context });
+  const themeModules = new Map();
   await module.link((specifier) => {
+    if (specifier.startsWith('../theme/')) {
+      const themeModule = new vm.SourceTextModule(fs.readFileSync(path.join(__dirname, '../src', specifier.slice(3) + '.js'), 'utf8'), { context });
+      themeModules.set(specifier, themeModule);
+      return themeModule;
+    }
+    if (specifier === '@mui/material/styles') {
+      // Only alpha is needed by palette.js; keep the fixture free of npm dependencies.
+      return new vm.SyntheticModule(['alpha'], function exposeAlpha() {
+        this.setExport('alpha', (hex, opacity) => {
+          const rgb = [1, 3, 5].map((start) => parseInt(hex.slice(start, start + 2), 16));
+          return `rgba(${rgb.join(', ')}, ${opacity})`;
+        });
+      }, { context });
+    }
     const dependency = specifier === 'axios' ? axios : { error: (message) => messages.push(message) };
     const name = specifier === 'axios' ? 'default' : 'toast';
     return new vm.SyntheticModule([name], function expose() { this.setExport(name, dependency); }, { context });
   });
   await module.evaluate();
-  return { open: module.namespace.openAuthenticatedDocument, messages, calls, revoked, timers, frames, events, preview };
+  return { open: module.namespace.openAuthenticatedDocument, messages, calls, revoked, timers, frames, events, preview,
+    palette: themeModules.get('../theme/palette').namespace.default,
+    typography: themeModules.get('../theme/typography').namespace.default,
+    createdUrls: () => created, wasOpened: () => opened };
 }
 
 test('PDF: authenticated Axios settings, filename, opener detached and no early revoke', async () => {
@@ -80,7 +110,7 @@ test('PDF: authenticated Axios settings, filename, opener detached and no early 
   assert.equal(f.timers.size, 0);
 });
 
-for (const status of [401, 403, 404, 429, 500]) {
+for (const status of [401, 403, 404, 429, 500, 503]) {
   test(`HTTP ${status}: close tab, never render error data or disclose server text`, async () => {
     const f = await fixture({ request: async () => {
       throw { response: { status, data: new Blob(['{"message":"private-server-detail"}']) } };
@@ -91,6 +121,7 @@ for (const status of [401, 403, 404, 429, 500]) {
     assert.equal(f.timers.size, 0);
     assert.equal(f.messages.length, 1);
     assert.equal(f.messages[0].includes('private-server-detail'), false);
+    assert.match(f.messages[0], /sesión|documento|solicitudes/);
   });
 }
 
@@ -105,7 +136,7 @@ for (const [label, type, contents] of [
     assert.equal(f.preview.closed, true);
     assert.equal(f.frames.length, 0);
     assert.equal(f.messages.length, 1);
-    if (label === 'JSON 2xx') assert.match(f.messages[0], /sign in again/);
+    if (label === 'JSON 2xx') assert.match(f.messages[0], /Inicia sesión de nuevo/);
   });
 }
 
@@ -114,7 +145,7 @@ test('network failure and timeout: close tab and report controlled error', async
     const f = await fixture({ request: async () => { throw { code }; } });
     assert.equal(await f.open('/api/invoices/1/download', 'invoice_1.pdf'), false);
     assert.equal(f.preview.closed, true);
-    assert.match(f.messages[0], /connection/);
+    assert.match(f.messages[0], /conexión/);
   }
 });
 
@@ -122,7 +153,7 @@ test('pop-up blocked: useful retry instruction, no request or object URL', async
   const f = await fixture({ blocked: true });
   assert.equal(await f.open('/api/invoices/1/download', 'invoice_1.pdf'), false);
   assert.equal(f.calls.length, 0);
-  assert.match(f.messages[0], /Allow pop-ups/);
+  assert.match(f.messages[0], /Permite las ventanas emergentes/);
   assert.equal(f.revoked.length, 0);
 });
 
@@ -268,12 +299,80 @@ test('static: four protected routes preserve controllers/binding and explicitly 
   assert.match(middleware, /401\)->header\('Cache-Control', 'private, no-store'\)/);
 });
 
-test('static: invoice, payroll, request consumers and shared helper remain unchanged', () => {
+test('static: invoice, payroll and request consumers remain unchanged', () => {
   const web = path.resolve(__dirname, '..');
-  for (const file of ['src/pages/InvoicePage.js', 'src/pages/ServiceHistory.js', 'src/pages/NewServicePage.js', 'src/pages/PayrollPage.js', 'src/pages/RequestPage.js', 'src/utils/documentDownload.js']) {
+  for (const file of ['src/pages/InvoicePage.js', 'src/pages/ServiceHistory.js', 'src/pages/NewServicePage.js', 'src/pages/PayrollPage.js', 'src/pages/RequestPage.js']) {
     const original = execFileSync('git', ['show', `HEAD:${file}`], { cwd: web, encoding: 'utf8' });
     assert.equal(fs.readFileSync(path.join(web, file), 'utf8').replace(/\r\n/g, '\n'), original.replace(/\r\n/g, '\n'));
   }
+});
+
+test('waiting UI uses real light-theme tokens, Spanish accessible status and no external data', async () => {
+  let resolve;
+  const pending = new Promise((done) => { resolve = done; });
+  const f = await fixture({ request: () => pending });
+  const filename = '<img src=x onerror=alert(1)>.pdf';
+  const work = f.open('/api/invoices/1/download', filename);
+  const doc = f.preview.document;
+  assert.equal(doc.documentElement.lang, 'es');
+  assert.equal(doc.documentElement.style.colorScheme, 'light');
+  assert.equal(doc.title, filename, 'external filename is assigned only as plain title');
+  assert.equal(doc.body.style.backgroundColor, f.palette.background.default);
+  assert.equal(doc.body.style.fontFamily, f.typography.fontFamily);
+  const main = doc.body.children[0];
+  const status = main.children[0];
+  assert.equal(status.attributes.role, 'status');
+  assert.equal(status.attributes['aria-live'], 'polite');
+  assert.equal(status.style.backgroundColor, f.palette.background.paper);
+  const [spinner, heading, explanation] = status.children;
+  assert.equal(spinner.style.borderTopColor, f.palette.primary.main);
+  assert.equal(spinner.attributes['aria-hidden'], 'true');
+  assert.equal(heading.textContent, 'Preparando documento');
+  assert.equal(heading.style.fontSize, f.typography.h6.fontSize);
+  assert.equal(explanation.textContent, 'El PDF se abrirá aquí cuando esté listo');
+  assert.equal(explanation.style.color, f.palette.text.secondary);
+  assert.equal(f.createdUrls(), 0);
+  const css = doc.head.children.find((child) => child.tagName === 'STYLE').textContent;
+  assert.match(css, /prefers-reduced-motion: reduce/);
+  assert.match(css, /animation: none/);
+  assert.match(css, /100svh/);
+  assert.doesNotMatch(JSON.stringify(main), /onerror|cloud\.example/);
+  assert.doesNotMatch(heading.textContent + explanation.textContent, /\d+\s*%/);
+  resolve({ status: 200, headers: { 'content-type': 'application/pdf' }, data: new Blob(['%PDF-1.4 synthetic']) });
+  assert.equal(await work, true);
+  assert.equal(doc.body.children.length, 1);
+  assert.equal(doc.body.children[0].tagName, 'IFRAME');
+  assert.equal(f.createdUrls(), 1);
+  assert.equal(f.revoked.length, 0);
+  f.events.pagehide();
+  assert.equal(f.revoked.length, 1);
+});
+
+test('malformed URLs and disallowed destinations fail before popup/request/resource creation', async () => {
+  const f = await fixture();
+  for (const value of ['https://[', 'http://cloud.example.invalid/api/a', 'https://elsewhere.example.invalid/a', '/a?token=synthetic']) {
+    assert.equal(await f.open(value, 'fixture.pdf'), false);
+  }
+  assert.equal(f.wasOpened(), false);
+  assert.equal(f.calls.length, 0);
+  assert.equal(f.createdUrls(), 0);
+  assert.equal(f.timers.size, 0);
+});
+
+test('waiting UI is constructed with DOM APIs and never inserts HTML or fetches resources', () => {
+  const helper = fs.readFileSync(path.join(__dirname, '../src/utils/documentDownload.js'), 'utf8');
+  assert.doesNotMatch(helper, /innerHTML|document\.write|insertAdjacentHTML|@import|url\(/);
+  assert.match(helper, /showDocumentLoading\(preview\);\s*const response = await axios\.get/);
+});
+
+test('viewer DOM failure releases an already-created Blob URL and reports a controlled error', async () => {
+  const f = await fixture({ failFrame: true });
+  assert.equal(await f.open('/api/invoices/1/download', 'fixture.pdf'), false);
+  assert.equal(f.createdUrls(), 1);
+  assert.deepEqual(f.revoked, ['blob:fixture/1']);
+  assert.equal(f.preview.closed, true);
+  assert.equal(f.timers.size, 0);
+  assert.doesNotMatch(f.messages[0], /synthetic frame failure/);
 });
 
 const reportSource = fs.readFileSync(path.join(__dirname, '../src/pages/ReportPage.js'), 'utf8');
