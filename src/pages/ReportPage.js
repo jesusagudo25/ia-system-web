@@ -55,6 +55,7 @@ import useResponsive from '../hooks/useResponsive';
 // sections
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import config from '../config.json';
+import { openAuthenticatedDocument } from '../utils/documentDownload';
 
 // ----------------------------------------------------------------------
 
@@ -123,6 +124,16 @@ export const ReportPage = () => {
   const [report, setReport] = useState({});
 
   const [file, setFile] = useState({});
+  const [isOpeningReport, setIsOpeningReport] = useState(false);
+
+  const handleOpenReport = async () => {
+    setIsOpeningReport(true);
+    try {
+      await openAuthenticatedDocument(file.file_path, file.file_name);
+    } finally {
+      setIsOpeningReport(false);
+    }
+  };
 
   const [page, setPage] = useState(0);
 
@@ -165,7 +176,6 @@ export const ReportPage = () => {
   const handleGenerateReport = async () => {
 
     setIsLoading(true);
-    setOpenReport(false);
 
     if (differenceInDays(endDate, startDate) < 0) {
       toast.error('The start date must be less than the end date');
@@ -196,24 +206,14 @@ export const ReportPage = () => {
       setOpenFile(true);
       setFile(response.data);
       toast.success('Report generated successfully');
-      setStartDate(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
-      setEndDate(new Date(`${format(lastDayOfMonth(new Date()), 'yyyy-MM-dd')}T00:00:00`));
-      setTypeOfPerson('All');
-      setLanguage('');
-      setNameOfInterpreter('');
       setOpenReport(false);
       setIsLoading(false);
     } catch (error) {
-      console.log(error);
-      toast.error(`Error generating report: ${error.response.data.message}`);
+      toast.error(error.response?.status === 401
+        ? 'Your session has expired. Please sign in again.'
+        : 'The report could not be generated. Please try again.');
       setIsLoading(false);
-      setOpenReport(false);
-      setStartDate(new Date(`${format(new Date(), 'yyyy-MM-01')}T00:00:00`));
-      setEndDate(new Date(`${format(lastDayOfMonth(new Date()), 'yyyy-MM-dd')}T00:00:00`));
-      setTypeOfPerson('All');
-      setLanguage('');
-      setNameOfInterpreter('');
-      setOpenReport(false);
+      setOpenReport(true);
     }
   };
 
@@ -660,28 +660,22 @@ export const ReportPage = () => {
                   fontWeight: '400'
                 }}>You can download the report in PDF format</Typography>
 
-                <a
-                  href={`${file.file_path}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
-                  style={{ textDecoration: 'none' }}
-                  onClick={() => {
-                    setOpenFile(false);
-                    setFile({});
+                <LoadingButton variant="contained"
+                  onClick={handleOpenReport}
+                  loading={isOpeningReport}
+                  size='large'
+                  sx={{
+                    width: '100%',
                   }}
+                  color="error"
+                  startIcon={<Iconify icon="mdi:file-pdf" />}
                 >
-                  <Button variant="contained"
-                    size='large'
-                    sx={{
-                      width: '100%',
-                    }}
-                    color="error"
-                    startIcon={<Iconify icon="mdi:file-pdf" />}
-                  >
-                    Download
-                  </Button>
-                </a>
+                  Download
+                </LoadingButton>
+
+                <Typography variant="body2">
+                  You can retry opening this report. If it has expired or is unavailable, generate it again.
+                </Typography>
 
 
               </Stack>
