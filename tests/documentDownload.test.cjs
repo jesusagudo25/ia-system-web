@@ -386,7 +386,9 @@ test('static: reports use the protected private contract and a retryable button'
 test('static: four report calculation/filter/rendering bodies preserve their previous code', () => {
   const cloud = path.resolve(__dirname, '../../ia-system-cloud');
   const file = 'app/Http/Controllers/ReportController.php';
-  const previous = execFileSync('git', ['-c', `safe.directory=${cloud.replace(/\\/g, '/')}`, 'show', `HEAD:${file}`], { cwd: cloud, encoding: 'utf8' }).replace(/\r\n/g, '\n');
+  // Compare against CODEX 03, before report storage changed. HEAD now includes CODEX 04.
+  const baseline = '22bfe7cf247031aebf80c0127d59914c51c6ff2a';
+  const previous = execFileSync('git', ['-c', `safe.directory=${cloud.replace(/\\/g, '/')}`, 'show', `${baseline}:${file}`], { cwd: cloud, encoding: 'utf8' }).replace(/\r\n/g, '\n');
   const current = fs.readFileSync(path.join(cloud, file), 'utf8').replace(/\r\n/g, '\n');
   const bodies = (source) => source.slice(source.indexOf('    public function monthlyServiceReport('), source.indexOf('    public function show('));
   let replacements = 0;
