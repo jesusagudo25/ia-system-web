@@ -172,17 +172,101 @@ test('static: all four invoice actions use the helper and no direct invoice anch
   assert.match(app, /config\.headers\.Authorization = `Bearer/);
 });
 
-test('static: other five document routes and report implementation match HEAD', () => {
+test('static: report route and excluded backend implementation match HEAD', () => {
   const cloud = path.resolve(__dirname, '../../ia-system-cloud');
   const original = (file) => execFileSync('git', ['-c', `safe.directory=${cloud.replace(/\\/g, '/')}`, 'show', `HEAD:${file}`], { cwd: cloud, encoding: 'utf8' });
   const currentRoutes = fs.readFileSync(path.join(cloud, 'routes/api.php'), 'utf8');
   const oldRoutes = original('routes/api.php');
-  for (const route of ['payrolls', 'bank-checks', 'requests', 'bank-checks-preview', 'reports']) {
+  for (const route of ['reports']) {
     const line = oldRoutes.split(/\r?\n/).find((value) => value.includes(`'/${route}/`) && value.includes('/download'));
     assert.ok(line);
     assert.ok(currentRoutes.split(/\r?\n/).includes(line));
   }
-  for (const file of ['app/Http/Controllers/ReportController.php', 'config/cors.php', 'resources/views/pdf/invoice.blade.php']) {
+  for (const file of [
+    'app/Http/Controllers/ReportController.php', 'config/cors.php', 'resources/views/pdf/invoice.blade.php',
+    'app/Http/Controllers/InvoiceController.php', 'app/Http/Controllers/PayrollController.php',
+    'app/Http/Controllers/RequestController.php', 'app/Http/Controllers/BankCheckController.php',
+    'app/Http/Controllers/BankCheckPreviewController.php', 'resources/views/pdf/fortnightly.blade.php',
+    'resources/views/pdf/bank-checks.blade.php',
+  ]) {
     assert.equal(fs.readFileSync(path.join(cloud, file), 'utf8').replace(/\r\n/g, '\n'), original(file).replace(/\r\n/g, '\n'));
+  }
+});
+
+const phaseThreeRoutes = ['payrolls', 'bank-checks', 'requests', 'bank-checks-preview'];
+
+for (const route of phaseThreeRoutes) {
+  test(`${route}: valid synthetic PDF uses the shared viewer`, async () => {
+    const f = await fixture();
+    assert.equal(await f.open(`/api/${route}/42/download`, `${route}_42.pdf`), true);
+    assert.equal(f.calls[0][0], `https://cloud.example.invalid/api/${route}/42/download`);
+    assert.equal(f.preview.document.title, `${route}_42.pdf`);
+    assert.equal(f.frames.length, 1);
+    assert.equal(f.revoked.length, 0);
+    f.events.pagehide();
+    assert.equal(f.revoked.length, 1);
+  });
+
+  test(`${route}: HTTP 201 success=false JSON is never opened as a PDF`, async () => {
+    const f = await fixture({ response: {
+      status: 201,
+      headers: { 'content-type': 'application/json' },
+      data: new Blob(['{"success":false,"message":"synthetic-date-range-error"}']),
+    } });
+    assert.equal(await f.open(`/api/${route}/42/download`, `${route}_42.pdf`), false);
+    assert.equal(f.preview.closed, true);
+    assert.equal(f.frames.length, 0);
+    assert.equal(f.timers.size, 0);
+    assert.equal(f.messages.length, 1);
+    assert.doesNotMatch(f.messages[0], /synthetic-date-range-error/);
+  });
+}
+
+test('static: ten controls preserve route, document ID, context and accessible buttons', () => {
+  const expected = {
+    'PayrollPage.js': [
+      ['payrolls', 'id'], ['bank-checks', 'id'],
+      ['payrolls', 'payroll.id'], ['bank-checks', 'payroll.id'],
+    ],
+    'RequestPage.js': [
+      ['requests', 'id'], ['bank-checks-preview', 'id'],
+      ['requests', 'id'], ['bank-checks-preview', 'id'],
+      ['requests', 'request.id'], ['bank-checks-preview', 'request.id'],
+    ],
+  };
+  for (const [file, actions] of Object.entries(expected)) {
+    const source = fs.readFileSync(path.join(__dirname, '../src/pages', file), 'utf8');
+    const actual = [...source.matchAll(/<(?:IconButton|Button)\b[^>\n]*onClick=\{\(\) => openAuthenticatedDocument\(`\/api\/([^/]+)\/\$\{([^}]+)\}\/download`/g)]
+      .map((match) => [match[1], match[2]]);
+    assert.deepEqual(actual, actions);
+    assert.doesNotMatch(source, /href=\{`[^`]*\/(?:payrolls|requests|bank-checks|bank-checks-preview)\/[^`]*\/download/);
+    assert.match(source, /<ToastContainer\s*\/>/);
+  }
+});
+
+test('static: four protected routes preserve controllers/binding and explicitly select JSON 401', () => {
+  const cloud = path.resolve(__dirname, '../../ia-system-cloud');
+  const routes = fs.readFileSync(path.join(cloud, 'routes/api.php'), 'utf8');
+  const middleware = fs.readFileSync(path.join(cloud, 'app/Http/Middleware/Authenticate.php'), 'utf8');
+  const definitions = [
+    ['payrolls', 'payroll', 'PayrollController'], ['bank-checks', 'payroll', 'BankCheckController'],
+    ['requests', 'request', 'RequestController'], ['bank-checks-preview', 'request', 'BankCheckPreviewController'],
+  ];
+  for (const [route, parameter, controller] of definitions) {
+    const definition = routes.slice(routes.indexOf(`Route::get('/${route}/{${parameter}}/download'`)).split(';')[0];
+    assert.ok(definition.startsWith(`Route::get('/${route}/{${parameter}}/download', [${controller}::class, 'pdf'])`));
+    assert.match(definition, /->middleware\('auth:sanctum'\)/);
+    assert.ok(definition.includes(`->name('${route}.download')`));
+    assert.ok(middleware.includes(`'${route}.download'`));
+  }
+  assert.match(middleware, /'message' => 'Unauthenticated\.'/);
+  assert.match(middleware, /401\)->header\('Cache-Control', 'private, no-store'\)/);
+});
+
+test('static: invoice consumers, shared helper and ReportPage remain unchanged', () => {
+  const web = path.resolve(__dirname, '..');
+  for (const file of ['src/pages/InvoicePage.js', 'src/pages/ServiceHistory.js', 'src/pages/NewServicePage.js', 'src/pages/ReportPage.js', 'src/utils/documentDownload.js']) {
+    const original = execFileSync('git', ['show', `HEAD:${file}`], { cwd: web, encoding: 'utf8' });
+    assert.equal(fs.readFileSync(path.join(web, file), 'utf8').replace(/\r\n/g, '\n'), original.replace(/\r\n/g, '\n'));
   }
 });

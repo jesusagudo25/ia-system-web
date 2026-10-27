@@ -52,6 +52,7 @@ import useResponsive from '../hooks/useResponsive';
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import { ReviewListHead, ReviewListToolbar } from '../sections/@payroll/table';
 import config from '../config.json';
+import { openAuthenticatedDocument } from '../utils/documentDownload';
 
 // ----------------------------------------------------------------------
 
@@ -480,25 +481,11 @@ export const RequestPage = () => {
                                                         {
                                                             status === 'pending' ? (
                                                                 <Stack direction="row" spacing={1}>
-                                                                    <a
-                                                                        style={{ textDecoration: 'none', color: 'inherit' }}
-                                                                        target="_blank"
-                                                                        href={`${config.APPBACK_URL}/api/requests/${id}/download`}
-                                                                        rel="noreferrer"
-                                                                    >
-                                                                        <IconButton size="large" color="inherit">
-                                                                            <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>                                                                        </IconButton>
-                                                                    </a>
-                                                                    <a
-                                                                        style={{ textDecoration: 'none', color: '#2065D1' }}
-                                                                        target="_blank"
-                                                                        href={`${config.APPBACK_URL}/api/bank-checks-preview/${id}/download`}
-                                                                        rel="noreferrer"
-                                                                    >
-                                                                        <IconButton size="large" color="inherit">
-                                                                            <Iconify icon="bx:money-withdraw" /> <Typography variant="caption">Checks</Typography>
-                                                                        </IconButton>
-                                                                    </a>
+                                                                    <IconButton onClick={() => openAuthenticatedDocument(`/api/requests/${id}/download`, `request_${id}.pdf`)} size="large" color="inherit">
+                                                                        <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>                                                                        </IconButton>
+                                                                    <IconButton sx={{ color: '#2065D1' }} onClick={() => openAuthenticatedDocument(`/api/bank-checks-preview/${id}/download`, `bank_checks_preview_${id}.pdf`)} size="large" color="inherit">
+                                                                        <Iconify icon="bx:money-withdraw" /> <Typography variant="caption">Checks</Typography>
+                                                                    </IconButton>
 
                                                                     <IconButton size="large" color="success" onClick={() => handleClickDelete(id, suffixId, 'completed')} >
                                                                         <Iconify icon={'mdi:check'} />  <Typography variant="caption">Complete</Typography>
@@ -513,26 +500,12 @@ export const RequestPage = () => {
                                                                 :
                                                                 status === 'completed' ? (
                                                                     <Stack direction="row" spacing={1}>
-                                                                        <a
-                                                                            style={{ textDecoration: 'none', color: 'inherit' }}
-                                                                            target="_blank"
-                                                                            href={`${config.APPBACK_URL}/api/requests/${id}/download`}
-                                                                            rel="noreferrer"
-                                                                        >
-                                                                            <IconButton size="large" color="inherit">
-                                                                                <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>
-                                                                            </IconButton>
-                                                                        </a>
-                                                                        <a
-                                                                            style={{ textDecoration: 'none', color: '#2065D1' }}
-                                                                            target="_blank"
-                                                                            href={`${config.APPBACK_URL}/api/bank-checks-preview/${id}/download`}
-                                                                            rel="noreferrer"
-                                                                        >
-                                                                            <IconButton size="large" color="inherit">
-                                                                                <Iconify icon="bx:money-withdraw" /> <Typography variant="caption">Checks</Typography>
-                                                                            </IconButton>
-                                                                        </a>
+                                                                        <IconButton onClick={() => openAuthenticatedDocument(`/api/requests/${id}/download`, `request_${id}.pdf`)} size="large" color="inherit">
+                                                                            <Iconify icon="bx:bxs-file-pdf" /> <Typography variant="caption">Download</Typography>
+                                                                        </IconButton>
+                                                                        <IconButton sx={{ color: '#2065D1' }} onClick={() => openAuthenticatedDocument(`/api/bank-checks-preview/${id}/download`, `bank_checks_preview_${id}.pdf`)} size="large" color="inherit">
+                                                                            <Iconify icon="bx:money-withdraw" /> <Typography variant="caption">Checks</Typography>
+                                                                        </IconButton>
 
 
                                                                         <a
@@ -686,43 +659,27 @@ export const RequestPage = () => {
                                 }}>You can download the request in PDF format</Typography>
 
                                 <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', width: '100%', justifyContent: 'center', gap: 2 }}>
-                                    <a
-                                        href={`${config.APPBACK_URL}/api/requests/${request.id}/download/`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        download
-                                        style={{ textDecoration: 'none' }}
+                                    <Button onClick={() => openAuthenticatedDocument(`/api/requests/${request.id}/download`, `request_${request.id}.pdf`)} variant="contained"
+                                        size='large'
+                                        sx={{
+                                            width: '100%',
+                                        }}
+                                        color="error"
+                                        startIcon={<Iconify icon="mdi:file-pdf" />}
                                     >
-                                        <Button variant="contained"
-                                            size='large'
-                                            sx={{
-                                                width: '100%',
-                                            }}
-                                            color="error"
-                                            startIcon={<Iconify icon="mdi:file-pdf" />}
-                                        >
-                                            Download request
-                                        </Button>
-                                    </a>
+                                        Download request
+                                    </Button>
 
-                                    <a
-                                        href={`${config.APPBACK_URL}/api/bank-checks-preview/${request.id}/download/`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        download
-                                        style={{ textDecoration: 'none' }}
+                                    <Button onClick={() => openAuthenticatedDocument(`/api/bank-checks-preview/${request.id}/download`, `bank_checks_preview_${request.id}.pdf`)} variant="contained"
+                                        size='large'
+                                        sx={{
+                                            width: '100%',
+                                        }}
+                                        color="success"
+                                        startIcon={<Iconify icon="mdi:file-pdf" />}
                                     >
-                                        <Button variant="contained"
-                                            size='large'
-                                            sx={{
-                                                width: '100%',
-                                            }}
-                                            color="success"
-                                            startIcon={<Iconify icon="mdi:file-pdf" />}
-                                        >
-                                            Download bank checks preview
-                                        </Button>
-                                    </a>
+                                        Download bank checks preview
+                                    </Button>
                                 </Stack>
 
                             </Stack>
