@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 const statusMessages = {
   401: 'Your session has expired. Please sign in again.',
   403: 'The document could not be accessed.',
-  404: 'The invoice was not found.',
+  404: 'The document was not found.',
   429: 'Too many requests. Please wait and try again.',
 };
 
@@ -22,7 +22,7 @@ async function errorMessage(response) {
   if (message === 'Unauthenticated.') return statusMessages[401];
   return statusMessages[response?.status] || (
     response?.status >= 500
-      ? 'The server could not generate the invoice. Please try again later.'
+      ? 'The server could not generate the document. Please try again later.'
       : 'The server did not return a valid PDF. Please try again.'
   );
 }
@@ -56,7 +56,7 @@ export async function openAuthenticatedDocument(path, filename) {
     }
     preview.opener = null;
     preview.document.title = filename;
-    preview.document.body.textContent = 'Loading invoice…';
+    preview.document.body.textContent = 'Loading document...';
 
     const response = await axios.get(destination.href, {
       responseType: 'blob',
@@ -96,7 +96,7 @@ export async function openAuthenticatedDocument(path, filename) {
     if (preview && !preview.closed) preview.close();
     toast.error(error.response
       ? await errorMessage(error.response)
-      : 'The invoice could not be opened. Check your connection and try again.');
+      : 'The document could not be opened. Check your connection and try again.');
     return false;
   }
 }
